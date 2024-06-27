@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
@@ -22,13 +23,13 @@ import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
  *
  * @notice Manages investments of the user's assets into the whitelisted strategies to generate applicable revenue.
  *
- * @dev This contract inherits functionalities from `ReentrancyGuard`, and `Ownable`.
+ * @dev This contract inherits functionalities from  `Ownable2Step`, `ReentrancyGuard`, and `Pausable`.
  *
  * @author Hovooo (@hovooo), Cosmin Grigore (@gcosmintech).
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
+contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
 
@@ -53,15 +54,11 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
     IManagerContainer public immutable override managerContainer;
 
     /**
-     * @notice Returns the pause state of the contract.
-     */
-    bool public override paused;
-
-    /**
      * @notice Creates a new StrategyManager contract.
+     * @param _initialOwner The initial owner of the contract.
      * @param _managerContainer contract that contains the address of the Manager contract.
      */
-    constructor(address _managerContainer) {
+    constructor(address _initialOwner, address _managerContainer) Ownable(_initialOwner) {
         require(_managerContainer != address(0), "3065");
         managerContainer = IManagerContainer(_managerContainer);
     }
@@ -108,7 +105,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         validStrategy(_strategy)
         validAmount(_amount)
         validToken(_token)
-        notPaused
+        whenPaused
         nonReentrant
         returns (uint256 tokenOutAmount, uint256 tokenInAmount)
     {
@@ -156,7 +153,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         validStrategy(_data.strategyFrom)
         validStrategy(_data.strategyTo)
         nonReentrant
-        notPaused
+        whenPaused
         returns (uint256 tokenOutAmount, uint256 tokenInAmount)
     {
         address _holding = _getHoldingManager().userHolding(msg.sender);
@@ -224,7 +221,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         onlyAllowed(_holding)
         validAmount(_shares)
         nonReentrant
-        notPaused
+        whenPaused
         returns (uint256 assetAmount, uint256 tokenInAmount)
     {
         require(_getHoldingManager().isHolding(_holding), "3002");
@@ -259,7 +256,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         override
         validStrategy(_strategy)
         nonReentrant
-        notPaused
+        whenPaused
         returns (uint256[] memory rewards, address[] memory tokens)
     {
         address _holding = _getHoldingManager().userHolding(msg.sender);
@@ -360,7 +357,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
     function stakeReceiptTokens(
         address _strategy,
         uint256 _amount
-    ) external override notPaused validStrategy(_strategy) validAmount(_amount) {
+    ) external override whenPaused validStrategy(_strategy) validAmount(_amount) {
         address gaugeAddress = strategyGauges[_strategy];
         require(gaugeAddress != address(0), "1104");
         IHolding holding = IHolding(_getHoldingManager().userHolding(msg.sender));
@@ -394,7 +391,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
     function unstakeReceiptTokens(
         address _strategy,
         uint256 _amount
-    ) public override notPaused validStrategy(_strategy) validAmount(_amount) {
+    ) public override whenPaused validStrategy(_strategy) validAmount(_amount) {
         address gaugeAddress = strategyGauges[_strategy];
         require(gaugeAddress != address(0), "1104");
         IHolding holding = IHolding(_getHoldingManager().userHolding(msg.sender));
@@ -407,15 +404,6 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
     }
 
     // -- Administration --
-
-    /**
-     * @notice Sets a new value for pause state.
-     * @param _val the new value.
-     */
-    function setPaused(bool _val) external override onlyOwner {
-        emit PauseUpdated(paused, _val);
-        paused = _val;
-    }
 
     /**
      * @notice Adds a new strategy to the whitelist.
@@ -498,6 +486,27 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
     ) external override onlyOwner validAddress(_strategy) validAddress(_gauge) {
         addStrategy(_strategy);
         addStrategyGauge(_strategy, _gauge);
+    }
+
+    /**
+     * @notice Triggers stopped state.
+     */
+    function pause() external override onlyOwner whenNotPaused {
+        _pause();
+    }
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external override onlyOwner whenPaused {
+        _unpause();
+    }
+
+    /**
+     * @notice Override to avoid losing contract ownership.
+     */
+    function renounceOwnership() public pure override {
+        revert("1000");
     }
 
     // -- Getters --
@@ -663,13 +672,6 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         return IStablesManager(_getManager().stablesManager());
     }
 
-    /**
-     * @notice Override to avoid losing contract ownership.
-     */
-    function renounceOwnership() public pure override {
-        revert("1000");
-    }
-
     // -- Modifiers --
 
     /**
@@ -718,14 +720,6 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
      */
     modifier validToken(address _token) {
         require(_getManager().isTokenWhitelisted(_token), "3001");
-        _;
-    }
-
-    /**
-     * @dev Modifier to check if the contract is not paused.
-     */
-    modifier notPaused() {
-        require(!paused, "1200");
         _;
     }
 }
