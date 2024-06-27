@@ -90,13 +90,6 @@ interface ISharesRegistry {
     event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
 
     /**
-     * @notice Event emitted when contract ownership transferal was initiated.
-     * @param oldOwner The address of the old owner.
-     * @param newOwner The address of the new owner.
-     */
-    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
-
-    /**
      * @notice Event emitted when contract new ownership is accepted.
      * @param newOwner The address of the new owner.
      */
@@ -133,19 +126,6 @@ interface ISharesRegistry {
      * @return The manager container.
      */
     function managerContainer() external view returns (IManagerContainer);
-
-    /**
-     * @notice Current owner.
-     * @return The owner address.
-     */
-    function owner() external view returns (address);
-
-    /**
-     * @notice Possible new owner.
-     * @dev If different than `owner`, an ownership transfer is in progress and has to be accepted by the new owner.
-     * @return The temporary owner address.
-     */
-    function temporaryOwner() external view returns (address);
 
     /**
      * @notice Info about the accrued data.
@@ -383,38 +363,6 @@ interface ISharesRegistry {
      * - `TimelockAmountUpdated` event indicating timelock amount change operation.
      */
     function acceptTimelockAmountChange() external;
-
-    /**
-     * @notice Initiates the ownership transferal.
-     *
-     * @notice Requirements:
-     * - `_newOwner` must be different from the current owner.
-     *
-     * @notice Effects:
-     * - Updates `temporaryOwner` state variable.
-     *
-     * @notice Emits:
-     * - `OwnershipTransferred` event indicating ownership transferal initiation.
-     *
-     * @param _newOwner The address of the new owner.
-     */
-    function transferOwnership(address _newOwner) external;
-
-    /**
-     * @notice Finalizes the ownership transferal process.
-     *
-     * @notice Requirements:
-     * - Must be called after `transferOwnership` was executed successfully, by the new temporary owner.
-     * - `msg.sender` must be the temporary owner.
-     *
-     * @notice Effects:
-     * - Updates `owner` state variable.
-     * - Updates `temporaryOwner` state variable.
-     *
-     * @notice Emits:
-     * - `OwnershipAccepted` event indicating ownership transferal finalization.
-     */
-    function acceptOwnership() external;
 
     // -- Getters --
 
