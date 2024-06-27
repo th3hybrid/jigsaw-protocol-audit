@@ -69,11 +69,6 @@ interface ILiquidationManager {
      */
     function LIQUIDATION_PRECISION() external view returns (uint256);
 
-    /**
-     * @notice returns the pause state of the contract
-     */
-    function paused() external view returns (bool);
-
     // -- User specific methods --
 
     /**
@@ -166,10 +161,16 @@ interface ILiquidationManager {
     function setSelfLiquidationFee(uint256 _val) external;
 
     /**
-     * @notice Sets a new value for the pause state
-     * @param _val The new value for the pause state
+     * @notice Triggers stopped state.
      */
-    function setPaused(bool _val) external;
+    function pause() external;
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external;
+
+    // -- Structs --
 
     /**
      * @notice Temporary data structure used in the self-liquidation process.
