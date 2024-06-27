@@ -2,13 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface IStrategyManagerMin {
-    /// @notice returns a strategy info
-    function strategyInfo(address _strategy)
-        external
-        view
-        returns (
-            uint256,
-            bool,
-            bool
-        );
+    /**
+     * @notice Returns the strategy info.
+     */
+    function strategyInfo(address _strategy) external view returns (uint256, bool, bool);
 }
