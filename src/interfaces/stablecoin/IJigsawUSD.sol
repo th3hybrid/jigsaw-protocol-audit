@@ -2,34 +2,81 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IManagerContainer} from "../core/IManagerContainer.sol";
 
+import { IManagerContainer } from "../core/IManagerContainer.sol";
+
+/**
+ * @title IJigsawUSD
+ * @dev Interface for the Jigsaw Stablecoin Contract.
+ */
 interface IJigsawUSD is IERC20 {
-    /// @notice event emitted when the mint limit is updated
+    /**
+     * @notice event emitted when the mint limit is updated
+     */
     event MintLimitUpdated(uint256 oldLimit, uint256 newLimit);
 
-    /// @notice sets the manager address
-    /// @param _limit the new mint limit
-    function updateMintLimit(uint256 _limit) external;
-
-    /// @notice interface of the manager container contract
+    /**
+     * @notice Contract that contains the address of the manager contract.
+     * @return The manager container.
+     */
     function managerContainer() external view returns (IManagerContainer);
 
-    /// @notice returns the max mint limitF
+    /**
+     * @notice Returns the max mint limit.
+     */
     function mintLimit() external view returns (uint256);
 
-    /// @notice mint tokens
-    /// @dev no need to check if '_to' is a valid address if the '_mint' method is used
-    /// @param _to address of the user receiving minted tokens
-    /// @param _amount the amount to be minted
+    /**
+     * @notice Sets the maximum mintable amount.
+     *
+     * @notice Requirements:
+     * - Must be called by the contract owner.
+     *
+     * @notice Effects:
+     * - Updates the `mintLimit` state variable.
+     *
+     * @notice Emits:
+     * - `MintLimitUpdated` event indicating mint limit update operation.
+     * @param _limit The new mint limit.
+     */
+    function updateMintLimit(uint256 _limit) external;
+
+    /**
+     * @notice Mints tokens.
+     *
+     * @notice Requirements:
+     * - Must be called by the Stables Manager Contract
+     *  .
+     * @notice Effects:
+     * - Mints the specified amount of tokens to the given address.
+     *
+     * @param _to Address of the user receiving minted tokens.
+     * @param _amount The amount to be minted.
+     */
     function mint(address _to, uint256 _amount) external;
 
-    /// @notice burns token from sender
-    /// @param _amount the amount of tokens to be burnt
+    /**
+     * @notice Burns tokens from the `msg.sender`.
+     *
+     * @notice Requirements:
+     * - Must be called by the token holder.
+     *
+     * @notice Effects:
+     * - Burns the specified amount of tokens from the caller's balance.
+     *
+     * @param _amount The amount of tokens to be burnt.
+     */
     function burn(uint256 _amount) external;
 
-    /// @notice burns token from an address
-    /// @param _user the user to burn it from
-    /// @param _amount the amount of tokens to be burnt
+    /**
+     * @notice Burns tokens from an address.
+     *
+     * - Must be called by the Stables Manager Contract
+     *
+     * @notice Effects: Burns the specified amount of tokens from the specified address.
+     *
+     * @param _user The user to burn it from.
+     * @param _amount The amount of tokens to be burnt.
+     */
     function burnFrom(address _user, uint256 _amount) external;
 }
