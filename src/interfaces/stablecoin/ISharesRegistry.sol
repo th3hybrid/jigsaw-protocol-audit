@@ -1,137 +1,439 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IOracle} from "../oracle/IOracle.sol";
-import {IManagerContainer} from "../core/IManagerContainer.sol";
+import { IManagerContainer } from "../core/IManagerContainer.sol";
+import { IOracle } from "../oracle/IOracle.sol";
 
-/// @title Interface for SharesRegistry contract
-/// @author Cosmin Grigore (@gcosmintech)
-/// @dev based on MIM CauldraonV2 contract
+/**
+ * @title ISharesRegistry
+ * @dev Interface for the Shares Registry Contract.
+ * @dev Based on MIM CauldraonV2 contract.
+ */
 interface ISharesRegistry {
-    /// @notice event emitted when contract new ownership is accepted
-    event OwnershipAccepted(address indexed newOwner);
-    /// @notice event emitted when contract ownership transferal was initated
-    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
-    /// @notice event emitted when collateral was registered
-    event CollateralAdded(address indexed user, uint256 share);
-    /// @notice event emitted when collateral was unregistered
-    event CollateralRemoved(address indexed user, uint256 share);
-    /// @notice event emitted when the collateralization rate is updated
-    event CollateralizationRateUpdated(uint256 oldVal, uint256 newVal);
-    /// @notice event emitted when accrue was called
-    event Accrued(uint256 updatedTotalBorrow, uint256 extraAmount);
-    /// @notice oracle data updated
-    event OracleDataUpdated();
-    /// @notice emitted when new oracle data is requested
-    event NewOracleDataRequested(bytes newData);
-    /// @notice emitted when new oracle is requested
-    event NewOracleRequested(address newOracle);
-    /// @notice oracle updated
-    event OracleUpdated();
-    /// @notice event emitted when borrowed amount is set
+    /**
+     * @notice Event emitted when borrowed amount is set.
+     * @param _holding The address of the holding.
+     * @param oldVal The old value.
+     * @param newVal The new value.
+     */
     event BorrowedSet(address indexed _holding, uint256 oldVal, uint256 newVal);
-    // @notice event emitted when timelock amount is updated
-    event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
-    // @notice event emitted when a new timelock amount is requested
-    event TimelockAmountUpdateRequested(uint256 oldVal, uint256 newVal);
-    /// @notice event emitted when interest per second is updated
+
+    /**
+     * @notice Event emitted when collateral is registered.
+     * @param user The address of the user.
+     * @param share The amount of shares.
+     */
+    event CollateralAdded(address indexed user, uint256 share);
+
+    /**
+     * @notice Event emitted when collateral was unregistered.
+     * @param user The address of the user.
+     * @param share The amount of shares.
+     */
+    event CollateralRemoved(address indexed user, uint256 share);
+
+    /**
+     * @notice Event emitted when accrue was called.
+     * @param updatedTotalBorrow The updated total borrow.
+     * @param extraAmount The extra amount.
+     */
+    event Accrued(uint256 updatedTotalBorrow, uint256 extraAmount);
+
+    /**
+     * @notice Event emitted when interest per second is updated.
+     * @param oldVal The old value.
+     * @param newVal The new value.
+     */
     event InterestUpdated(uint256 oldVal, uint256 newVal);
 
-    /// @notice accure info data
+    /**
+     * @notice Event emitted when the collateralization rate is updated.
+     * @param oldVal The old value.
+     * @param newVal The new value.
+     */
+    event CollateralizationRateUpdated(uint256 oldVal, uint256 newVal);
+
+    /**
+     * @notice Event emitted when a new oracle is requested.
+     * @param newOracle The new oracle address.
+     */
+    event NewOracleRequested(address newOracle);
+
+    /**
+     * @notice Event emitted when the oracle is updated.
+     */
+    event OracleUpdated();
+
+    /**
+     * @notice Event emitted when new oracle data is requested.
+     * @param newData The new data.
+     */
+    event NewOracleDataRequested(bytes newData);
+
+    /**
+     * @notice Event emitted when oracle data is updated.
+     */
+    event OracleDataUpdated();
+
+    /**
+     * @notice Event emitted when a new timelock amount is requested.
+     * @param oldVal The old value.
+     * @param newVal The new value.
+     */
+    event TimelockAmountUpdateRequested(uint256 oldVal, uint256 newVal);
+
+    /**
+     * @notice Event emitted when timelock amount is updated.
+     * @param oldVal The old value.
+     * @param newVal The new value.
+     */
+    event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
+
+    /**
+     * @notice Event emitted when contract ownership transferal was initiated.
+     * @param oldOwner The address of the old owner.
+     * @param newOwner The address of the new owner.
+     */
+    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
+
+    /**
+     * @notice Event emitted when contract new ownership is accepted.
+     * @param newOwner The address of the new owner.
+     */
+    event OwnershipAccepted(address indexed newOwner);
+
+    /**
+     * @notice Returns holding's borrowed amount.
+     * @param _holding The address of the holding.
+     * @return The borrowed amount.
+     */
+    function borrowed(address _holding) external view returns (uint256);
+
+    /**
+     * @notice Returns holding's available collateral amount.
+     * @param _holding The address of the holding.
+     * @return The collateral amount.
+     */
+    function collateral(address _holding) external view returns (uint256);
+
+    /**
+     * @notice Returns the token address for which this registry was created.
+     * @return The token address.
+     */
+    function token() external view returns (address);
+
+    /**
+     * @notice Collateralization rate for token.
+     * @return The collateralization rate.
+     */
+    function collateralizationRate() external view returns (uint256);
+
+    /**
+     * @notice Interface of the manager container contract.
+     * @return The manager container.
+     */
+    function managerContainer() external view returns (IManagerContainer);
+
+    /**
+     * @notice Current owner.
+     * @return The owner address.
+     */
+    function owner() external view returns (address);
+
+    /**
+     * @notice Possible new owner.
+     * @dev If different than `owner`, an ownership transfer is in progress and has to be accepted by the new owner.
+     * @return The temporary owner address.
+     */
+    function temporaryOwner() external view returns (address);
+
+    /**
+     * @notice Info about the accrued data.
+     * @return lastAccrued, feesEarned, and INTEREST_PER_SECOND.
+     */
+    function accrueInfo() external view returns (uint64, uint128, uint64);
+
+    /**
+     * @notice Oracle contract associated with this share registry.
+     * @return The oracle contract.
+     */
+    function oracle() external view returns (IOracle);
+
+    /**
+     * @notice Extra oracle data if needed.
+     * @return The oracle data.
+     */
+    function oracleData() external view returns (bytes calldata);
+
+    /**
+     * @notice Current timelock amount.
+     * @return The timelock amount.
+     */
+    function timelockAmount() external view returns (uint256);
+
+    // -- User specific methods --
+
+    /**
+     * @notice Updates `_holding`'s borrowed amount.
+     *
+     * @notice Requirements:
+     * - `msg.sender` must be the Stables Manager Contract.
+     *
+     * @notice Effects:
+     * - Updates `borrowed` mapping.
+     *
+     * @notice Emits:
+     * - `BorrowedSet` indicating holding's borrowed amount update operation.
+     *
+     * @param _holding The address of the user's holding.
+     * @param _newVal The new borrowed amount.
+     */
+    function setBorrowed(address _holding, uint256 _newVal) external;
+
+    /**
+     * @notice Registers collateral for user's `_holding`.
+     *
+     * @notice Requirements:
+     * - `msg.sender` must be the Stables Manager Contract.
+     *
+     * @notice Effects:
+     * - Updates `collateral` mapping.
+     *
+     * @notice Emits:
+     * - `CollateralAdded` event indicating collateral addition operation.
+     *
+     * @param _holding The address of the user's holding.
+     * @param _share The new collateral shares.
+     */
+    function registerCollateral(address _holding, uint256 _share) external;
+
+    /**
+     * @notice Registers a collateral removal operation for user's `_holding`.
+     *
+     * @notice Requirements:
+     * - `msg.sender` must be the Stables Manager Contract.
+     *
+     * @notice Effects:
+     * - Updates `collateral` mapping.
+     *
+     * @notice Emits:
+     * - `CollateralRemoved` event indicating collateral removal operation.
+     *
+     * @param _holding The address of the user's holding.
+     * @param _share The new collateral shares.
+     */
+    function unregisterCollateral(address _holding, uint256 _share) external;
+
+    /**
+     * @notice Accrues the interest on the borrowed tokens and handles the accumulation of fees.
+     *
+     * @notice Requirements:
+     * - `msg.sender` must be the Stables Manager Contract.
+     *
+     * @notice Effects:
+     * - Updates `collateral` mapping.
+     *
+     * @notice Emits:
+     * - `Accrued`.
+     *
+     * @param _totalBorrow Total borrow amount.
+     */
+    function accrue(uint256 _totalBorrow) external returns (uint256);
+
+    // -- Administration --
+
+    /**
+     * @notice Sets a new interest per second.
+     *
+     * @notice Effects:
+     * - Updates `accrueInfo` state variable.
+     *
+     * @notice Emits:
+     * - `InterestUpdated` event indicating interest update operation.
+     *
+     * @param _newVal The new value.
+     */
+    function setInterestPerSecond(uint64 _newVal) external;
+
+    /**
+     * @notice Updates the collateralization rate.
+     *
+     * @notice Requirements:
+     * - `_newVal` must be greater than or equal to minimal collateralization rate - `minCR`.
+     * - `_newVal` must be less than or equal to the precision defined by the manager.
+     *
+     * @notice Effects:
+     * - Updates `collateralizationRate` state variable.
+     *
+     * @notice Emits:
+     * - `CollateralizationRateUpdated` event indicating collateralization rate update operation.
+     *
+     * @param _newVal The new value.
+     */
+    function setCollateralizationRate(uint256 _newVal) external;
+
+    /**
+     * @notice Requests a change for the oracle address.
+     *
+     * @notice Requirements:
+     * - Previous oracle change request must have expired or been accepted.
+     * - No timelock or oracle data change requests should be active.
+     * - `_oracle` must not be the zero address.
+     *
+     * @notice Effects:
+     * - Updates `_isOracleActiveChange` state variable.
+     * - Updates `_newOracle` state variable.
+     * - Updates `_newOracleTimestamp` state variable.
+     *
+     * @notice Emits:
+     * - `NewOracleRequested` event indicating new oracle request.
+     *
+     * @param _oracle The new oracle address.
+     */
+    function requestNewOracle(address _oracle) external;
+
+    /**
+     * @notice Updates the oracle.
+     *
+     * @notice Requirements:
+     * - Oracle change must have been requested and the timelock must have passed.
+     *
+     * @notice Effects:
+     * - Updates `oracle` state variable.
+     * - Updates `_isOracleActiveChange` state variable.
+     * - Updates `_newOracle` state variable.
+     * - Updates `_newOracleTimestamp` state variable.
+     *
+     * @notice Emits:
+     * - `OracleUpdated` event indicating oracle update.
+     */
+    function setOracle() external;
+
+    /**
+     * @notice Requests a change for oracle data.
+     *
+     * @notice Requirements:
+     * - Previous oracle data change request must have expired or been accepted.
+     * - No timelock or oracle change requests should be active.
+     *
+     * @notice Effects:
+     * - Updates `_isOracleDataActiveChange` state variable.
+     * - Updates `_newOracleData` state variable.
+     * - Updates `_newOracleDataTimestamp` state variable.
+     *
+     * @notice Emits:
+     * - `NewOracleDataRequested` event indicating new oracle data request.
+     *
+     * @param _data The new oracle data.
+     */
+    function requestNewOracleData(bytes calldata _data) external;
+
+    /**
+     * @notice Updates the oracle data.
+     *
+     * @notice Requirements:
+     * - Oracle data change must have been requested and the timelock must have passed.
+     *
+     * @notice Effects:
+     * - Updates `oracleData` state variable.
+     * - Updates `_isOracleDataActiveChange` state variable.
+     * - Updates `_newOracleData` state variable.
+     * - Updates `_newOracleDataTimestamp` state variable.
+     *
+     * @notice Emits:
+     * - `OracleDataUpdated` event indicating oracle data update.
+     */
+    function setOracleData() external;
+
+    /**
+     * @notice Requests a timelock update.
+     *
+     * @notice Requirements:
+     * - `_newVal` must not be zero.
+     * - Previous timelock change request must have expired or been accepted.
+     * - No oracle or oracle data change requests should be active.
+     *
+     * @notice Effects:
+     * - Updates `_isTimelockActiveChange` state variable.
+     * - Updates `_oldTimelock` state variable.
+     * - Updates `_newTimelock` state variable.
+     * - Updates `_newTimelockTimestamp` state variable.
+     *
+     * @notice Emits:
+     * - `TimelockAmountUpdateRequested` event indicating timelock change request.
+     *
+     * @param _newVal The new value in seconds.
+     */
+    function requestTimelockAmountChange(uint256 _newVal) external;
+
+    /**
+     * @notice Updates the timelock amount.
+     *
+     * @notice Requirements:
+     * - Timelock change must have been requested and the timelock must have passed.
+     * - The timelock for timelock change must have already expired.
+     *
+     * @notice Effects:
+     * - Updates `timelockAmount` state variable.
+     * - Updates `_oldTimelock` state variable.
+     * - Updates `_newTimelock` state variable.
+     * - Updates `_newTimelockTimestamp` state variable.
+     *
+     * @notice Emits:
+     * - `TimelockAmountUpdated` event indicating timelock amount change operation.
+     */
+    function acceptTimelockAmountChange() external;
+
+    /**
+     * @notice Initiates the ownership transferal.
+     *
+     * @notice Requirements:
+     * - `_newOwner` must be different from the current owner.
+     *
+     * @notice Effects:
+     * - Updates `temporaryOwner` state variable.
+     *
+     * @notice Emits:
+     * - `OwnershipTransferred` event indicating ownership transferal initiation.
+     *
+     * @param _newOwner The address of the new owner.
+     */
+    function transferOwnership(address _newOwner) external;
+
+    /**
+     * @notice Finalizes the ownership transferal process.
+     *
+     * @notice Requirements:
+     * - Must be called after `transferOwnership` was executed successfully, by the new temporary owner.
+     * - `msg.sender` must be the temporary owner.
+     *
+     * @notice Effects:
+     * - Updates `owner` state variable.
+     * - Updates `temporaryOwner` state variable.
+     *
+     * @notice Emits:
+     * - `OwnershipAccepted` event indicating ownership transferal finalization.
+     */
+    function acceptOwnership() external;
+
+    // -- Getters --
+
+    /**
+     * @notice Returns the up to date exchange rate of the `token`.
+     *
+     * @notice Requirements:
+     * - Oracle must provide an updated rate.
+     *
+     * @return The updated exchange rate.
+     */
+    function getExchangeRate() external view returns (uint256);
+
+    /**
+     * @notice Accrue info data.
+     */
     struct AccrueInfo {
         uint64 lastAccrued;
         uint128 feesEarned;
-        // solhint-disable-next-line var-name-mixedcase
         uint64 INTEREST_PER_SECOND;
     }
-
-    /// @notice borrowed amount for holding; holding > amount
-    function borrowed(address _holding) external view returns (uint256);
-
-    /// @notice info about the accrued data
-    function accrueInfo() external view returns (uint64, uint128, uint64);
-
-    /// @notice current timelock amount
-    function timelockAmount() external view returns (uint256);
-
-    /// @notice current owner
-    function owner() external view returns (address);
-
-    /// @notice possible new owner
-    /// @dev if different than `owner` an ownership transfer is in  progress and has to be accepted by the new
-    /// owner
-    function temporaryOwner() external view returns (address);
-
-    /// @notice interface of the manager container contract
-    function managerContainer() external view returns (IManagerContainer);
-
-    /// @notice returns the token address for which this registry was created
-    function token() external view returns (address);
-
-    /// @notice oracle contract associated with this share registry
-    function oracle() external view returns (IOracle);
-
-    /// @notice returns the up to date exchange rate
-    function getExchangeRate() external view returns (uint256);
-
-    /// @notice updates the colalteralization rate
-    /// @param _newVal the new value
-    function setCollateralizationRate(uint256 _newVal) external;
-
-    /// @notice collateralization rate for token
-    // solhint-disable-next-line func-name-mixedcase
-    function collateralizationRate() external view returns (uint256);
-
-    /// @notice returns the collateral shares for user
-    /// @param _user the address for which the query is performed
-    function collateral(address _user) external view returns (uint256);
-
-    /// @notice requests a change for the oracle address
-    /// @param _oracle the new oracle address
-    function requestNewOracle(address _oracle) external;
-
-    /// @notice sets new oracle for the oracle address
-    function setOracle() external;
-
-    /// @notice sets new interest per second
-    /// @param _newVal the new value
-    function setInterestPerSecond(uint64 _newVal) external;
-
-    /// @notice requests a timelock update
-    /// @param _newVal the new value in seconds
-    function requestTimelockAmountChange(uint256 _newVal) external;
-
-    /// @notice updates the timelock amount
-    function acceptTimelockAmountChange() external;
-
-    /// @notice requests a change for oracle data
-    /// @param _data the new data
-    function requestNewOracleData(bytes calldata _data) external;
-
-    /// @notice sets a new value for borrowed
-    /// @param _holding the address of the user
-    /// @param _newVal the new amount
-    function setBorrowed(address _holding, uint256 _newVal) external;
-
-    /// @notice updates the AccrueInfo object
-    /// @param _totalBorrow total borrow amount
-    function accrue(uint256 _totalBorrow) external returns (uint256);
-
-    /// @notice registers collateral for token
-    /// @param _holding the user's address for which collateral is registered
-    /// @param _share amount of shares
-    function registerCollateral(address _holding, uint256 _share) external;
-
-    /// @notice registers a collateral removal operation
-    /// @param _holding the address of the user
-    /// @param _share the new collateral shares
-    function unregisterCollateral(address _holding, uint256 _share) external;
-
-    /// @notice initiates the ownership transferal
-    /// @param _newOwner the address of the new owner
-    function transferOwnership(address _newOwner) external;
-
-    /// @notice finalizes the ownership transferal process
-    /// @dev must be called after `transferOwnership` was executed successfully, by the new temporary onwer
-    function acceptOwnership() external;
 }
