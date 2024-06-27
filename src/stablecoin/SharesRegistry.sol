@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IManager } from "../interfaces/core/IManager.sol";
 import { IManagerContainer } from "../interfaces/core/IManagerContainer.sol";
@@ -18,7 +20,7 @@ import { ISharesRegistry } from "../interfaces/stablecoin/ISharesRegistry.sol";
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract SharesRegistry is ISharesRegistry {
+contract SharesRegistry is ISharesRegistry, Ownable2Step {
     /**
      * @notice Returns holding's borrowed amount.
      */
@@ -43,17 +45,6 @@ contract SharesRegistry is ISharesRegistry {
      * @notice Returns the address of the manager container contract.
      */
     IManagerContainer public immutable override managerContainer;
-
-    /**
-     * @notice Current owner.
-     */
-    address public override owner;
-
-    /**
-     * @notice Possible new owner.
-     * @dev If different than `owner` an ownership transfer is in progress and has to be accepted by the new owner.
-     */
-    address public override temporaryOwner;
 
     /**
      * @notice Info about the accrued data.
@@ -95,7 +86,7 @@ contract SharesRegistry is ISharesRegistry {
     /**
      * @notice Creates a SharesRegistry for a specific token.
      *
-     * @param _owner The owner of the contract.
+     * @param _initialOwner The initial owner of the contract.
      * @param _managerContainer Contract that contains the address of the manager contract.
      * @param _token The address of the token contract, used as a collateral within this contract.
      * @param _oracle The oracle used to retrieve price data for the `_token`.
@@ -103,21 +94,19 @@ contract SharesRegistry is ISharesRegistry {
      * @param _collateralizationRate Collateralization value.
      */
     constructor(
-        address _owner,
+        address _initialOwner,
         address _managerContainer,
         address _token,
         address _oracle,
         bytes memory _oracleData,
         uint256 _collateralizationRate
-    ) {
-        require(_owner != address(0), "3032");
+    ) Ownable(_initialOwner) {
         require(_managerContainer != address(0), "3065");
         require(_token != address(0), "3001");
         require(_oracle != address(0), "3034");
         require(_collateralizationRate >= minCR, "2001");
         require(_collateralizationRate <= IManager(IManagerContainer(_managerContainer).manager()).PRECISION(), "3066");
 
-        owner = _owner;
         token = _token;
         oracle = IOracle(_oracle);
         oracleData = _oracleData;
@@ -436,47 +425,6 @@ contract SharesRegistry is ISharesRegistry {
         _newTimelockTimestamp = 0;
     }
 
-    /**
-     * @notice Initiates the ownership transferal.
-     *
-     * @notice Requirements:
-     * - `_newOwner` must be different from the current owner.
-     *
-     * @notice Effects:
-     * - Updates `temporaryOwner` state variable.
-     *
-     * @notice Emits:
-     * - `OwnershipTransferred` event indicating ownership transferal initiation.
-     *
-     * @param _newOwner The address of the new owner.
-     */
-    function transferOwnership(address _newOwner) external override onlyOwner {
-        require(_newOwner != owner, "3035");
-        temporaryOwner = _newOwner;
-        emit OwnershipTransferred(owner, _newOwner);
-    }
-
-    /**
-     * @notice Finalizes the ownership transferal process.
-     *
-     * @notice Requirements:
-     * - Must be called after `transferOwnership` was executed successfully, by the new temporary owner.
-     * - `msg.sender` must be the temporary owner.
-     *
-     * @notice Effects:
-     * - Updates `owner` state variable.
-     * - Updates `temporaryOwner` state variable.
-     *
-     * @notice Emits:
-     * - `OwnershipAccepted` event indicating ownership transferal finalization.
-     */
-    function acceptOwnership() external override {
-        require(msg.sender == temporaryOwner, "1000");
-        owner = temporaryOwner;
-        emit OwnershipAccepted(temporaryOwner);
-        temporaryOwner = address(0);
-    }
-
     // -- Getters --
 
     /**
@@ -502,14 +450,6 @@ contract SharesRegistry is ISharesRegistry {
      */
     modifier onlyStableManager() {
         require(msg.sender == IManager(managerContainer.manager()).stablesManager(), "1000");
-        _;
-    }
-
-    /**
-     * @notice Modifier to only allow access to a function by the Owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner, "1000");
         _;
     }
 }
