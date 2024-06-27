@@ -18,15 +18,9 @@ docs/
 
 coverage/*
 coverage_report/*
-
 coverage.json
-
 report
 lcov.info
 out
 
 .DS_Store
-
-bin
-
-broadcast
