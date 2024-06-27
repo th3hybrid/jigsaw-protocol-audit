@@ -132,13 +132,6 @@ interface IStrategyManager is IStrategyManagerMin {
     event RewardsClaimed(address indexed token, address indexed holding, uint256 amount);
 
     /**
-     * @notice Emitted when the pause state is changed.
-     * @param oldVal The old pause state.
-     * @param newVal The new pause state.
-     */
-    event PauseUpdated(bool oldVal, bool newVal);
-
-    /**
      * @notice Emitted when a user stakes receipt tokens into a strategy gauge.
      * @param strategy The address of the strategy where tokens are staked.
      * @param amount The amount of receipt tokens staked.
@@ -165,11 +158,6 @@ interface IStrategyManager is IStrategyManagerMin {
      * @return IManagerContainer The contract instance containing the Manager contract address.
      */
     function managerContainer() external view returns (IManagerContainer);
-
-    /**
-     * @notice Returns the pause state of the contract.
-     */
-    function paused() external view returns (bool);
 
     // -- User specific methods --
 
@@ -386,12 +374,6 @@ interface IStrategyManager is IStrategyManagerMin {
     // -- Administration --
 
     /**
-     * @notice Sets a new value for pause state.
-     * @param _val the new value
-     */
-    function setPaused(bool _val) external;
-
-    /**
      * @notice Adds a new strategy to the whitelist.
      * @param _strategy strategy's address.
      */
@@ -430,6 +412,16 @@ interface IStrategyManager is IStrategyManagerMin {
      * @param _gauge gauge's address.
      */
     function configStrategy(address _strategy, address _gauge) external;
+
+    /**
+     * @notice Triggers stopped state.
+     */
+    function pause() external;
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external;
 
     // -- Getters --
 
