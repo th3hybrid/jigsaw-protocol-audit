@@ -1,12 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IReceiptToken} from "../vyper/IReceiptToken.sol";
+import { IReceiptToken } from "../vyper/IReceiptToken.sol";
 
-/// @title Interface for a strategy
-/// @author Cosmin Grigore (@gcosmintech)
+/**
+ * @title IStrategy
+ * @notice Interface for a Strategies.
+ *
+ * @dev This interface defines the standard functions and events for a strategy contract.
+ * @dev The strategy allows for the deposit, withdrawal, and reward claiming functionalities.
+ * @dev It also provides views for essential information about the strategy's token and rewards.
+ */
 interface IStrategy {
-    /// @notice emitted when funds are deposited
+    /**
+     * @notice Emitted when funds are deposited.
+     *
+     * @param asset The address of the asset.
+     * @param tokenIn The address of the input token.
+     * @param assetAmount The amount of the asset.
+     * @param tokenInAmount The amount of the input token.
+     * @param shares The number of shares received.
+     * @param recipient The address of the recipient.
+     */
     event Deposit(
         address indexed asset,
         address indexed tokenIn,
@@ -16,63 +31,90 @@ interface IStrategy {
         address indexed recipient
     );
 
-    /// @notice emitted when funds are withdrawn
-    event Withdraw(
-        address indexed asset,
-        address indexed recipient,
-        uint256 shares,
-        uint256 amount
-    );
+    /**
+     * @notice Emitted when funds are withdrawn.
+     *
+     * @param asset The address of the asset.
+     * @param recipient The address of the recipient.
+     * @param shares The number of shares withdrawn.
+     * @param amount The amount of the asset withdrawn.
+     */
+    event Withdraw(address indexed asset, address indexed recipient, uint256 shares, uint256 amount);
 
-    /// @notice emitted when rewards are withdrawn
-    event Rewards(
-        address indexed recipient,
-        uint256[] rewards,
-        address[] rewardTokens
-    );
+    /**
+     * @notice Emitted when rewards are claimed.
+     *
+     * @param recipient The address of the recipient.
+     * @param rewards The array of reward amounts.
+     * @param rewardTokens The array of reward token addresses.
+     */
+    event Rewards(address indexed recipient, uint256[] rewards, address[] rewardTokens);
 
-    /// @notice participants info
-    struct RecipientInfo {
-        uint256 investedAmount;
-        uint256 totalShares;
-    }
+    /**
+     * @notice Returns investments details.
+     * @param _recipient The address of the recipient.
+     * @return investedAmount The amount invested.
+     * @return totalShares The total shares.
+     */
+    function recipients(address _recipient) external view returns (uint256 investedAmount, uint256 totalShares);
 
-    //returns investments details
-    function recipients(address _recipient)
-        external
-        view
-        returns (uint256, uint256);
-
-    //returns the address of the token accepted by the strategy as input
+    /**
+     * @notice Returns the address of the token accepted by the strategy's underlying protocol as input.
+     * @return tokenIn The address of the tokenIn.
+     */
     function tokenIn() external view returns (address);
 
-    //returns the address of strategy's receipt token
+    /**
+     * @notice Returns the address of token issued by the strategy's underlying protocol after deposit.
+     * @return tokenOut The address of the tokenOut.
+     */
     function tokenOut() external view returns (address);
 
-    //returns the address of strategy's main reward token
+    /**
+     * @notice Returns the address of the strategy's main reward token.
+     * @return rewardToken The address of the reward token.
+     */
     function rewardToken() external view returns (address);
 
-    //returns the address of strategy's main reward token
+    /**
+     * @notice Returns the address of the receipt token minted by the strategy itself.
+     * @return receiptToken The address of the receipt token.
+     */
     function receiptToken() external view returns (IReceiptToken);
 
-    //returns the number of decimals of the strategy's shares
+    /**
+     * @notice Returns the number of decimals of the strategy's shares.
+     * @return sharesDecimals The number of decimals.
+     */
     function sharesDecimals() external view returns (uint256);
 
-    //returns rewards amount
-    function getRewards(address _recipient) external view returns (uint256);
+    /**
+     * @notice Returns rewards amount.
+     * @param _recipient The address of the recipient.
+     * @return rewards The rewards amount.
+     */
+    function getRewards(address _recipient) external view returns (uint256 rewards);
 
-    /// @notice returns address of the receipt token
-    function getReceiptTokenAddress() external view returns (address);
+    /**
+     * @notice Returns the address of the receipt token.
+     * @return receiptTokenAddress The address of the receipt token.
+     */
+    function getReceiptTokenAddress() external view returns (address receiptTokenAddress);
 
-    /// @notice deposits funds into the strategy
-    /// @dev some strategies won't give back any receipt tokens; in this case 'tokenOutAmount' will be 0
-    /// @dev 'tokenInAmount' will be equal to '_amount' in case the '_asset' is the same as strategy 'tokenIn()'
-    /// @param _asset token to be invested
-    /// @param _amount token's amount
-    /// @param _recipient on behalf of
-    /// @param _data extra data
-    /// @return tokenOutAmount receipt tokens amount/obtained shares
-    /// @return tokenInAmount returned token in amount
+    /**
+     * @notice Deposits funds into the strategy.
+     *
+     * @dev Some strategies won't give back any receipt tokens; in this case 'tokenOutAmount' will be 0.
+     * 'tokenInAmount' will be equal to '_amount' in case the '_asset' is the same as strategy 'tokenIn()'.
+     *
+     * @param _asset The token to be invested.
+     * @param _amount The token's amount.
+     * @param _recipient The address of the recipient.
+     * @param _data Extra data.
+     *
+     * @return tokenOutAmount The receipt tokens amount/obtained shares.
+     * @return tokenInAmount The returned token in amount.
+     */
     function deposit(
         address _asset,
         uint256 _amount,
@@ -80,16 +122,20 @@ interface IStrategy {
         bytes calldata _data
     ) external returns (uint256 tokenOutAmount, uint256 tokenInAmount);
 
-    /// @notice withdraws deposited funds
-    /// @dev some strategies will allow only the tokenIn to be withdrawn
-    /// @dev 'assetAmount' will be equal to 'tokenInAmount' in case the '_asset' is the same as strategy 'tokenIn()'
-    /// @param _asset token to be invested
-    /// @param _shares amount to withdraw
-    /// @param _recipient on behalf of
-    /// @param _asset token to be withdrawn
-    /// @param _data extra data
-    /// @return assetAmount returned asset amoumt obtained from the operation
-    /// @return tokenInAmount returned token in amount
+    /**
+     * @notice Withdraws deposited funds.
+     *
+     * @dev Some strategies will allow only the tokenIn to be withdrawn. 'assetAmount' will be equal to 'tokenInAmount'
+     * in case the '_asset' is the same as strategy 'tokenIn()'.
+     *
+     * @param _shares The amount to withdraw.
+     * @param _recipient The address of the recipient.
+     * @param _asset The token to be withdrawn.
+     * @param _data Extra data.
+     *
+     * @return assetAmount The returned asset amount obtained from the operation.
+     * @return tokenInAmount The returned token in amount.
+     */
     function withdraw(
         uint256 _shares,
         address _recipient,
@@ -97,12 +143,25 @@ interface IStrategy {
         bytes calldata _data
     ) external returns (uint256 assetAmount, uint256 tokenInAmount);
 
-    /// @notice claims rewards from the strategy
-    /// @param _recipient on behalf of
-    /// @param _data extra data
-    /// @return amounts reward tokens amounts
-    /// @return tokens reward tokens addresses
-    function claimRewards(address _recipient, bytes calldata _data)
-        external
-        returns (uint256[] memory amounts, address[] memory tokens);
+    /**
+     * @notice Claims rewards from the strategy.
+     *
+     * @param _recipient The address of the recipient.
+     * @param _data Extra data.
+     *
+     * @return amounts The reward tokens amounts.
+     * @return tokens The reward tokens addresses.
+     */
+    function claimRewards(
+        address _recipient,
+        bytes calldata _data
+    ) external returns (uint256[] memory amounts, address[] memory tokens);
+
+    /**
+     * @notice Participants info.
+     */
+    struct RecipientInfo {
+        uint256 investedAmount;
+        uint256 totalShares;
+    }
 }
