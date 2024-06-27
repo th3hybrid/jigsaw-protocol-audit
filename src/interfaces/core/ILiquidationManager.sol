@@ -32,13 +32,6 @@ interface ILiquidationManager {
     event Liquidated(address indexed holding, address indexed token, uint256 amount, uint256 collateralUsed);
 
     /**
-     * @notice Emitted when the pause state is updated.
-     * @param oldVal The old value of the pause state.
-     * @param newVal The new value of the pause state.
-     */
-    event PauseUpdated(bool oldVal, bool newVal);
-
-    /**
      * @notice Emitted when collateral is retrieved from a strategy.
      * @param token address retrieved as collateral.
      * @param holding address from which collateral is retrieved.

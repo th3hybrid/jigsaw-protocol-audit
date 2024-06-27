@@ -60,13 +60,6 @@ interface IHoldingManager {
     event RepaidMultiple(address indexed holding, uint256 length, bool repaidFromUser);
 
     /**
-     * @notice Emitted when the pause state is changed.
-     * @param oldVal The old pause state.
-     * @param newVal The new pause state.
-     */
-    event PauseUpdated(bool oldVal, bool newVal);
-
-    /**
      * @notice Emitted when the user wraps native coin.
      * @param user The address of the user.
      * @param amount The amount wrapped.
