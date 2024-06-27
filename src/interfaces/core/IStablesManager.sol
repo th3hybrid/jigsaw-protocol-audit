@@ -59,13 +59,6 @@ interface IStablesManager {
     event RegistryUpdated(address indexed token, address indexed registry);
 
     /**
-     * @notice Emitted when pause state is changed.
-     * @param oldVal The old pause state.
-     * @param newVal The new pause state.
-     */
-    event PauseUpdated(bool oldVal, bool newVal);
-
-    /**
      * @notice Returns total borrowed jUSD amount using `token`.
      * @param _token The address of the token.
      * @return The total borrowed amount.
@@ -90,12 +83,6 @@ interface IStablesManager {
      * @return The address of the manager container contract.
      */
     function managerContainer() external view returns (IManagerContainer);
-
-    /**
-     * @notice Returns the pause state of the contract.
-     * @return Boolean indicating the pause state.
-     */
-    function paused() external view returns (bool);
 
     // -- User specific methods --
 
@@ -215,20 +202,14 @@ interface IStablesManager {
     // -- Administration --
 
     /**
-     * @notice Sets a new value for pause state.
-     *
-     * @notice Requirements:
-     * - Caller must be the contract owner.
-     *
-     * @notice Effects:
-     * - Updates the paused state.
-     *
-     * @notice Emits:
-     * - `PauseUpdated`.
-     *
-     * @param _val The new value.
+     * @notice Triggers stopped state.
      */
-    function setPaused(bool _val) external;
+    function pause() external;
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external;
 
     // -- Getters --
 

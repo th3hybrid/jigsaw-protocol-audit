@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import { Holding } from "./Holding.sol";
 import { OperationsLib } from "./libraries/OperationsLib.sol";
@@ -24,13 +27,13 @@ import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
  *
  * @notice Manages holding creation, management, and interaction for a more secure and dynamic flow.
  *
- * @dev Inherits from `Ownable` and `ReentrancyGuard`.
+ * @dev This contract inherits functionalities from `Ownable2Step`, `Pausable`, and `ReentrancyGuard`.
  *
  * @author Hovooo (@hovooo), Cosmin Grigore (@gcosmintech).
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
+contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /**
@@ -59,15 +62,11 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
     IManagerContainer public immutable override managerContainer;
 
     /**
-     * @notice Returns the pause state of the contract.
-     */
-    bool public override paused;
-
-    /**
      * @notice Creates a new HoldingManager Contract.
+     * @param _initialOwner The initial owner of the contract
      * @param _managerContainer Contract that contains the address of the manager contract.
      */
-    constructor(address _managerContainer) {
+    constructor(address _initialOwner, address _managerContainer) Ownable(_initialOwner) {
         require(_managerContainer != address(0), "3065");
         managerContainer = IManagerContainer(_managerContainer);
         holdingImplementationReference = address(new Holding());
@@ -92,7 +91,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
      *
      * @return The address of the new holding.
      */
-    function createHolding() external override nonReentrant notPaused returns (address) {
+    function createHolding() external override nonReentrant whenNotPaused returns (address) {
         require(userHolding[msg.sender] == address(0), "1101");
 
         if (msg.sender != tx.origin) {
@@ -134,7 +133,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
         validAmount(_amount)
         validHolding(userHolding[msg.sender])
         nonReentrant
-        notPaused
+        whenNotPaused
     {
         _deposit({ _from: msg.sender, _token: _token, _amount: _amount });
     }
@@ -155,7 +154,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
         validToken(_getManager().WETH())
         validHolding(userHolding[msg.sender])
         nonReentrant
-        notPaused
+        whenNotPaused
     {
         _wrap();
         _deposit({ _from: address(this), _token: _getManager().WETH(), _amount: msg.value });
@@ -187,7 +186,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
         validAmount(_amount)
         validHolding(userHolding[msg.sender])
         nonReentrant
-        notPaused
+        whenNotPaused
     {
         IHolding holding = IHolding(userHolding[msg.sender]);
         (uint256 userAmount, uint256 feeAmount) = _withdraw({ _token: _token, _amount: _amount });
@@ -221,7 +220,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
         validAmount(_amount)
         validHolding(userHolding[msg.sender])
         nonReentrant
-        notPaused
+        whenNotPaused
     {
         address wethAddress = _getManager().WETH();
         IHolding(userHolding[msg.sender]).transfer({ _token: wethAddress, _to: address(this), _amount: _amount });
@@ -262,7 +261,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
         address _token,
         uint256 _amount,
         bool _mintDirectlyToUser
-    ) external override nonReentrant notPaused validHolding(userHolding[msg.sender]) {
+    ) external override nonReentrant whenNotPaused validHolding(userHolding[msg.sender]) {
         address holding = userHolding[msg.sender];
 
         emit Borrowed({ holding: holding, token: _token, amount: _amount, mintToUser: _mintDirectlyToUser });
@@ -299,7 +298,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
     function borrowMultiple(
         BorrowOrRepayData[] calldata _data,
         bool _mintDirectlyToUser
-    ) external override validHolding(userHolding[msg.sender]) nonReentrant notPaused {
+    ) external override validHolding(userHolding[msg.sender]) nonReentrant whenNotPaused {
         require(_data.length > 0, "3006");
 
         address holding = userHolding[msg.sender];
@@ -342,7 +341,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
         address _token,
         uint256 _amount,
         bool _repayFromUser
-    ) external override nonReentrant notPaused validHolding(userHolding[msg.sender]) {
+    ) external override nonReentrant whenNotPaused validHolding(userHolding[msg.sender]) {
         address holding = userHolding[msg.sender];
 
         emit Repaid({ holding: holding, token: _token, amount: _amount, repayFromUser: _repayFromUser });
@@ -375,7 +374,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
     function repayMultiple(
         BorrowOrRepayData[] calldata _data,
         bool _repayFromUser
-    ) external override validHolding(userHolding[msg.sender]) nonReentrant notPaused {
+    ) external override validHolding(userHolding[msg.sender]) nonReentrant whenNotPaused {
         require(_data.length > 0, "3006");
 
         address holding = userHolding[msg.sender];
@@ -402,7 +401,7 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
      * @param _minter Minter address.
      * @param _gauge Gauge to mint for.
      */
-    function mint(address _minter, address _gauge) external override notPaused {
+    function mint(address _minter, address _gauge) external override whenNotPaused {
         IHolding(userHolding[msg.sender]).mint({ _minter: _minter, _gauge: _gauge });
     }
 
@@ -414,22 +413,17 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
     // -- Administration --
 
     /**
-     * @notice Sets a new value for pause state.
-     *
-     * @notice Requirements:
-     * - Only the contract owner can call this function.
-     *
-     * @notice Effects:
-     * - Updates the paused state.
-     *
-     * @notice Emits:
-     * - `PauseUpdated` event with the old and new values.
-     *
-     * @param _val The new value.
+     * @notice Triggers stopped state.
      */
-    function setPaused(bool _val) external override onlyOwner {
-        emit PauseUpdated({ oldVal: paused, newVal: _val });
-        paused = _val;
+    function pause() external override onlyOwner whenNotPaused {
+        _pause();
+    }
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external override onlyOwner whenPaused {
+        _unpause();
     }
 
     /**
@@ -592,14 +586,6 @@ contract HoldingManager is IHoldingManager, ReentrancyGuard, Ownable {
      */
     modifier validToken(address _token) {
         require(_getManager().isTokenWhitelisted(_token), "3001");
-        _;
-    }
-
-    /**
-     * @notice Ensures the contract is not paused.
-     */
-    modifier notPaused() {
-        require(!paused, "1200");
         _;
     }
 }

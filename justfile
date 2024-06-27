@@ -54,7 +54,6 @@ remap: && _timer
 # Builds
 build: && _timer
 	forge clean
-	forge remappings > remappings.txt
 	forge build --names --sizes
 
 format: && _timer

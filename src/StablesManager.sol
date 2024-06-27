@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { OperationsLib } from "./libraries/OperationsLib.sol";
 
@@ -20,13 +21,13 @@ import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
  *
  * @notice Manages operations with protocol's stablecoin and user's collateral.
  *
- * @dev This contract inherits functionalities from `Ownable`.
+ * @dev This contract inherits functionalities from `Ownable2Step`, `Pausable`.
  *
  * @author Hovooo (@hovooo), Cosmin Grigore (@gcosmintech).
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract StablesManager is IStablesManager, Ownable {
+contract StablesManager is IStablesManager, Ownable2Step, Pausable {
     using Math for uint256;
 
     /**
@@ -49,18 +50,16 @@ contract StablesManager is IStablesManager, Ownable {
      */
     IManagerContainer public immutable override managerContainer;
 
-    /**
-     * @notice Returns the pause state of the contract.
-     */
-    bool public override paused;
+    // -- Constructor --
 
     /**
      * @notice Creates a new StablesManager contract.
      *
+     * @param _initialOwner The initial owner of the contract.
      * @param _managerContainer Contract that contains the address of the manager contract.
      * @param _jUSD The protocol's stablecoin address.
      */
-    constructor(address _managerContainer, address _jUSD) {
+    constructor(address _initialOwner, address _managerContainer, address _jUSD) Ownable(_initialOwner) {
         require(_managerContainer != address(0), "3065");
         require(_jUSD != address(0), "3001");
         managerContainer = IManagerContainer(_managerContainer);
@@ -89,7 +88,11 @@ contract StablesManager is IStablesManager, Ownable {
      * @param _token Collateral token.
      * @param _amount Amount of tokens to be added as collateral.
      */
-    function addCollateral(address _holding, address _token, uint256 _amount) external override notPaused onlyAllowed {
+    function addCollateral(
+        address _holding,
+        address _token,
+        uint256 _amount
+    ) external override whenNotPaused onlyAllowed {
         require(shareRegistryInfo[_token].active, "1201");
 
         emit AddedCollateral({ holding: _holding, token: _token, amount: _amount });
@@ -119,7 +122,7 @@ contract StablesManager is IStablesManager, Ownable {
         address _holding,
         address _token,
         uint256 _amount
-    ) external override onlyAllowed notPaused {
+    ) external override onlyAllowed whenNotPaused {
         require(shareRegistryInfo[_token].active, "1201");
 
         emit RemovedCollateral({ holding: _holding, token: _token, amount: _amount });
@@ -145,7 +148,7 @@ contract StablesManager is IStablesManager, Ownable {
      * @param _token Collateral token.
      * @param _amount Amount of collateral.
      */
-    function forceRemoveCollateral(address _holding, address _token, uint256 _amount) external override notPaused {
+    function forceRemoveCollateral(address _holding, address _token, uint256 _amount) external override whenNotPaused {
         require(msg.sender == _getManager().liquidationManager(), "1000");
         require(shareRegistryInfo[_token].active, "1201");
 
@@ -180,7 +183,7 @@ contract StablesManager is IStablesManager, Ownable {
         address _token,
         uint256 _amount,
         bool _mintDirectlyToUser
-    ) external override onlyAllowed notPaused {
+    ) external override onlyAllowed whenNotPaused {
         require(_amount > 0, "3010");
         require(shareRegistryInfo[_token].active, "1201");
 
@@ -242,7 +245,7 @@ contract StablesManager is IStablesManager, Ownable {
         address _token,
         uint256 _amount,
         address _burnFrom
-    ) external override onlyAllowed notPaused {
+    ) external override onlyAllowed whenNotPaused {
         require(shareRegistryInfo[_token].active, "1201");
         ISharesRegistry registry = ISharesRegistry(shareRegistryInfo[_token].deployedAt);
         require(registry.borrowed(_holding) > 0, "3011");
@@ -301,22 +304,17 @@ contract StablesManager is IStablesManager, Ownable {
     }
 
     /**
-     * @notice Sets a new value for pause state.
-     *
-     * @notice Requirements:
-     * - Caller must be the contract owner.
-     *
-     * @notice Effects:
-     * - Updates the paused state.
-     *
-     * @notice Emits:
-     * - `PauseUpdated`.
-     *
-     * @param _val The new value.
+     * @notice Triggers stopped state.
      */
-    function setPaused(bool _val) external override onlyOwner {
-        emit PauseUpdated({ oldVal: paused, newVal: _val });
-        paused = _val;
+    function pause() external override onlyOwner whenNotPaused {
+        _pause();
+    }
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external override onlyOwner whenPaused {
+        _unpause();
     }
 
     /**
@@ -460,14 +458,6 @@ contract StablesManager is IStablesManager, Ownable {
                 || msg.sender == manager.strategyManager(),
             "1000"
         );
-        _;
-    }
-
-    /**
-     * @notice Ensures the contract is not paused.
-     */
-    modifier notPaused() {
-        require(!paused, "1200");
         _;
     }
 }

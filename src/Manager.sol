@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 import { ILiquidationManager } from "./interfaces/core/ILiquidationManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
@@ -13,13 +14,13 @@ import { OperationsLib } from "./libraries/OperationsLib.sol";
  *
  * @notice This contract manages various configurations necessary for the functioning of the protocol.
  *
- * @dev This contract inherits functionalities from `Ownable`.
+ * @dev This contract inherits functionalities from `Ownable2Step`.
  *
  * @author Hovooo (@hovooo), Cosmin Grigore (@gcosmintech).
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract Manager is IManager, Ownable {
+contract Manager is IManager, Ownable2Step {
     // -- Mappings --
 
     /**
@@ -178,17 +179,19 @@ contract Manager is IManager, Ownable {
     /**
      * @notice Creates a new Manager Contract.
      *
+     * @param _initialOwner The initial owner of the contract.
      * @param _usdc The USDC address.
      * @param _weth The WETH address.
      * @param _oracle The jUSD oracle address.
      * @param _oracleData The jUSD initial oracle data.
      */
     constructor(
+        address _initialOwner,
         address _usdc,
         address _weth,
         address _oracle,
         bytes memory _oracleData
-    ) validAddress(_usdc) validAddress(_weth) validAddress(_oracle) {
+    ) Ownable(_initialOwner) validAddress(_usdc) validAddress(_weth) validAddress(_oracle) {
         USDC = _usdc;
         WETH = _weth;
         jUsdOracle = IOracle(_oracle);
