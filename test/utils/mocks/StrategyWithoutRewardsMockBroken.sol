@@ -8,9 +8,9 @@ import { IHolding } from "../../../src/interfaces/core/IHolding.sol";
 import { IManagerContainer } from "../../../src/interfaces/core/IManagerContainer.sol";
 import { IStrategy } from "../../../src/interfaces/core/IStrategy.sol";
 
+import { IReceiptToken } from "../../../src/interfaces/vyper/IReceiptToken.sol";
 import { StrategyBase } from "../../../src/strategies/StrategyBase.sol";
 import { StrategyConfigLib } from "../../../src/vyper/libraries/StrategyConfigLib.sol";
-import { IReceiptToken } from "../../../src/interfaces/vyper/IReceiptToken.sol";
 
 /// @title StrategyWithoutRewardsMockBroken
 /// @dev This contract simulates situation when during deposit {tokenOutAmount} is returned as 0,
@@ -37,7 +37,7 @@ contract StrategyWithoutRewardsMockBroken is IStrategy, StrategyBase {
         address _jigsawMinterAddress,
         string memory _receiptTokenName,
         string memory _receiptTokenSymbol
-    ) {
+    ) StrategyBase(msg.sender) {
         managerContainer = IManagerContainer(_managerContainer);
         rewardToken = _rewardToken;
         tokenIn = _tokenIn;

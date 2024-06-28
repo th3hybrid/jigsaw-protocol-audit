@@ -38,7 +38,7 @@ contract StrategyWithRewardsMock is IStrategy, StrategyBase {
         address _jigsawMinterAddress,
         string memory _receiptTokenName,
         string memory _receiptTokenSymbol
-    ) {
+    ) StrategyBase(msg.sender) {
         managerContainer = IManagerContainer(_managerContainer);
         rewardToken = _rewardToken;
         tokenIn = _tokenIn;

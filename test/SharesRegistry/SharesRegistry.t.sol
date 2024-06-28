@@ -6,7 +6,6 @@ import "forge-std/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { ISharesRegistry } from "../../src/interfaces/stablecoin/ISharesRegistry.sol";
 import { SharesRegistry } from "../../src/stablecoin/SharesRegistry.sol";
 import { BasicContractsFixture } from "../fixtures/BasicContractsFixture.t.sol";
 
@@ -40,11 +39,11 @@ contract SharesRegistryTest is BasicContractsFixture {
     /// @notice event emitted when interest per second is updated
     event InterestUpdated(uint256 oldVal, uint256 newVal);
 
-    ISharesRegistry internal registry;
+    SharesRegistry internal registry;
 
     function setUp() public {
         init();
-        registry = ISharesRegistry(registries[address(usdc)]);
+        registry = SharesRegistry(registries[address(usdc)]);
     }
 
     // Tests if init fails correctly when owner is address(0)

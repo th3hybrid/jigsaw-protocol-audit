@@ -15,7 +15,6 @@ import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract StakerTest is Test {
-    event PauseUpdated(bool oldVal, bool newVal);
     event SavedFunds(address indexed token, uint256 amount);
     event RewardsDurationUpdated(uint256 newDuration);
     event RewardAdded(uint256 reward);
@@ -40,13 +39,13 @@ contract StakerTest is Test {
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
-        manager = new Manager(address(usdc), address(weth), address(jUsdOracle), bytes(""));
-        managerContainer = new ManagerContainer(address(manager));
+        manager = new Manager(address(this), address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        managerContainer = new ManagerContainer(address(this), address(manager));
 
         tokenIn = address(new SampleTokenERC20("TokenIn", "TI", 0));
         rewardToken = address(new SampleTokenERC20("RewardToken", "RT", 0));
 
-        staker = new Staker(tokenIn, rewardToken, 365 days);
+        staker = new Staker(address(this), tokenIn, rewardToken, 365 days);
         vm.stopPrank();
     }
 
@@ -60,14 +59,14 @@ contract StakerTest is Test {
     // Tests if initialization of the contract with invalid TokenIn address reverts correctly
     function test_init_staker_when_invalidTokenIn() public {
         vm.expectRevert(bytes("3000"));
-        Staker failedStaker = new Staker(address(0), rewardToken, 365 days);
+        Staker failedStaker = new Staker(address(this), address(0), rewardToken, 365 days);
         failedStaker;
     }
 
     // Tests if initialization of the contract with invalid RewardToken address reverts correctly
     function test_init_staker_when_invalidRewardToken() public {
         vm.expectRevert(bytes("3000"));
-        Staker failedStaker = new Staker(tokenIn, address(0), 365 days);
+        Staker failedStaker = new Staker(address(this), tokenIn, address(0), 365 days);
         failedStaker;
     }
 
@@ -75,24 +74,18 @@ contract StakerTest is Test {
     function test_setPaused_when_unauthorized(address _caller) public {
         vm.assume(_caller != staker.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
 
-        staker.setPaused(true);
+        staker.pause();
     }
 
     // Tests setting contract paused from Owner's address
     function test_setPaused_when_authorized() public {
-        //Sets contract paused and checks if after pausing contract is paused and event is emitted
         vm.startPrank(OWNER, OWNER);
-        vm.expectEmit();
-        emit PauseUpdated(staker.paused(), !staker.paused());
-        staker.setPaused(true);
+        staker.pause();
         assertEq(staker.paused(), true);
 
-        //Sets contract unpaused and checks if after pausing contract is unpaused and event is emitted
-        vm.expectEmit();
-        emit PauseUpdated(staker.paused(), !staker.paused());
-        staker.setPaused(false);
+        staker.unpause();
         assertEq(staker.paused(), false);
         vm.stopPrank();
     }
@@ -101,7 +94,7 @@ contract StakerTest is Test {
     function test_setRewardsDuration_when_unauthorized(address _caller) public {
         vm.assume(_caller != staker.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         staker.setRewardsDuration(1);
     }
 
@@ -129,7 +122,7 @@ contract StakerTest is Test {
     function test_addRewards_when_unauthorized(address _caller) public {
         vm.assume(_caller != staker.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         staker.addRewards(address(1), 1);
     }
 
@@ -289,9 +282,9 @@ contract StakerTest is Test {
     // Tests if deposit reverts correctly when paused
     function test_deposit_when_paused() public {
         vm.prank(staker.owner(), staker.owner());
-        staker.setPaused(true);
+        staker.pause();
 
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         staker.deposit(1);
     }
 

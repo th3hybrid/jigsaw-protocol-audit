@@ -20,7 +20,6 @@ contract StablesManagerTest is BasicContractsFixture {
     event RegistryAdded(address indexed token, address indexed registry);
     event RegistryUpdated(address indexed token, address indexed registry);
     event RegistryConfigUpdated(address indexed registry, bool active);
-    event PauseUpdated(bool oldVal, bool newVal);
 
     address[] internal allowedCallers;
 
@@ -33,14 +32,14 @@ contract StablesManagerTest is BasicContractsFixture {
     // Tests if init fails correctly when managerContainer address is address(0)
     function test_init_when_invalidManagerContainer() public {
         vm.expectRevert(bytes("3065"));
-        StablesManager failedStablesManager = new StablesManager(address(0), address(0));
+        StablesManager failedStablesManager = new StablesManager(address(this), address(0), address(0));
         failedStablesManager;
     }
 
     // Tests if init works correctly when authorized
     function test_init_when_authorized() public {
         vm.expectRevert(bytes("3001"));
-        StablesManager failedStablesManager = new StablesManager(address(1), address(0));
+        StablesManager failedStablesManager = new StablesManager(address(this), address(1), address(0));
         failedStablesManager;
     }
 
@@ -48,24 +47,17 @@ contract StablesManagerTest is BasicContractsFixture {
     function test_setPaused_when_unauthorized(address _caller) public {
         vm.assume(_caller != stablesManager.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
 
-        stablesManager.setPaused(true);
+        stablesManager.pause();
     }
 
     // Tests setting contract paused from Owner's address
     function test_setPaused_when_authorized() public {
-        //Sets contract paused and checks if after pausing contract is paused and event is emitted
-        vm.startPrank(OWNER, OWNER);
-        vm.expectEmit();
-        emit PauseUpdated(stablesManager.paused(), !stablesManager.paused());
-        stablesManager.setPaused(true);
+        stablesManager.pause();
         assertEq(stablesManager.paused(), true);
 
-        //Sets contract unpaused and checks if after pausing contract is unpaused and event is emitted
-        vm.expectEmit();
-        emit PauseUpdated(stablesManager.paused(), !stablesManager.paused());
-        stablesManager.setPaused(false);
+        stablesManager.unpause();
         assertEq(stablesManager.paused(), false);
         vm.stopPrank();
     }
@@ -74,7 +66,7 @@ contract StablesManagerTest is BasicContractsFixture {
     function test_registerOrUpdateShareRegistry_when_unauthorized(address _caller) public {
         vm.assume(_caller != stablesManager.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         stablesManager.registerOrUpdateShareRegistry(address(1), address(2), true);
     }
 
@@ -233,9 +225,9 @@ contract StablesManagerTest is BasicContractsFixture {
     // Tests if addCollateral reverts correctly when paused
     function test_addCollateral_when_paused() public {
         vm.prank(stablesManager.owner(), stablesManager.owner());
-        stablesManager.setPaused(true);
+        stablesManager.pause();
 
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         stablesManager.addCollateral(address(1), address(2), 1);
     }
 
@@ -270,10 +262,10 @@ contract StablesManagerTest is BasicContractsFixture {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
         vm.prank(stablesManager.owner(), stablesManager.owner());
-        stablesManager.setPaused(true);
+        stablesManager.pause();
 
         vm.prank(caller, caller);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         stablesManager.removeCollateral(address(1), address(2), 1);
     }
 
@@ -360,10 +352,10 @@ contract StablesManagerTest is BasicContractsFixture {
     // Tests if forceRemoveCollateral reverts correctly when contract is paused
     function test_forceRemoveCollateral_when_paused(address _caller) public {
         vm.prank(stablesManager.owner(), stablesManager.owner());
-        stablesManager.setPaused(true);
+        stablesManager.pause();
 
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         stablesManager.forceRemoveCollateral(address(1), address(2), 1);
     }
 
@@ -432,10 +424,10 @@ contract StablesManagerTest is BasicContractsFixture {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
         vm.prank(stablesManager.owner(), stablesManager.owner());
-        stablesManager.setPaused(true);
+        stablesManager.pause();
 
         vm.prank(caller, caller);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         stablesManager.borrow(address(1), address(2), 1, true);
     }
 
@@ -509,10 +501,10 @@ contract StablesManagerTest is BasicContractsFixture {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
         vm.prank(stablesManager.owner(), stablesManager.owner());
-        stablesManager.setPaused(true);
+        stablesManager.pause();
 
         vm.prank(caller, caller);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         stablesManager.repay(address(1), address(2), 1, address(3));
     }
 

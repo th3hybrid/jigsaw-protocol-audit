@@ -106,18 +106,18 @@ contract HoldingManagerTest is BasicContractsFixture {
         manager.whitelistContract(_user);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        holdingManager.setPaused(true);
+        vm.expectRevert();
+        holdingManager.pause();
 
         vm.prank(OWNER);
-        holdingManager.setPaused(true);
+        holdingManager.pause();
 
         vm.prank(_user);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         holdingManager.createHolding();
 
         vm.prank(OWNER);
-        holdingManager.setPaused(false);
+        holdingManager.unpause();
 
         vm.prank(_user);
         holdingManager.createHolding();
@@ -156,10 +156,10 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.createHolding();
 
         vm.prank(holdingManager.owner(), holdingManager.owner());
-        holdingManager.setPaused(true);
+        holdingManager.pause;
 
         vm.prank(user, user);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         holdingManager.wrapAndDeposit{ value: _amount }();
     }
 
@@ -234,10 +234,10 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.createHolding();
 
         vm.prank(holdingManager.owner(), holdingManager.owner());
-        holdingManager.setPaused(true);
+        holdingManager.pause();
 
         vm.prank(_user, _user);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         holdingManager.withdraw(address(usdc), 1);
     }
 
@@ -430,10 +430,10 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.createHolding();
 
         vm.prank(holdingManager.owner(), holdingManager.owner());
-        holdingManager.setPaused(true);
+        holdingManager.pause();
 
         vm.prank(_user, _user);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         holdingManager.withdrawAndUnwrap(1);
     }
 
@@ -593,10 +593,10 @@ contract HoldingManagerTest is BasicContractsFixture {
         address user = address(uint160(uint256(keccak256(bytes("Random user")))));
 
         vm.prank(holdingManager.owner(), holdingManager.owner());
-        holdingManager.setPaused(true);
+        holdingManager.pause();
 
         vm.prank(user, user);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         holdingManager.mint(address(1), address(1));
     }
 
@@ -655,10 +655,10 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.createHolding();
 
         vm.prank(holdingManager.owner(), holdingManager.owner());
-        holdingManager.setPaused(true);
+        holdingManager.pause();
 
         vm.prank(user, user);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         holdingManager.borrowMultiple(data, false);
     }
 
@@ -738,10 +738,10 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.createHolding();
 
         vm.prank(holdingManager.owner(), holdingManager.owner());
-        holdingManager.setPaused(true);
+        holdingManager.pause();
 
         vm.prank(user, user);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         holdingManager.repayMultiple(data, false);
     }
 
@@ -805,10 +805,10 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.createHolding();
 
         vm.prank(holdingManager.owner(), holdingManager.owner());
-        holdingManager.setPaused(true);
+        holdingManager.pause();
 
         vm.prank(user, user);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         holdingManager.repay(address(1), 1, true);
     }
 

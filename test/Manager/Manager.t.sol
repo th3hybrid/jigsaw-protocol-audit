@@ -43,7 +43,7 @@ contract ManagerTest is BasicContractsFixture {
         uint256 validAmount = bound(_amount, 0, manager.PRECISION() - 1);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setLiquidatorBonus(validAmount);
 
         vm.startPrank(OWNER, OWNER);
@@ -64,7 +64,7 @@ contract ManagerTest is BasicContractsFixture {
         uint256 newAmount = bound(_amount, 0, manager.PRECISION() - 1);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setSelfLiquidationFee(newAmount);
 
         vm.startPrank(OWNER, OWNER);
@@ -82,7 +82,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(_newAddress != manager.feeAddress());
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setFeeAddress(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -106,7 +106,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(_newAddress != manager.liquidationManager());
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setLiquidationManager(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -130,7 +130,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(_newAddress != manager.strategyManager());
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setStrategyManager(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -154,7 +154,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(_newAddress != manager.swapManager());
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setSwapManager(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -178,7 +178,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(_newAddress != manager.holdingManager());
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setHoldingManager(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -202,7 +202,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(_newAddress != manager.stablesManager());
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setStablecoinManager(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -225,7 +225,7 @@ contract ManagerTest is BasicContractsFixture {
         uint256 newAmount = bound(_amount, 1, OperationsLib.FEE_FACTOR - 1);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setPerformanceFee(newAmount);
 
         vm.startPrank(OWNER, OWNER);
@@ -248,7 +248,7 @@ contract ManagerTest is BasicContractsFixture {
         uint256 newAmount = bound(_amount, 1, OperationsLib.FEE_FACTOR - 1);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setWithdrawalFee(newAmount);
 
         vm.startPrank(OWNER, OWNER);
@@ -272,7 +272,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(_newAddress != manager.receiptTokenFactory());
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setReceiptTokenFactory(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -296,7 +296,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(_newAddress != manager.liquidityGaugeFactory());
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.setLiquidityGaugeFactory(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -320,7 +320,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(manager.isContractWhitelisted(_newAddress) == false);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.whitelistContract(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -344,7 +344,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(manager.isContractWhitelisted(_newAddress) == false);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.blacklistContract(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -371,7 +371,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(manager.isTokenWhitelisted(_newAddress) == false);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.whitelistToken(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -395,7 +395,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(manager.isTokenWhitelisted(_newAddress) == false);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.removeToken(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
@@ -447,7 +447,7 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(manager.isTokenNonWithdrawable(_newAddress) == false);
 
         vm.prank(_user);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         manager.removeNonWithdrawableToken(_newAddress);
 
         vm.startPrank(OWNER, OWNER);

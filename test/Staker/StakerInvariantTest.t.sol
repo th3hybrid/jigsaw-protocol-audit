@@ -25,7 +25,7 @@ contract StakerInvariantTest is Test {
 
         tokenIn = address(new SampleTokenERC20("TokenIn", "TI", 0));
         rewardToken = address(new SampleTokenERC20("RewardToken", "RT", 0));
-        staker = new Staker(tokenIn, rewardToken, 365 days);
+        staker = new Staker(OWNER, tokenIn, rewardToken, 365 days);
 
         vm.stopPrank();
 

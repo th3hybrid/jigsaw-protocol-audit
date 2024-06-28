@@ -74,15 +74,15 @@ abstract contract BasicContractsFixture is Test {
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new wETHMock();
         jUsdOracle = new SampleOracle();
-        manager = new Manager(address(usdc), address(weth), address(jUsdOracle), bytes(""));
-        managerContainer = new ManagerContainer(address(manager));
-        liquidationManager = new LiquidationManager(address(managerContainer));
+        manager = new Manager(OWNER, address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        managerContainer = new ManagerContainer(OWNER, address(manager));
+        liquidationManager = new LiquidationManager(OWNER, address(managerContainer));
 
-        holdingManager = new HoldingManager(address(managerContainer));
-        jUsd = new JigsawUSD(address(managerContainer));
+        holdingManager = new HoldingManager(OWNER, address(managerContainer));
+        jUsd = new JigsawUSD(OWNER, address(managerContainer));
         jUsd.updateMintLimit(type(uint256).max);
-        stablesManager = new StablesManager(address(managerContainer), address(jUsd));
-        strategyManager = new StrategyManager(address(managerContainer));
+        stablesManager = new StablesManager(OWNER, address(managerContainer), address(jUsd));
+        strategyManager = new StrategyManager(OWNER, address(managerContainer));
 
         manager.setStablecoinManager(address(stablesManager));
         manager.setHoldingManager(address(holdingManager));

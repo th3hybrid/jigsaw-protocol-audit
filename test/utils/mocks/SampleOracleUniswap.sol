@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { TickMath } from "../TickMath.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import { FixedPoint96 } from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
-import { TickMath } from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 import { IOracle } from "../../../src/interfaces/oracle/IOracle.sol";
 

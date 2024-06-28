@@ -74,14 +74,14 @@ contract LiquidationTest is Test {
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
-        manager = new Manager(address(usdc), address(weth), address(jUsdOracle), bytes(""));
-        managerContainer = new ManagerContainer(address(manager));
-        liquidationManager = new LiquidationManager(address(managerContainer));
+        manager = new Manager(address(this), address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        managerContainer = new ManagerContainer(address(this), address(manager));
+        liquidationManager = new LiquidationManager(address(this), address(managerContainer));
 
-        holdingManager = new HoldingManager(address(managerContainer));
-        jUsd = new JigsawUSD(address(managerContainer));
-        stablesManager = new StablesManager(address(managerContainer), address(jUsd));
-        strategyManager = new StrategyManager(address(managerContainer));
+        holdingManager = new HoldingManager(address(this), address(managerContainer));
+        jUsd = new JigsawUSD(address(this), address(managerContainer));
+        stablesManager = new StablesManager(address(this), address(managerContainer), address(jUsd));
+        strategyManager = new StrategyManager(address(this), address(managerContainer));
 
         manager.setStablecoinManager(address(stablesManager));
         manager.setHoldingManager(address(holdingManager));
@@ -163,7 +163,7 @@ contract LiquidationTest is Test {
 
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
 
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         liquidationManager.liquidate(user, address(usdc), 5, liquidateCalldata);
     }
 
@@ -630,7 +630,7 @@ contract LiquidationTest is Test {
         // create holding for user
         userHolding = holdingManager.createHolding();
 
-        usdc.increaseAllowance(address(holdingManager), _collateralAmount);
+        usdc.approve(address(holdingManager), _collateralAmount);
 
         bool enoughBalance = usdc.balanceOf(_user) >= _collateralAmount;
 

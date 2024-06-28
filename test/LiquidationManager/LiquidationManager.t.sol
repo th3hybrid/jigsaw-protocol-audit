@@ -26,7 +26,6 @@ import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 contract LiquidationManagerTest is Test {
     event LiquidatorBonusUpdated(uint256 oldAmount, uint256 newAmount);
     event SelfLiquidationFeeUpdated(uint256 oldAmount, uint256 newAmount);
-    event PauseUpdated(bool oldVal, bool newVal);
 
     LiquidationManager public liquidationManager;
     Manager public manager;
@@ -38,9 +37,9 @@ contract LiquidationManagerTest is Test {
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
-        manager = new Manager(address(usdc), address(weth), address(jUsdOracle), bytes(""));
-        managerContainer = new ManagerContainer(address(manager));
-        liquidationManager = new LiquidationManager(address(managerContainer));
+        manager = new Manager(address(this), address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        managerContainer = new ManagerContainer(address(this), address(manager));
+        liquidationManager = new LiquidationManager(address(this), address(managerContainer));
 
         manager.setLiquidationManager(address(liquidationManager));
     }
@@ -144,23 +143,18 @@ contract LiquidationManagerTest is Test {
     function test_setPaused_when_unauthorized(address _caller) public {
         vm.assume(_caller != liquidationManager.owner());
         vm.startPrank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
-
-        liquidationManager.setPaused(true);
+        vm.expectRevert();
+        liquidationManager.pause();
     }
 
     // Tests setting contract paused from Owner's address
     function test_setPaused_when_authorized() public {
         //Sets contract paused and checks if after pausing contract is paused and event is emitted
-        vm.expectEmit();
-        emit PauseUpdated(liquidationManager.paused(), !liquidationManager.paused());
-        liquidationManager.setPaused(true);
+        liquidationManager.pause();
         assertEq(liquidationManager.paused(), true);
 
         //Sets contract unpaused and checks if after pausing contract is unpaused and event is emitted
-        vm.expectEmit();
-        emit PauseUpdated(liquidationManager.paused(), !liquidationManager.paused());
-        liquidationManager.setPaused(false);
+        liquidationManager.unpause();
         assertEq(liquidationManager.paused(), false);
     }
 

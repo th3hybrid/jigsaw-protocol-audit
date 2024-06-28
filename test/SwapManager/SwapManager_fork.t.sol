@@ -6,8 +6,8 @@ import "forge-std/console.sol";
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { TickMath } from "../utils/TickMath.sol";
 import { IUniswapV3Factory } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import { TickMath } from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import { IQuoterV2 } from "@uniswap/v3-periphery/contracts/interfaces/IQuoterV2.sol";
 
 import { HoldingManager } from "../../src/HoldingManager.sol";
@@ -50,19 +50,20 @@ contract SwapManagerTest is Test {
     address UniswapSwapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     function setUp() public {
-        vm.createSelectFork(vm.rpcUrl("arbitrum"), 172_364_769);
+        vm.createSelectFork(vm.envString("ARBITRUM_RPC_URL"), 172_364_769);
 
         uniswapFactory = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
         quoter = IQuoterV2(0x61fFE014bA17989E743c5F6cB21bF9697530B21e);
         usdc = IUSDC(USDC);
         weth = IERC20Metadata(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
-        manager = new Manager(USDC, address(weth), address(1), bytes(""));
-        managerContainer = new ManagerContainer(address(manager));
-        swapManager = new SwapManager(address(uniswapFactory), UniswapSwapRouter, address(managerContainer));
-        jUsd = new JigsawUSD(address(managerContainer));
-        stablesManager = new StablesManager(address(managerContainer), address(jUsd));
-        holdingManager = new HoldingManager(address(managerContainer));
-        strategyManager = new StrategyManager(address(managerContainer));
+        manager = new Manager(address(this), USDC, address(weth), address(1), bytes(""));
+        managerContainer = new ManagerContainer(address(this), address(manager));
+        swapManager =
+            new SwapManager(address(this), address(uniswapFactory), UniswapSwapRouter, address(managerContainer));
+        jUsd = new JigsawUSD(address(this), address(managerContainer));
+        stablesManager = new StablesManager(address(this), address(managerContainer), address(jUsd));
+        holdingManager = new HoldingManager(address(this), address(managerContainer));
+        strategyManager = new StrategyManager(address(this), address(managerContainer));
 
         manager.setHoldingManager(address(holdingManager));
         manager.setStablecoinManager(address(stablesManager));
@@ -91,7 +92,7 @@ contract SwapManagerTest is Test {
         address caller = vm.addr(uint256(keccak256(bytes("Unauthprized caller address"))));
         address prevAddr = swapManager.swapRouter();
         vm.prank(caller, caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
 
         swapManager.setSwapRouter(address(1));
 

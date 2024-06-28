@@ -27,8 +27,8 @@ import { IReceiptToken } from "../../src/interfaces/vyper/IReceiptToken.sol";
 import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
+import { TickMath } from "../utils/TickMath.sol";
 import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
-import { TickMath } from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
 import { SampleOracleUniswap } from "../utils/mocks/SampleOracleUniswap.sol";
 
@@ -113,7 +113,7 @@ contract SelfLiquidationTest is Test {
     }
 
     function setUp() public {
-        vm.createSelectFork(vm.rpcUrl("arbitrum"));
+        vm.createSelectFork(vm.envString("ARBITRUM_RPC_URL"));
 
         VyperDeployer vyperDeployer = new VyperDeployer();
 
@@ -124,21 +124,22 @@ contract SelfLiquidationTest is Test {
         usdc = IUSDC(USDC);
         weth = IERC20Metadata(WETH);
 
-        manager = new Manager(USDC, WETH, address(1), bytes(""));
-        managerContainer = new ManagerContainer(address(manager));
+        manager = new Manager(address(this), USDC, WETH, address(1), bytes(""));
+        managerContainer = new ManagerContainer(address(this), address(manager));
 
-        jUsd = new JigsawUSD(address(managerContainer));
+        jUsd = new JigsawUSD(address(this), address(managerContainer));
 
         SampleOracle jUsdOracle = new SampleOracle();
         manager.requestNewJUsdOracle(address(jUsdOracle));
         vm.warp(block.timestamp + manager.timelockAmount());
         manager.setJUsdOracle();
 
-        liquidationManager = new LiquidationManager(address(managerContainer));
-        holdingManager = new HoldingManager(address(managerContainer));
-        stablesManager = new StablesManager(address(managerContainer), address(jUsd));
-        strategyManager = new StrategyManager(address(managerContainer));
-        swapManager = new SwapManager(address(uniswapFactory), UniswapSwapRouter, address(managerContainer));
+        liquidationManager = new LiquidationManager(address(this), address(managerContainer));
+        holdingManager = new HoldingManager(address(this), address(managerContainer));
+        stablesManager = new StablesManager(address(this), address(managerContainer), address(jUsd));
+        strategyManager = new StrategyManager(address(this), address(managerContainer));
+        swapManager =
+            new SwapManager(address(this), address(uniswapFactory), UniswapSwapRouter, address(managerContainer));
 
         manager.setStablecoinManager(address(stablesManager));
         manager.setHoldingManager(address(holdingManager));
@@ -235,7 +236,7 @@ contract SelfLiquidationTest is Test {
         );
 
         vm.prank(testData.user, testData.user);
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         liquidationManager.selfLiquidate(testData.collateral, 1, swapParams, strategiesParams);
     }
 

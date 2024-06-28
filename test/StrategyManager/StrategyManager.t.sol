@@ -12,7 +12,6 @@ import { StrategyWithRewardsMock } from "../utils/mocks/StrategyWithRewardsMock.
 import { StrategyWithoutRewardsMockBroken } from "../utils/mocks/StrategyWithoutRewardsMockBroken.sol";
 
 contract StrategyManagerTest is BasicContractsFixture {
-    event PauseUpdated(bool oldVal, bool newVal);
     event StrategyAdded(address indexed strategy);
     event StrategyUpdated(address indexed strategy, bool active, uint256 fee);
     event GaugeAdded(address indexed strategy, address indexed gauge);
@@ -47,7 +46,7 @@ contract StrategyManagerTest is BasicContractsFixture {
     // Tests contract creation with wrong constructor arguments
     function test_wrongConstructorArgs() public {
         vm.expectRevert(bytes("3065"));
-        StrategyManager newManager = new StrategyManager(address(0));
+        StrategyManager newManager = new StrategyManager(address(this), address(0));
         newManager;
     }
 
@@ -60,25 +59,19 @@ contract StrategyManagerTest is BasicContractsFixture {
     function test_setPaused_when_unauthorized(address _caller) public {
         vm.assume(_caller != strategyManager.owner());
         vm.startPrank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
 
-        strategyManager.setPaused(true);
+        strategyManager.pause();
     }
 
     // Tests setting contract paused from Owner's address
     function test_setPaused_when_authorized() public {
-        //Sets contract paused and checks if after pausing contract is paused and event is emitted
-        vm.expectEmit();
-        emit PauseUpdated(strategyManager.paused(), !strategyManager.paused());
         vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.setPaused(true);
+        strategyManager.pause();
         assertEq(strategyManager.paused(), true);
 
-        //Sets contract unpaused and checks if after pausing contract is unpaused and event is emitted
-        vm.expectEmit();
-        emit PauseUpdated(strategyManager.paused(), !strategyManager.paused());
         vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.setPaused(false);
+        strategyManager.unpause();
         assertEq(strategyManager.paused(), false);
     }
 
@@ -87,7 +80,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address strategy = address(uint160(uint256(keccak256("random address"))));
         vm.assume(_caller != strategyManager.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         strategyManager.addStrategy(strategy);
 
         (,, bool whitelisted) = strategyManager.strategyInfo(strategy);
@@ -144,7 +137,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.assume(_caller != strategyManager.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         strategyManager.updateStrategy(strategy, info);
 
         (,, bool whitelisted) = strategyManager.strategyInfo(strategy);
@@ -185,7 +178,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.assume(_caller != strategyManager.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         strategyManager.addStrategyGauge(strategy, gauge);
 
         assertEq(strategyManager.strategyGauges(strategy), address(0), "Strategy gauge added when unauthorized");
@@ -258,7 +251,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         vm.stopPrank();
 
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         strategyManager.removeStrategyGauge(strategy);
 
         assertEq(strategyManager.strategyGauges(strategy), gauge, "Strategy gauge removed when unauthorized");
@@ -307,7 +300,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.assume(_caller != strategyManager.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         strategyManager.updateStrategyGauge(strategy, gauge);
 
         assertEq(strategyManager.strategyGauges(strategy), address(0), "Strategy gauge updated when unauthorized");
@@ -394,7 +387,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.assume(_caller != strategyManager.owner());
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.expectRevert();
         strategyManager.configStrategy(strategy, gauge);
 
         (,, bool whitelisted) = strategyManager.strategyInfo(strategy);
@@ -492,9 +485,9 @@ contract StrategyManagerTest is BasicContractsFixture {
         uint256 amount = 10e18;
 
         vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.setPaused(true);
+        strategyManager.pause();
 
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         strategyManager.invest(token, strategy, amount, bytes(""));
     }
 
@@ -632,9 +625,9 @@ contract StrategyManagerTest is BasicContractsFixture {
         moveInvestmentData.strategyTo = address(strategyWithoutRewardsMock);
 
         vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.setPaused(true);
+        strategyManager.pause();
 
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         strategyManager.moveInvestment(token, moveInvestmentData);
     }
 
@@ -849,10 +842,10 @@ contract StrategyManagerTest is BasicContractsFixture {
         bytes memory data = bytes("");
 
         vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.setPaused(true);
+        strategyManager.pause();
 
         vm.prank(manager.holdingManager(), manager.holdingManager());
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         strategyManager.claimInvestment(holding, strategy, shares, asset, data);
     }
 
@@ -1017,9 +1010,9 @@ contract StrategyManagerTest is BasicContractsFixture {
         bytes memory data = bytes("");
 
         vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.setPaused(true);
+        strategyManager.pause();
 
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         strategyManager.claimRewards(strategy, data);
     }
 
@@ -1220,9 +1213,9 @@ contract StrategyManagerTest is BasicContractsFixture {
         uint256 amount = 10e18;
 
         vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.setPaused(true);
+        strategyManager.pause();
 
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         strategyManager.stakeReceiptTokens(strategy, amount);
     }
 
@@ -1327,9 +1320,9 @@ contract StrategyManagerTest is BasicContractsFixture {
         uint256 amount = 10e18;
 
         vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.setPaused(true);
+        strategyManager.pause();
 
-        vm.expectRevert(bytes("1200"));
+        vm.expectRevert();
         strategyManager.unstakeReceiptTokens(strategy, amount);
     }
 

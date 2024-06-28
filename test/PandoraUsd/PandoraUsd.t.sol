@@ -21,7 +21,7 @@ contract JigsawUsdTest is BasicContractsFixture {
 
     function test_should_wrong_initialization_values() public {
         vm.expectRevert(bytes("3065"));
-        new JigsawUSD(address(0));
+        new JigsawUSD(address(this), address(0));
     }
 
     function test_should_exceed_mint_limit_values(address user) public {

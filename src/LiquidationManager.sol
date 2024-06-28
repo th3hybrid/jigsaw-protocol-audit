@@ -115,7 +115,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         external
         override
         nonReentrant
-        whenPaused
+        whenNotPaused
         validAddress(_collateral)
         validAmount(_jUsdAmount)
         returns (uint256 collateralUsed, uint256 jUsdAmountRepaid)
@@ -309,7 +309,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         external
         override
         nonReentrant
-        whenPaused
+        whenNotPaused
         validAddress(_collateral)
         validAmount(_jUsdAmount)
         returns (uint256 collateralUsed, uint256 jUsdAmountRepaid)
