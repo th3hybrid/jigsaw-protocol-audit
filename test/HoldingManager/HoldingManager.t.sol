@@ -14,9 +14,10 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { OperationsLib } from "../../src/libraries/OperationsLib.sol";
 
-import { SampleTokenERC20 } from "../../src/mocks/SampleTokenERC20.sol";
-import { SimpleContract } from "../../src/mocks/SimpleContract.sol";
+import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
+
 import { BasicContractsFixture } from "../fixtures/BasicContractsFixture.t.sol";
+import { SimpleContract } from "../utils/mocks/SimpleContract.sol";
 
 contract HoldingManagerTest is BasicContractsFixture {
     using Math for uint256;

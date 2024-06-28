@@ -6,11 +6,10 @@ import "forge-std/console.sol";
 
 import "../fixtures/BasicContractsFixture.t.sol";
 
-import { MaliciousStrategy } from "../../src/mocks/MaliciousStrategy.sol";
-
-import { SampleTokenBigDecimals } from "../../src/mocks/SampleTokenBigDecimals.sol";
-import { StrategyWithRewardsMock } from "../../src/mocks/StrategyWithRewardsMock.sol";
-import { StrategyWithoutRewardsMockBroken } from "../../src/mocks/StrategyWithoutRewardsMockBroken.sol";
+import { MaliciousStrategy } from "../utils/mocks/MaliciousStrategy.sol";
+import { SampleTokenBigDecimals } from "../utils/mocks/SampleTokenBigDecimals.sol";
+import { StrategyWithRewardsMock } from "../utils/mocks/StrategyWithRewardsMock.sol";
+import { StrategyWithoutRewardsMockBroken } from "../utils/mocks/StrategyWithoutRewardsMockBroken.sol";
 
 contract StrategyManagerTest is BasicContractsFixture {
     event PauseUpdated(bool oldVal, bool newVal);

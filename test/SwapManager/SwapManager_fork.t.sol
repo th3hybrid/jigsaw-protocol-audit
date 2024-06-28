@@ -4,23 +4,23 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import { HoldingManager } from "../../src/HoldingManager.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { IUniswapV3Factory } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import { TickMath } from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import { IQuoterV2 } from "@uniswap/v3-periphery/contracts/interfaces/IQuoterV2.sol";
+
+import { HoldingManager } from "../../src/HoldingManager.sol";
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
-
 import { StablesManager } from "../../src/StablesManager.sol";
 import { StrategyManager } from "../../src/StrategyManager.sol";
 import { SwapManager } from "../../src/SwapManager.sol";
 import { ISwapManager } from "../../src/interfaces/core/ISwapManager.sol";
-import { TickMath } from "../../src/libraries/TickMath.sol";
-import { SampleOracle } from "../../src/mocks/SampleOracle.sol";
 import { JigsawUSD } from "../../src/stablecoin/JigsawUSD.sol";
-import { INonfungiblePositionManager } from "../utils/INonfungiblePositionManager.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IUniswapV3Factory } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import { IQuoterV2 } from "@uniswap/v3-periphery/contracts/interfaces/IQuoterV2.sol";
+import { INonfungiblePositionManager } from "../utils/INonfungiblePositionManager.sol";
+import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
 
 interface IUSDC is IERC20Metadata {
     function balanceOf(address account) external view returns (uint256);

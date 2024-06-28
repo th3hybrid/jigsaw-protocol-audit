@@ -7,12 +7,12 @@ import "forge-std/console.sol";
 import { HoldingManager } from "../../src/HoldingManager.sol";
 
 import { LiquidationManager } from "../../src/LiquidationManager.sol";
-import { LiquidityGaugeFactory } from "../../src/LiquidityGaugeFactory.sol";
+import { LiquidityGaugeFactory } from "../../src/vyper/LiquidityGaugeFactory.sol";
 
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 
-import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
+import { ReceiptTokenFactory } from "../../src/vyper/ReceiptTokenFactory.sol";
 
 import { StablesManager } from "../../src/StablesManager.sol";
 import { StrategyManager } from "../../src/StrategyManager.sol";
@@ -23,18 +23,19 @@ import { IGaugeController } from "../../src/interfaces/vyper/IGaugeController.so
 import { IJigsawToken } from "../../src/interfaces/vyper/IJigsawToken.sol";
 import { IMinter } from "../../src/interfaces/vyper/IMinter.sol";
 import { IReceiptToken } from "../../src/interfaces/vyper/IReceiptToken.sol";
-import { FullMath } from "../../src/libraries/FullMath.sol";
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SampleOracle } from "../../src/mocks/SampleOracle.sol";
-import { SampleTokenERC20 } from "../../src/mocks/SampleTokenERC20.sol";
-import { StrategyWithoutRewardsMock } from "../../src/mocks/StrategyWithoutRewardsMock.sol";
+import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
 
-import { VyperDeployer } from "../../../lib/utils/VyperDeployer.sol";
-import { wETHMock } from "../../src/mocks/wETHMock.sol";
+import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
+import { StrategyWithoutRewardsMock } from "../utils/mocks/StrategyWithoutRewardsMock.sol";
+
+import { VyperDeployer } from "../utils/VyperDeployer.sol";
+
 import { JigsawUSD } from "../../src/stablecoin/JigsawUSD.sol";
 import { SharesRegistry } from "../../src/stablecoin/SharesRegistry.sol";
+import { wETHMock } from "../utils/mocks/wETHMock.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 abstract contract BasicContractsFixture is Test {

@@ -9,8 +9,8 @@ import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/exte
 import { Holding } from "../../src/Holding.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SimpleContract } from "../../src/mocks/SimpleContract.sol";
 import { BasicContractsFixture } from "../fixtures/BasicContractsFixture.t.sol";
+import { SimpleContract } from "../utils/mocks/SimpleContract.sol";
 
 contract HoldingTest is BasicContractsFixture {
     using Math for uint256;

@@ -8,7 +8,8 @@ import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SampleOracle } from "../../src/mocks/SampleOracle.sol";
+import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
+
 import { BasicContractsFixture } from "../fixtures/BasicContractsFixture.t.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 

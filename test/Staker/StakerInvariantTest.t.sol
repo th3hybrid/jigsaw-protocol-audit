@@ -6,7 +6,8 @@ import "forge-std/console.sol";
 import { Staker } from "../../src/Staker.sol";
 
 import { IStaker } from "../../src/interfaces/core/IStaker.sol";
-import { SampleTokenERC20 } from "../../src/mocks/SampleTokenERC20.sol";
+
+import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 import { StakerInvariantTestHandler } from "./StakerInvariantTestHandler.t.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 

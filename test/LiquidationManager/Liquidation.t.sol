@@ -4,14 +4,16 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import { VyperDeployer } from "../../../lib/utils/VyperDeployer.sol";
 import { HoldingManager } from "../../src/HoldingManager.sol";
 import { LiquidationManager } from "../../src/LiquidationManager.sol";
-import { LiquidityGaugeFactory } from "../../src/LiquidityGaugeFactory.sol";
+
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
+import { LiquidityGaugeFactory } from "../../src/vyper/LiquidityGaugeFactory.sol";
+import { VyperDeployer } from "../utils/VyperDeployer.sol";
+import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
+import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 
-import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
 import { StablesManager } from "../../src/StablesManager.sol";
 import { StrategyManager } from "../../src/StrategyManager.sol";
 import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
@@ -19,18 +21,16 @@ import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
 import { IGaugeController } from "../../src/interfaces/vyper/IGaugeController.sol";
 import { IMinter } from "../../src/interfaces/vyper/IMinter.sol";
 import { IReceiptToken } from "../../src/interfaces/vyper/IReceiptToken.sol";
-import { FullMath } from "../../src/libraries/FullMath.sol";
-
+import { ReceiptTokenFactory } from "../../src/vyper/ReceiptTokenFactory.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SampleOracle } from "../../src/mocks/SampleOracle.sol";
+import { SampleTokenBigDecimals } from "../utils/mocks/SampleTokenBigDecimals.sol";
 
-import { SampleTokenBigDecimals } from "../../src/mocks/SampleTokenBigDecimals.sol";
-import { SampleTokenERC20 } from "../../src/mocks/SampleTokenERC20.sol";
-import { SampleTokenSmallDecimals } from "../../src/mocks/SampleTokenSmallDecimals.sol";
-import { StrategyWithoutRewardsMock } from "../../src/mocks/StrategyWithoutRewardsMock.sol";
 import { JigsawUSD } from "../../src/stablecoin/JigsawUSD.sol";
 import { SharesRegistry } from "../../src/stablecoin/SharesRegistry.sol";
+
+import { SampleTokenSmallDecimals } from "../utils/mocks/SampleTokenSmallDecimals.sol";
+import { StrategyWithoutRewardsMock } from "../utils/mocks/StrategyWithoutRewardsMock.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title LiquidationTest

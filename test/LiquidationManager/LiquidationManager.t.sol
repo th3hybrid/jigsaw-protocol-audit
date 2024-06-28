@@ -11,8 +11,8 @@ import { ManagerContainer } from "../../src/ManagerContainer.sol";
 import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
 import { IManager } from "../../src/interfaces/core/IManager.sol";
 
-import { SampleOracle } from "../../src/mocks/SampleOracle.sol";
-import { SampleTokenERC20 } from "../../src/mocks/SampleTokenERC20.sol";
+import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
+import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 
 /// @title LiquidationManagerTest
 /// @notice This contract includes tests specifically designed for conducting fuzzy testing of the

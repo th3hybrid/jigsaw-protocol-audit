@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import { Staker } from "../../src/Staker.sol";
 import { IStaker } from "../../src/interfaces/core/IStaker.sol";
-import { SampleTokenERC20 } from "../../src/mocks/SampleTokenERC20.sol";
 
 contract StakerInvariantTestHandler is CommonBase, StdCheats, StdUtils {
     using EnumerableSet for EnumerableSet.AddressSet;
