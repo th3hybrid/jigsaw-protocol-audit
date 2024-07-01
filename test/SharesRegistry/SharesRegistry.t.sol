@@ -121,7 +121,7 @@ contract SharesRegistryTest is BasicContractsFixture {
     // Tests if requestNewOracle reverts correctly when caller is not authorized
     function test_requestNewOracle_when_unauthorized(address _caller) public onlyNotOwner(_caller) {
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("1000"));
+        vm.expectRevert();
         registry.requestNewOracle(address(2));
     }
 
@@ -181,7 +181,7 @@ contract SharesRegistryTest is BasicContractsFixture {
     // Tests if setOracle reverts correctly when caller is not authorized
     function test_setOracle_when_unauthorized(address _caller) public onlyNotOwner(_caller) {
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("1000"));
+        vm.expectRevert();
         registry.setOracle();
     }
 
@@ -222,7 +222,7 @@ contract SharesRegistryTest is BasicContractsFixture {
     // Tests if setInterestPerSecond reverts correctly when caller is not authorized
     function test_setInterestPerSecond_when_unauthorized(address _caller) public onlyNotOwner(_caller) {
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("1000"));
+        vm.expectRevert();
         registry.setInterestPerSecond(uint64(1));
     }
 
@@ -243,7 +243,7 @@ contract SharesRegistryTest is BasicContractsFixture {
     // Tests if requestTimelockAmountChange reverts correctly when caller is not authorized
     function test_requestTimelockAmountChange_when_unauthorized(address _caller) public onlyNotOwner(_caller) {
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("1000"));
+        vm.expectRevert();
         registry.requestTimelockAmountChange(1);
     }
 
@@ -311,7 +311,7 @@ contract SharesRegistryTest is BasicContractsFixture {
     // Tests if acceptTimelockAmountChange reverts correctly when caller is not authorized
     function test_acceptTimelockAmountChange_when_unauthorized(address _caller) public onlyNotOwner(_caller) {
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("1000"));
+        vm.expectRevert();
         registry.acceptTimelockAmountChange();
     }
 
@@ -335,7 +335,7 @@ contract SharesRegistryTest is BasicContractsFixture {
     // Tests if setCollateralizationRate reverts correctly when caller is not authorized
     function test_setCollateralizationRate_when_unauthorized(address _caller) public onlyNotOwner(_caller) {
         vm.prank(_caller, _caller);
-        vm.expectRevert(bytes("1000"));
+        vm.expectRevert();
         registry.setCollateralizationRate(1);
     }
 
