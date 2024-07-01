@@ -498,7 +498,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
     /**
      * @notice Returns to normal state.
      */
-    function unpause() external override onlyOwner whenNotPaused {
+    function unpause() external override onlyOwner whenPaused {
         _unpause();
     }
 
