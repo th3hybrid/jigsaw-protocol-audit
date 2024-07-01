@@ -18,26 +18,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 16
-
-      - name: Run yarn install
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: install # will run `yarn install` command
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-
-      - name: Install Vyper
-        run: pip install vyper==0.2.16
 
       - name: Run Forge build
         run: |
@@ -45,6 +30,11 @@ jobs:
           forge build --sizes
         id: build
 
+      - name: create env file
+        run: |
+          touch .env
+          echo MAINNET_RPC_URL=${{ secrets.MAINNET_RPC_URL }} >> .env
+          echo ARBITRUM_RPC_URL=${{ secrets.ARBITRUM_RPC_URL }} >> .env
       - name: Run Forge tests
         run: |
           forge test --fuzz-runs 100 -vvv
