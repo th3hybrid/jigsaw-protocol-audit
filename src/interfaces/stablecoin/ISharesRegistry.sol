@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import { IManagerContainer } from "../core/IManagerContainer.sol";
 import { IOracle } from "../oracle/IOracle.sol";
@@ -88,12 +88,6 @@ interface ISharesRegistry {
      * @param newVal The new value.
      */
     event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
-
-    /**
-     * @notice Event emitted when contract new ownership is accepted.
-     * @param newOwner The address of the new owner.
-     */
-    event OwnershipAccepted(address indexed newOwner);
 
     /**
      * @notice Returns holding's borrowed amount.

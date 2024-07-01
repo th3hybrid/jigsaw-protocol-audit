@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -105,7 +105,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         validStrategy(_strategy)
         validAmount(_amount)
         validToken(_token)
-        whenPaused
+        whenNotPaused
         nonReentrant
         returns (uint256 tokenOutAmount, uint256 tokenInAmount)
     {
@@ -153,7 +153,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         validStrategy(_data.strategyFrom)
         validStrategy(_data.strategyTo)
         nonReentrant
-        whenPaused
+        whenNotPaused
         returns (uint256 tokenOutAmount, uint256 tokenInAmount)
     {
         address _holding = _getHoldingManager().userHolding(msg.sender);
@@ -221,7 +221,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         onlyAllowed(_holding)
         validAmount(_shares)
         nonReentrant
-        whenPaused
+        whenNotPaused
         returns (uint256 assetAmount, uint256 tokenInAmount)
     {
         require(_getHoldingManager().isHolding(_holding), "3002");
@@ -256,7 +256,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         override
         validStrategy(_strategy)
         nonReentrant
-        whenPaused
+        whenNotPaused
         returns (uint256[] memory rewards, address[] memory tokens)
     {
         address _holding = _getHoldingManager().userHolding(msg.sender);
@@ -357,7 +357,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
     function stakeReceiptTokens(
         address _strategy,
         uint256 _amount
-    ) external override whenPaused validStrategy(_strategy) validAmount(_amount) {
+    ) external override whenNotPaused validStrategy(_strategy) validAmount(_amount) {
         address gaugeAddress = strategyGauges[_strategy];
         require(gaugeAddress != address(0), "1104");
         IHolding holding = IHolding(_getHoldingManager().userHolding(msg.sender));
@@ -391,7 +391,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
     function unstakeReceiptTokens(
         address _strategy,
         uint256 _amount
-    ) public override whenPaused validStrategy(_strategy) validAmount(_amount) {
+    ) public override whenNotPaused validStrategy(_strategy) validAmount(_amount) {
         address gaugeAddress = strategyGauges[_strategy];
         require(gaugeAddress != address(0), "1104");
         IHolding holding = IHolding(_getHoldingManager().userHolding(msg.sender));
