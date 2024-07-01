@@ -33,20 +33,6 @@ interface ISharesRegistry {
     event CollateralRemoved(address indexed user, uint256 share);
 
     /**
-     * @notice Event emitted when accrue was called.
-     * @param updatedTotalBorrow The updated total borrow.
-     * @param extraAmount The extra amount.
-     */
-    event Accrued(uint256 updatedTotalBorrow, uint256 extraAmount);
-
-    /**
-     * @notice Event emitted when interest per second is updated.
-     * @param oldVal The old value.
-     * @param newVal The new value.
-     */
-    event InterestUpdated(uint256 oldVal, uint256 newVal);
-
-    /**
      * @notice Event emitted when the collateralization rate is updated.
      * @param oldVal The old value.
      * @param newVal The new value.
@@ -122,12 +108,6 @@ interface ISharesRegistry {
     function managerContainer() external view returns (IManagerContainer);
 
     /**
-     * @notice Info about the accrued data.
-     * @return lastAccrued, feesEarned, and INTEREST_PER_SECOND.
-     */
-    function accrueInfo() external view returns (uint64, uint128, uint64);
-
-    /**
      * @notice Oracle contract associated with this share registry.
      * @return The oracle contract.
      */
@@ -198,36 +178,7 @@ interface ISharesRegistry {
      */
     function unregisterCollateral(address _holding, uint256 _share) external;
 
-    /**
-     * @notice Accrues the interest on the borrowed tokens and handles the accumulation of fees.
-     *
-     * @notice Requirements:
-     * - `msg.sender` must be the Stables Manager Contract.
-     *
-     * @notice Effects:
-     * - Updates `collateral` mapping.
-     *
-     * @notice Emits:
-     * - `Accrued`.
-     *
-     * @param _totalBorrow Total borrow amount.
-     */
-    function accrue(uint256 _totalBorrow) external returns (uint256);
-
     // -- Administration --
-
-    /**
-     * @notice Sets a new interest per second.
-     *
-     * @notice Effects:
-     * - Updates `accrueInfo` state variable.
-     *
-     * @notice Emits:
-     * - `InterestUpdated` event indicating interest update operation.
-     *
-     * @param _newVal The new value.
-     */
-    function setInterestPerSecond(uint64 _newVal) external;
 
     /**
      * @notice Updates the collateralization rate.
@@ -369,13 +320,4 @@ interface ISharesRegistry {
      * @return The updated exchange rate.
      */
     function getExchangeRate() external view returns (uint256);
-
-    /**
-     * @notice Accrue info data.
-     */
-    struct AccrueInfo {
-        uint64 lastAccrued;
-        uint128 feesEarned;
-        uint64 INTEREST_PER_SECOND;
-    }
 }
