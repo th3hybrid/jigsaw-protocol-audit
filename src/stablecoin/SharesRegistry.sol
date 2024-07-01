@@ -47,11 +47,6 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     IManagerContainer public immutable override managerContainer;
 
     /**
-     * @notice Info about the accrued data.
-     */
-    AccrueInfo public override accrueInfo;
-
-    /**
      * @notice Oracle contract associated with this share registry.
      */
     IOracle public override oracle;
@@ -179,62 +174,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
         emit CollateralRemoved(_holding, _share);
     }
 
-    // @todo DELETE ?
-    /**
-     * @notice Accrues the interest on the borrowed tokens and handles the accumulation of fees.
-     *
-     * @notice Requirements:
-     * - `msg.sender` must be the Stables Manager Contract.
-     *
-     * @notice Effects:
-     * - Updates `collateral` mapping.
-     *
-     * @notice Emits:
-     * - `Accrued`.
-     *
-     * @param _totalBorrow Total borrow amount.
-     */
-    function accrue(uint256 _totalBorrow) public override onlyStableManager returns (uint256) {
-        AccrueInfo memory _accrueInfo = accrueInfo;
-        uint256 elapsedTime = block.timestamp - _accrueInfo.lastAccrued;
-        if (elapsedTime == 0) return _totalBorrow;
-
-        _accrueInfo.lastAccrued = uint64(block.timestamp);
-
-        if (_totalBorrow == 0) {
-            accrueInfo = _accrueInfo;
-            return _totalBorrow;
-        }
-
-        uint256 extraAmount = (_totalBorrow * _accrueInfo.INTEREST_PER_SECOND * elapsedTime) / 1e18;
-
-        _totalBorrow += extraAmount;
-        _accrueInfo.feesEarned += uint128(extraAmount);
-
-        accrueInfo = _accrueInfo;
-        emit Accrued(_totalBorrow, extraAmount);
-
-        return _totalBorrow;
-    }
-
     // -- Administration --
-
-    // @todo DELETE
-    /**
-     * @notice Sets a new interest per second.
-     *
-     * @notice Effects:
-     * - Updates `accrueInfo` state variable.
-     *
-     * @notice Emits:
-     * - `InterestUpdated` event indicating interest update operation.
-     *
-     * @param _newVal The new value.
-     */
-    function setInterestPerSecond(uint64 _newVal) external override onlyOwner {
-        emit InterestUpdated(accrueInfo.INTEREST_PER_SECOND, _newVal);
-        accrueInfo.INTEREST_PER_SECOND = _newVal;
-    }
 
     /**
      * @notice Updates the collateralization rate.
