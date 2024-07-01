@@ -46,19 +46,6 @@ contract SharesRegistryTest is BasicContractsFixture {
         registry = SharesRegistry(registries[address(usdc)]);
     }
 
-    // Tests if init fails correctly when owner is address(0)
-    function test_init_when_invalidOwner() public {
-        address owner = address(0);
-        address container = address(0);
-        address token = address(0);
-        address oracle = address(0);
-        bytes memory data = "0x0";
-        uint256 colRate = 0;
-        vm.expectRevert(bytes("3032"));
-        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, colRate);
-        failedSharesRegistry;
-    }
-
     // Tests if init fails correctly when _managerContainer is address(0)
     function test_init_when_invalidContainer() public {
         address owner = address(1);

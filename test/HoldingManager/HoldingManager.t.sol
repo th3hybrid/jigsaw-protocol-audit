@@ -156,7 +156,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.createHolding();
 
         vm.prank(holdingManager.owner(), holdingManager.owner());
-        holdingManager.pause;
+        holdingManager.pause();
 
         vm.prank(user, user);
         vm.expectRevert();

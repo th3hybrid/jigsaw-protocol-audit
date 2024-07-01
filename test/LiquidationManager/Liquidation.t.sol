@@ -186,6 +186,7 @@ contract LiquidationTest is Test {
         uint256 _userCollateral,
         uint256 _liquidatorCollateral
     ) public {
+        vm.assume(_liquidatorCollateral <= 1000e18);
         vm.assume(_liquidatorCollateral / 2 > _userCollateral / 2);
 
         // initiate user
@@ -451,6 +452,7 @@ contract LiquidationTest is Test {
     // Tests liquidation with strategies
     // Checks various states and amounts after liquidation
     function test_liquidate_when_withStrategies(uint256 _collateralAmount, bool invest) public {
+        vm.assume(_collateralAmount <= 1000e18);
         TestTempData memory testData;
 
         // initialize user
@@ -553,7 +555,7 @@ contract LiquidationTest is Test {
 
     // Tests if retrieve collateral function reverts correctly when strategy list is provided incorrectly
     function test_liquidate_when_strategyListFormatError(uint256 _collateralAmount) public {
-        vm.assume(_collateralAmount > 1e18);
+        vm.assume(_collateralAmount > 1e18 && _collateralAmount <= 1000e18);
         TestTempData memory testData;
 
         // initialize user

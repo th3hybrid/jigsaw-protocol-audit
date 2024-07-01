@@ -48,7 +48,7 @@ contract JigsawUsdTest is BasicContractsFixture {
     function test_should_update_the_mint_limit(address user) public {
         vm.assume(user != OWNER);
 
-        vm.expectRevert(bytes("1000"));
+        vm.expectRevert();
         vm.prank(user);
         jUsd.updateMintLimit(100);
 

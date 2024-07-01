@@ -39,13 +39,13 @@ contract StakerTest is Test {
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
-        manager = new Manager(address(this), address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        manager = new Manager(OWNER, address(usdc), address(weth), address(jUsdOracle), bytes(""));
         managerContainer = new ManagerContainer(address(this), address(manager));
 
         tokenIn = address(new SampleTokenERC20("TokenIn", "TI", 0));
         rewardToken = address(new SampleTokenERC20("RewardToken", "RT", 0));
 
-        staker = new Staker(address(this), tokenIn, rewardToken, 365 days);
+        staker = new Staker(OWNER, tokenIn, rewardToken, 365 days);
         vm.stopPrank();
     }
 

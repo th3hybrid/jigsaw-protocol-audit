@@ -54,6 +54,7 @@ contract StablesManagerTest is BasicContractsFixture {
 
     // Tests setting contract paused from Owner's address
     function test_setPaused_when_authorized() public {
+        vm.startPrank(stablesManager.owner());
         stablesManager.pause();
         assertEq(stablesManager.paused(), true);
 
