@@ -20,8 +20,6 @@ contract SharesRegistryTest is BasicContractsFixture {
     event CollateralRemoved(address indexed user, uint256 share);
     /// @notice event emitted when the collateralization rate is updated
     event CollateralizationRateUpdated(uint256 oldVal, uint256 newVal);
-    /// @notice event emitted when accrue was called
-    event Accrued(uint256 updatedTotalBorrow, uint256 extraAmount);
     /// @notice oracle data updated
     event OracleDataUpdated();
     /// @notice emitted when new oracle data is requested
@@ -36,8 +34,6 @@ contract SharesRegistryTest is BasicContractsFixture {
     event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
     // @notice event emitted when a new timelock amount is requested
     event TimelockAmountUpdateRequested(uint256 oldVal, uint256 newVal);
-    /// @notice event emitted when interest per second is updated
-    event InterestUpdated(uint256 oldVal, uint256 newVal);
 
     SharesRegistry internal registry;
 
@@ -204,27 +200,6 @@ contract SharesRegistryTest is BasicContractsFixture {
         registry.setOracle();
 
         assertEq(address(registry.oracle()), _oracle, "Oracle was set incorrect");
-    }
-
-    // Tests if setInterestPerSecond reverts correctly when caller is not authorized
-    function test_setInterestPerSecond_when_unauthorized(address _caller) public onlyNotOwner(_caller) {
-        vm.prank(_caller, _caller);
-        vm.expectRevert();
-        registry.setInterestPerSecond(uint64(1));
-    }
-
-    // Tests if setInterestPerSecond works correctly when authorized
-    function test_setInterestPerSecond_when_authorized(uint64 _newVal) public {
-        (,, uint64 oldInterest) = registry.accrueInfo();
-
-        vm.prank(registry.owner(), registry.owner());
-        vm.expectEmit();
-        emit InterestUpdated(oldInterest, _newVal);
-        registry.setInterestPerSecond(_newVal);
-
-        (,, uint64 interest) = registry.accrueInfo();
-
-        assertEq(interest, _newVal, "Interest per second is incorrect after setInterestPerSecond");
     }
 
     // Tests if requestTimelockAmountChange reverts correctly when caller is not authorized

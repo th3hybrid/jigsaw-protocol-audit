@@ -200,7 +200,6 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         uint256 jUsdMintAmount = amountValue.mulDiv(EXCHANGE_RATE_PRECISION, _getManager().getJUsdExchangeRate());
 
         // Update internal values.
-        totalBorrowed[_token] = registry.accrue(totalBorrowed[_token]);
         totalBorrowed[_token] += jUsdMintAmount;
 
         emit Borrowed({ holding: _holding, amount: jUsdMintAmount, mintToUser: _mintDirectlyToUser });
@@ -254,7 +253,6 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         require(_burnFrom != address(0), "3000");
 
         // Update internal values.
-        totalBorrowed[_token] = registry.accrue(totalBorrowed[_token]);
         totalBorrowed[_token] -= _amount;
 
         emit Repaid({ holding: _holding, amount: _amount, burnFrom: _burnFrom });
