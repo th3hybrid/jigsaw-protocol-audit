@@ -588,41 +588,6 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.stopPrank();
     }
 
-    // Tests if mint reverts correctly when contract is paused
-    function test_mint_HM_when_paused() public {
-        address user = address(uint160(uint256(keccak256(bytes("Random user")))));
-
-        vm.prank(holdingManager.owner(), holdingManager.owner());
-        holdingManager.pause();
-
-        vm.prank(user, user);
-        vm.expectRevert();
-        holdingManager.mint(address(1), address(1));
-    }
-
-    // Tests if mint works correctly when authorized
-    // @note doesn't check if user really gets his minted Jigsaw tokens, only that the call doesn't fail
-    // @note minter's behavior to be verified separately
-    function test_mint_HM_when_authorized() public {
-        address user = address(uint160(uint256(keccak256(bytes("Random user")))));
-
-        vm.prank(OWNER, OWNER);
-        address jigGauge =
-            liquidityGaugeFactory.createLiquidityGauge(address(jigsawToken), address(jigsawMinter), OWNER);
-
-        vm.startPrank(gaugeController.admin());
-        gaugeController.add_type("Test", 0);
-        gaugeController.add_gauge(jigGauge, 0, 0);
-        jigsawToken.set_minter(address(jigsawMinter));
-        vm.stopPrank();
-
-        vm.startPrank(user, user);
-        holdingManager.createHolding();
-        vm.warp(block.timestamp + 365 days);
-        holdingManager.mint(address(jigsawMinter), jigGauge);
-        vm.stopPrank();
-    }
-
     // Tests if borrowMultiple reverts correctly when caller doesn't have holding in the system
     function test_borrowMultiple_when_invalidHolding(address _user) public {
         IHoldingManager.BorrowOrRepayData[] memory data;

@@ -4,48 +4,41 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import { HoldingManager } from "../../src/HoldingManager.sol";
-import { LiquidationManager } from "../../src/LiquidationManager.sol";
-
-import { Manager } from "../../src/Manager.sol";
-import { ManagerContainer } from "../../src/ManagerContainer.sol";
-import { VyperDeployer } from "../utils/VyperDeployer.sol";
-import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
-import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
-
-import { StablesManager } from "../../src/StablesManager.sol";
-import { StrategyManager } from "../../src/StrategyManager.sol";
-import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
-
-import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
-import { IReceiptToken } from "../../src/interfaces/core/IReceiptToken.sol";
-import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
-import { IGaugeController } from "../../src/interfaces/vyper/IGaugeController.sol";
-import { IMinter } from "../../src/interfaces/vyper/IMinter.sol";
+import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SampleTokenBigDecimals } from "../utils/mocks/SampleTokenBigDecimals.sol";
-
+import { HoldingManager } from "../../src/HoldingManager.sol";
 import { JigsawUSD } from "../../src/JigsawUSD.sol";
+import { LiquidationManager } from "../../src/LiquidationManager.sol";
+import { Manager } from "../../src/Manager.sol";
+import { ManagerContainer } from "../../src/ManagerContainer.sol";
+import { ReceiptToken } from "../../src/ReceiptToken.sol";
+import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
 import { SharesRegistry } from "../../src/SharesRegistry.sol";
+import { StablesManager } from "../../src/StablesManager.sol";
+import { StrategyManager } from "../../src/StrategyManager.sol";
 
-import { SampleTokenSmallDecimals } from "../utils/mocks/SampleTokenSmallDecimals.sol";
+import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
+import { IReceiptToken } from "../../src/interfaces/core/IReceiptToken.sol";
+import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
 import { StrategyWithoutRewardsMock } from "../utils/mocks/StrategyWithoutRewardsMock.sol";
-import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
+import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
+import { SampleTokenBigDecimals } from "../utils/mocks/SampleTokenBigDecimals.sol";
+import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
+import { SampleTokenSmallDecimals } from "../utils/mocks/SampleTokenSmallDecimals.sol";
 
 /// @title LiquidationTest
-/// @notice This contract encompasses tests and utility functions for conducting fuzzy testing of the
-/// {liquidate} function in the LiquidationManager Contract.
+/// @notice This contract encompasses tests and utility functions for conducting fuzzy testing of the `liquidate`
+/// function in the LiquidationManager Contract.
 /// @notice for other tests of the LiquidationManager Contract see other files in this directory.
 contract LiquidationTest is Test {
     using Math for uint256;
 
     HoldingManager public holdingManager;
-    IGaugeController public gaugeController;
-    IMinter public jigsawMinter;
+
     IReceiptToken public receiptTokenReference;
     LiquidationManager public liquidationManager;
-    LiquidityGaugeFactory public liquidityGaugeFactory;
     Manager public manager;
     ManagerContainer public managerContainer;
     JigsawUSD public jUsd;
@@ -68,8 +61,6 @@ contract LiquidationTest is Test {
 
     function setUp() public {
         vm.warp(1_641_070_800);
-
-        VyperDeployer vyperDeployer = new VyperDeployer();
 
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new SampleTokenERC20("WETH", "WETH", 0);
@@ -98,37 +89,13 @@ contract LiquidationTest is Test {
         registries[address(usdc)] = address(sharesRegistry);
         stablesManager.registerOrUpdateShareRegistry(address(sharesRegistry), address(usdc), true);
 
-        address jigsawToken =
-            vyperDeployer.deployContract("JigsawToken", abi.encode("Jigsaw Token", "JIG", uint256(18)));
-
-        receiptTokenReference = IReceiptToken(vyperDeployer.deployContract("ReceiptToken"));
-
-        address votingEscrow =
-            vyperDeployer.deployContract("VotingEscrow", abi.encode(jigsawToken, "veJigsaw Token", "vePTO", "1"));
-
-        gaugeController = IGaugeController(
-            vyperDeployer.deployContract("GaugeController", abi.encode(jigsawToken, address(votingEscrow)))
-        );
-
-        address liquidityGaugeReference = vyperDeployer.deployContract("LiquidityGauge");
-
-        liquidityGaugeFactory = new LiquidityGaugeFactory(address(liquidityGaugeReference));
-        manager.setLiquidityGaugeFactory(address(liquidityGaugeFactory));
-
-        jigsawMinter =
-            IMinter(vyperDeployer.deployContract("Minter", abi.encode(jigsawToken, address(gaugeController))));
-
-        receiptTokenFactory = new ReceiptTokenFactory(address(receiptTokenReference));
+        receiptTokenFactory = new ReceiptTokenFactory(address(this));
         manager.setReceiptTokenFactory(address(receiptTokenFactory));
+        receiptTokenReference = IReceiptToken(new ReceiptToken(address(receiptTokenFactory)));
+        receiptTokenFactory.setReceiptTokenReferenceImplementation(address(receiptTokenReference));
 
         strategyWithoutRewardsMock = new StrategyWithoutRewardsMock(
-            address(managerContainer),
-            address(usdc),
-            address(usdc),
-            address(0),
-            address(jigsawMinter),
-            "RUsdc-Mock",
-            "RUSDCM"
+            address(managerContainer), address(usdc), address(usdc), address(0), "RUsdc-Mock", "RUSDCM"
         );
         strategyManager.addStrategy(address(strategyWithoutRewardsMock));
     }

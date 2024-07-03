@@ -29,7 +29,6 @@ contract MaliciousStrategy is IStrategy, StrategyBase {
     constructor(
         address _managerContainer,
         address _token,
-        address _jigsawMinterAddress,
         string memory _receiptTokenName,
         string memory _receiptTokenSymbol
     ) StrategyBase(msg.sender) {
