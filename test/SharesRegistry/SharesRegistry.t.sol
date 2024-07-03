@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { SharesRegistry } from "../../src/stablecoin/SharesRegistry.sol";
+import { SharesRegistry } from "../../src/SharesRegistry.sol";
 import { BasicContractsFixture } from "../fixtures/BasicContractsFixture.t.sol";
 
 contract SharesRegistryTest is BasicContractsFixture {

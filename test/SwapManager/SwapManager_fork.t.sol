@@ -11,13 +11,14 @@ import { IUniswapV3Factory } from "@uniswap/v3-core/contracts/interfaces/IUniswa
 import { IQuoterV2 } from "@uniswap/v3-periphery/contracts/interfaces/IQuoterV2.sol";
 
 import { HoldingManager } from "../../src/HoldingManager.sol";
+
+import { JigsawUSD } from "../../src/JigsawUSD.sol";
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 import { StablesManager } from "../../src/StablesManager.sol";
 import { StrategyManager } from "../../src/StrategyManager.sol";
 import { SwapManager } from "../../src/SwapManager.sol";
 import { ISwapManager } from "../../src/interfaces/core/ISwapManager.sol";
-import { JigsawUSD } from "../../src/stablecoin/JigsawUSD.sol";
 
 import { INonfungiblePositionManager } from "../utils/INonfungiblePositionManager.sol";
 import { SampleOracle } from "../utils/mocks/SampleOracle.sol";

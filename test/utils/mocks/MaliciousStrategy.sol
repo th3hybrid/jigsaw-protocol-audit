@@ -6,10 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IHolding } from "../../../src/interfaces/core/IHolding.sol";
 import { IManagerContainer } from "../../../src/interfaces/core/IManagerContainer.sol";
+
+import { IReceiptToken } from "../../../src/interfaces/core/IReceiptToken.sol";
+import { IReceiptTokenFactory } from "../../../src/interfaces/core/IReceiptTokenFactory.sol";
 import { IStrategy } from "../../../src/interfaces/core/IStrategy.sol";
-import { IReceiptToken } from "../../../src/interfaces/vyper/IReceiptToken.sol";
 import { StrategyBase } from "../../../src/strategies/StrategyBase.sol";
-import { StrategyConfigLib } from "../../../src/vyper/libraries/StrategyConfigLib.sol";
 
 contract MaliciousStrategy is IStrategy, StrategyBase {
     using SafeERC20 for IERC20;
@@ -37,14 +38,11 @@ contract MaliciousStrategy is IStrategy, StrategyBase {
         tokenIn = _token;
         tokenOut = _token;
         sharesDecimals = IERC20Metadata(_token).decimals();
-        address receiptTokenAddress = StrategyConfigLib.configStrategy(
-            _getManager().receiptTokenFactory(),
-            _getManager().liquidityGaugeFactory(),
-            _jigsawMinterAddress,
-            _receiptTokenName,
-            _receiptTokenSymbol
+        receiptToken = IReceiptToken(
+            IReceiptTokenFactory(_getManager().receiptTokenFactory()).createReceiptToken(
+                _receiptTokenName, _receiptTokenSymbol, address(this), msg.sender
+            )
         );
-        receiptToken = IReceiptToken(receiptTokenAddress);
     }
 
     function getRewards(address) external pure override returns (uint256) {

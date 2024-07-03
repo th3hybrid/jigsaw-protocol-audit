@@ -13,10 +13,11 @@ import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
 import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
+
+import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 import { IStrategy } from "./interfaces/core/IStrategy.sol";
 import { IStrategyManager } from "./interfaces/core/IStrategyManager.sol";
-import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
 
 /**
  * @title StrategyManager
@@ -38,6 +39,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      */
     mapping(address strategy => StrategyInfo info) public override strategyInfo;
 
+    // @todo delete as we no longer need it
     /**
      * @notice Returns the address of the gauge corresponding to the Strategy.
      */
@@ -335,6 +337,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         IHolding(_holding).transfer({ _token: _token, _to: _to, _amount: _amount });
     }
 
+    // @todo delete as we no longer need it
     /**
      * @notice Deposits receipt tokens into the liquidity gauge of the strategy.
      *
@@ -371,6 +374,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         require(success, "3015");
     }
 
+    // @todo delete as we no longer need it
     /**
      * @notice Withdraws staked receipt tokens from the liquidity gauge of the strategy.
      *
@@ -435,6 +439,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         emit StrategyUpdated(_strategy, _info.active, _info.performanceFee);
     }
 
+    // @todo delete as we no longer need it
     /**
      * @notice Adds a new gauge to a strategy.
      * @param _strategy strategy's address.
@@ -449,6 +454,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         strategyGauges[_strategy] = _gauge;
     }
 
+    // @todo delete as we no longer need it
     /**
      * @notice Removes a gauge from the strategy.
      * @param _strategy strategy's address.
@@ -459,6 +465,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         emit GaugeRemoved(_strategy);
     }
 
+    // @todo delete as we no longer need it
     /**
      * @notice Updates the strategy's gauge.
      * @param _strategy strategy's address.

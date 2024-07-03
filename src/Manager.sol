@@ -134,6 +134,7 @@ contract Manager is IManager, Ownable2Step {
      */
     address public override receiptTokenFactory;
 
+    // @todo delete as we no longer need it
     /**
      * @notice Returns the address of the LiquidityGaugeFactory.
      */

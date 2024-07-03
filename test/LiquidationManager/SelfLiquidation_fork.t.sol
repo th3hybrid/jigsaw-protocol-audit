@@ -10,19 +10,19 @@ import { LiquidationManager } from "../../src/LiquidationManager.sol";
 
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
-import { LiquidityGaugeFactory } from "../../src/vyper/LiquidityGaugeFactory.sol";
 
-import { ReceiptTokenFactory } from "../../src/vyper/ReceiptTokenFactory.sol";
+import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
 
 import { StablesManager } from "../../src/StablesManager.sol";
 import { StrategyManager } from "../../src/StrategyManager.sol";
 
 import { SwapManager } from "../../src/SwapManager.sol";
 import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
+
+import { IReceiptToken } from "../../src/interfaces/core/IReceiptToken.sol";
 import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
 import { IGaugeController } from "../../src/interfaces/vyper/IGaugeController.sol";
 import { IMinter } from "../../src/interfaces/vyper/IMinter.sol";
-import { IReceiptToken } from "../../src/interfaces/vyper/IReceiptToken.sol";
 
 import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -32,8 +32,8 @@ import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
 
 import { SampleOracleUniswap } from "../utils/mocks/SampleOracleUniswap.sol";
 
-import { JigsawUSD } from "../../src/stablecoin/JigsawUSD.sol";
-import { SharesRegistry } from "../../src/stablecoin/SharesRegistry.sol";
+import { JigsawUSD } from "../../src/JigsawUSD.sol";
+import { SharesRegistry } from "../../src/SharesRegistry.sol";
 
 import { StrategyWithoutRewardsMock } from "../utils/mocks/StrategyWithoutRewardsMock.sol";
 

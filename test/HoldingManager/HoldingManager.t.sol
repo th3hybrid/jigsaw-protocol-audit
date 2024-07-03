@@ -9,7 +9,7 @@ import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/exte
 import { Holding } from "../../src/Holding.sol";
 
 import { IHoldingManager } from "../../src/interfaces/core/IHoldingManager.sol";
-import { ISharesRegistry } from "../../src/interfaces/stablecoin/ISharesRegistry.sol";
+import { ISharesRegistry } from "../../src/interfaces/core/ISharesRegistry.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { OperationsLib } from "../../src/libraries/OperationsLib.sol";

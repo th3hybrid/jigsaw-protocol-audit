@@ -10,7 +10,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { BasicContractsFixture } from "../fixtures/BasicContractsFixture.t.sol";
 
-import { JigsawUSD } from "../../src/stablecoin/JigsawUSD.sol";
+import { JigsawUSD } from "../../src/JigsawUSD.sol";
 
 contract JigsawUsdTest is BasicContractsFixture {
     using Math for uint256;

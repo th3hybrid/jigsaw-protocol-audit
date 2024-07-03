@@ -9,7 +9,6 @@ import { LiquidationManager } from "../../src/LiquidationManager.sol";
 
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
-import { LiquidityGaugeFactory } from "../../src/vyper/LiquidityGaugeFactory.sol";
 import { VyperDeployer } from "../utils/VyperDeployer.sol";
 import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
 import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
@@ -17,17 +16,18 @@ import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 import { StablesManager } from "../../src/StablesManager.sol";
 import { StrategyManager } from "../../src/StrategyManager.sol";
 import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
+
+import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
+import { IReceiptToken } from "../../src/interfaces/core/IReceiptToken.sol";
 import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
 import { IGaugeController } from "../../src/interfaces/vyper/IGaugeController.sol";
 import { IMinter } from "../../src/interfaces/vyper/IMinter.sol";
-import { IReceiptToken } from "../../src/interfaces/vyper/IReceiptToken.sol";
-import { ReceiptTokenFactory } from "../../src/vyper/ReceiptTokenFactory.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SampleTokenBigDecimals } from "../utils/mocks/SampleTokenBigDecimals.sol";
 
-import { JigsawUSD } from "../../src/stablecoin/JigsawUSD.sol";
-import { SharesRegistry } from "../../src/stablecoin/SharesRegistry.sol";
+import { JigsawUSD } from "../../src/JigsawUSD.sol";
+import { SharesRegistry } from "../../src/SharesRegistry.sol";
 
 import { SampleTokenSmallDecimals } from "../utils/mocks/SampleTokenSmallDecimals.sol";
 import { StrategyWithoutRewardsMock } from "../utils/mocks/StrategyWithoutRewardsMock.sol";
