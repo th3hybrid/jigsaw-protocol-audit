@@ -397,16 +397,6 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         emit RepaidMultiple({ holding: holding, length: _data.length, repaidFromUser: _repayFromUser });
     }
 
-    // @todo delete as we no longer need it
-    /**
-     * @notice Mints Jigsaw Token.
-     * @param _minter Minter address.
-     * @param _gauge Gauge to mint for.
-     */
-    function mint(address _minter, address _gauge) external override whenNotPaused {
-        IHolding(userHolding[msg.sender]).mint({ _minter: _minter, _gauge: _gauge });
-    }
-
     /**
      * @notice Receives ETH.
      */

@@ -39,12 +39,6 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      */
     mapping(address strategy => StrategyInfo info) public override strategyInfo;
 
-    // @todo delete as we no longer need it
-    /**
-     * @notice Returns the address of the gauge corresponding to the Strategy.
-     */
-    mapping(address strategy => address gauge) public override strategyGauges;
-
     /**
      * @notice Stores the strategies holding has invested in.
      */
@@ -337,76 +331,6 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         IHolding(_holding).transfer({ _token: _token, _to: _to, _amount: _amount });
     }
 
-    // @todo delete as we no longer need it
-    /**
-     * @notice Deposits receipt tokens into the liquidity gauge of the strategy.
-     *
-     * @notice Requirements:
-     * - `_strategy` must be valid (not zero address).
-     * - `_amount` must be valid (greater than zero).
-     * - `_strategy` must have gauge associated with it.
-     * - Msg.sender's holding should have enough receipt tokens.
-     *
-     * @notice Effects:
-     * - Approves spending for `_strategy`'s gauge through holding.
-     * - Deposits receipt tokens to `_strategy`'s gauge through holding.
-     *
-     * @notice Emits:
-     * - ReceiptTokensStaked event indicating successful receipt token staking operation.
-     *
-     * @param _strategy strategy's address.
-     * @param _amount amount of receipt tokens to stake.
-     */
-    function stakeReceiptTokens(
-        address _strategy,
-        uint256 _amount
-    ) external override whenNotPaused validStrategy(_strategy) validAmount(_amount) {
-        address gaugeAddress = strategyGauges[_strategy];
-        require(gaugeAddress != address(0), "1104");
-        IHolding holding = IHolding(_getHoldingManager().userHolding(msg.sender));
-        address receiptTokenAddress = IStrategy(_strategy).getReceiptTokenAddress();
-        require(IERC20(receiptTokenAddress).balanceOf(address(holding)) >= _amount, "2002");
-        emit ReceiptTokensStaked(_strategy, _amount);
-        holding.approve(receiptTokenAddress, gaugeAddress, _amount);
-        (bool success,) = holding.genericCall(
-            gaugeAddress, abi.encodeWithSignature("deposit(uint256,address)", _amount, address(holding))
-        );
-        require(success, "3015");
-    }
-
-    // @todo delete as we no longer need it
-    /**
-     * @notice Withdraws staked receipt tokens from the liquidity gauge of the strategy.
-     *
-     * @notice Requirements:
-     * - `_strategy` must be valid (not zero address).
-     * - `_amount` must be valid (greater than zero).
-     * - `_strategy` must have gauge associated with it.
-     *
-     * @notice Effects:
-     * - Withdraws receipt tokens from `_strategy`'s gauge through holding.
-     *
-     * @notice Emits:
-     * - ReceiptTokensUnstaked event indicating successful receipt token unstaking operation.
-     *
-     * @param _strategy strategy's address.
-     * @param _amount amount of receipt tokens to unstake.
-     */
-    function unstakeReceiptTokens(
-        address _strategy,
-        uint256 _amount
-    ) public override whenNotPaused validStrategy(_strategy) validAmount(_amount) {
-        address gaugeAddress = strategyGauges[_strategy];
-        require(gaugeAddress != address(0), "1104");
-        IHolding holding = IHolding(_getHoldingManager().userHolding(msg.sender));
-        address receiptTokenAddress = IStrategy(_strategy).getReceiptTokenAddress();
-        uint256 oldBalance = IERC20(receiptTokenAddress).balanceOf(address(holding));
-        emit ReceiptTokensUnstaked(_strategy, _amount);
-        holding.genericCall(gaugeAddress, abi.encodeWithSignature("withdraw(uint256)", _amount));
-        uint256 newBalance = IERC20(receiptTokenAddress).balanceOf(address(holding));
-        require(newBalance - oldBalance == _amount, "3016");
-    }
-
     // -- Administration --
 
     /**
@@ -437,62 +361,6 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
     ) external override onlyOwner validStrategy(_strategy) {
         strategyInfo[_strategy] = _info;
         emit StrategyUpdated(_strategy, _info.active, _info.performanceFee);
-    }
-
-    // @todo delete as we no longer need it
-    /**
-     * @notice Adds a new gauge to a strategy.
-     * @param _strategy strategy's address.
-     * @param _gauge gauge's address.
-     */
-    function addStrategyGauge(
-        address _strategy,
-        address _gauge
-    ) public override onlyOwner validStrategy(_strategy) validAddress(_gauge) {
-        require(strategyGauges[_strategy] == address(0), "1103");
-        emit GaugeAdded(_strategy, _gauge);
-        strategyGauges[_strategy] = _gauge;
-    }
-
-    // @todo delete as we no longer need it
-    /**
-     * @notice Removes a gauge from the strategy.
-     * @param _strategy strategy's address.
-     */
-    function removeStrategyGauge(address _strategy) external override onlyOwner validStrategy(_strategy) {
-        require(strategyGauges[_strategy] != address(0), "1104");
-        strategyGauges[_strategy] = address(0);
-        emit GaugeRemoved(_strategy);
-    }
-
-    // @todo delete as we no longer need it
-    /**
-     * @notice Updates the strategy's gauge.
-     * @param _strategy strategy's address.
-     * @param _gauge gauge's address.
-     */
-    function updateStrategyGauge(
-        address _strategy,
-        address _gauge
-    ) external override onlyOwner validStrategy(_strategy) validAddress(_gauge) {
-        address oldGauge = strategyGauges[_strategy];
-        require(oldGauge != address(0), "1104");
-        require(oldGauge != _gauge, "1105");
-        emit GaugeUpdated(_strategy, oldGauge, _gauge);
-        strategyGauges[_strategy] = _gauge;
-    }
-
-    /**
-     * @notice Performs several actions to config a strategy.
-     * @param _strategy strategy's address.
-     * @param _gauge gauge's address.
-     */
-    function configStrategy(
-        address _strategy,
-        address _gauge
-    ) external override onlyOwner validAddress(_strategy) validAddress(_gauge) {
-        addStrategy(_strategy);
-        addStrategyGauge(_strategy, _gauge);
     }
 
     /**
@@ -647,12 +515,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         }
 
         IERC20 receiptToken = IERC20(_strategy.getReceiptTokenAddress());
-        uint256 holdingReceiptTokenBalance = receiptToken.balanceOf(_holding);
-
-        if (holdingReceiptTokenBalance < rtAmount) {
-            // Not enough Receipt Tokens in holding, need to unstake the difference
-            unstakeReceiptTokens(address(_strategy), (rtAmount - holdingReceiptTokenBalance));
-        }
+        require(receiptToken.balanceOf(_holding) >= rtAmount);
     }
 
     /**
