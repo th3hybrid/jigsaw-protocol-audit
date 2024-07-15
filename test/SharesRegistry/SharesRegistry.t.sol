@@ -332,7 +332,57 @@ contract SharesRegistryTest is BasicContractsFixture {
         );
     }
 
-    // @note continue from requestNewOracleData()
+    // Tests if requestNewOracleData reverts correctly when change is already requested
+    function test_requestNewOracleData_when_changeAlreadyRequested() public {
+        vm.prank(registry.owner(), registry.owner());
+        registry.requestNewOracleData(bytes(""));
+
+        vm.prank(registry.owner(), registry.owner());
+        vm.expectRevert(bytes("3096"));
+        registry.requestNewOracleData(bytes(""));
+    }
+
+    // Tests if requestNewOracleData reverts correctly when timelock is in active change
+    function test_requestNewOracleData_when_timelockInActiveChange() public {
+        vm.prank(registry.owner(), registry.owner());
+        registry.requestTimelockAmountChange(100 days);
+
+        vm.prank(registry.owner(), registry.owner());
+        vm.expectRevert(bytes("3095"));
+        registry.requestNewOracleData(bytes(""));
+    }
+
+    // Tests if setOracleData reverts correctly when no oracle data change is requested
+    function test_setOracleData_when_noOracleDataActiveChange() public {
+        vm.prank(registry.owner(), registry.owner());
+        vm.expectRevert(bytes("3094"));
+        registry.setOracleData();
+    }
+
+    // Tests if setOracleData reverts correctly when time lock has not expired
+    function test_setOracleData_when_tooSoon() public {
+        vm.prank(registry.owner(), registry.owner());
+        registry.requestNewOracleData(bytes(""));
+
+        vm.prank(registry.owner(), registry.owner());
+        vm.expectRevert(bytes("3066"));
+        registry.setOracleData();
+    }
+
+    // Tests if setOracleData reverts correctly when authorized
+    function test_setOracleData_when_authorized() public {
+        vm.prank(registry.owner(), registry.owner());
+        registry.requestNewOracleData(bytes("New Data"));
+
+        vm.warp(block.timestamp + registry.timelockAmount());
+
+        vm.prank(registry.owner(), registry.owner());
+        vm.expectEmit();
+        emit OracleDataUpdated();
+        registry.setOracleData();
+
+        assertEq(registry.oracleData(), bytes("New Data"), "Wrong new oracle data");
+    }
 
     modifier onlyNotOwner(address _caller) {
         vm.assume(_caller != registry.owner());
