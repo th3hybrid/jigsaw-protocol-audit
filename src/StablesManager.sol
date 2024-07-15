@@ -10,11 +10,11 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { OperationsLib } from "./libraries/OperationsLib.sol";
 
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
+import { IJigsawUSD } from "./interfaces/core/IJigsawUSD.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
 import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
+import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
-import { IJigsawUSD } from "./interfaces/stablecoin/IJigsawUSD.sol";
-import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
 
 /**
  * @title StablesManager

@@ -7,11 +7,10 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 
 import { IManager } from "../interfaces/core/IManager.sol";
 import { IManagerContainer } from "../interfaces/core/IManagerContainer.sol";
+
+import { IReceiptToken } from "../interfaces/core/IReceiptToken.sol";
 import { IStrategy } from "../interfaces/core/IStrategy.sol";
 import { IStrategyManager } from "../interfaces/core/IStrategyManager.sol";
-import { IReceiptToken } from "../interfaces/vyper/IReceiptToken.sol";
-
-import { StrategyConfigLib } from "../vyper/libraries/StrategyConfigLib.sol";
 
 /// @title StrategyBase contract used for any Aave strategy
 /// @author Cosmin Grigore (@gcosmintech)
@@ -26,10 +25,8 @@ abstract contract StrategyBase is Ownable, ReentrancyGuard {
     event StrategyManagerUpdated(address indexed old, address indexed newAddress);
     /// @notice emitted when funds are saved in case of an emergency
     event SavedFunds(address indexed token, uint256 amount);
-
     /// @notice emitted when receipt tokens are minted
     event ReceiptTokensMinted(address indexed receipt, uint256 amount);
-
     /// @notice emitted when receipt tokens are burned
     event ReceiptTokensBurned(address indexed receipt, uint256 amount);
 

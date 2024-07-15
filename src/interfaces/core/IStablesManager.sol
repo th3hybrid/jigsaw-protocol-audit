@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IJigsawUSD } from "../stablecoin/IJigsawUSD.sol";
-import { ISharesRegistry } from "../stablecoin/ISharesRegistry.sol";
+import { IJigsawUSD } from "../core/IJigsawUSD.sol";
+import { ISharesRegistry } from "../core/ISharesRegistry.sol";
 import { IManagerContainer } from "./IManagerContainer.sol";
 
 /**

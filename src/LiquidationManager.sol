@@ -14,11 +14,12 @@ import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { ILiquidationManager } from "./interfaces/core/ILiquidationManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
 import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
+
+import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 import { IStrategy } from "./interfaces/core/IStrategy.sol";
 import { IStrategyManager } from "./interfaces/core/IStrategyManager.sol";
 import { ISwapManager } from "./interfaces/core/ISwapManager.sol";
-import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
 
 /**
  * @title LiquidationManager

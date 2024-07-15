@@ -284,13 +284,6 @@ interface IHoldingManager {
      */
     function repayMultiple(BorrowOrRepayData[] calldata _data, bool _repayFromUser) external;
 
-    /**
-     * @notice Mints Jigsaw Token.
-     * @param _minter Minter address.
-     * @param _gauge Gauge to mint for.
-     */
-    function mint(address _minter, address _gauge) external;
-
     // -- Administration --
 
     /**

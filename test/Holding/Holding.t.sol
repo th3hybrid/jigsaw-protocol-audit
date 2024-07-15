@@ -135,39 +135,6 @@ contract HoldingTest is BasicContractsFixture {
         assertEq(usdc.balanceOf(_to), toBalanceBefore + _amount, "Didn't transfer when authorized");
     }
 
-    // Tests if mint fails correctly when unauthorized
-    function test_mint_when_unauthorized(address _caller) public onlyNotAllowed(_caller) {
-        Holding holding = createHolding();
-
-        vm.prank(_caller);
-        vm.expectRevert(bytes("1000"));
-        holding.mint(address(jigsawMinter), address(1));
-    }
-
-    // Tests if mint works correctly when authorized
-    // @note doesn't check if user really gets his minted Jigsaw tokens, only that the call doesn't fail
-    // @note minter's behavior to be verified separately
-    function test_mint_when_authorized(uint256 _callerId, address _to) public {
-        vm.prank(OWNER, OWNER);
-        address jigGauge =
-            liquidityGaugeFactory.createLiquidityGauge(address(jigsawToken), address(jigsawMinter), OWNER);
-
-        vm.startPrank(gaugeController.admin());
-        gaugeController.add_type("Test", 0);
-        gaugeController.add_gauge(jigGauge, 0, 0);
-        jigsawToken.set_minter(address(jigsawMinter));
-        vm.stopPrank();
-
-        vm.assume(_to != address(0));
-        address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
-        Holding holding = createHolding();
-
-        vm.warp(block.timestamp + 365 days);
-
-        vm.prank(caller, caller);
-        holding.mint(address(jigsawMinter), jigGauge);
-    }
-
     // Utility functions
 
     function createHolding() internal returns (Holding holding) {

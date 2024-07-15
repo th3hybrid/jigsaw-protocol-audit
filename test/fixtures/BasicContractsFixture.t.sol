@@ -4,52 +4,38 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import { HoldingManager } from "../../src/HoldingManager.sol";
-
-import { LiquidationManager } from "../../src/LiquidationManager.sol";
-import { LiquidityGaugeFactory } from "../../src/vyper/LiquidityGaugeFactory.sol";
-
-import { Manager } from "../../src/Manager.sol";
-import { ManagerContainer } from "../../src/ManagerContainer.sol";
-
-import { ReceiptTokenFactory } from "../../src/vyper/ReceiptTokenFactory.sol";
-
-import { StablesManager } from "../../src/StablesManager.sol";
-import { StrategyManager } from "../../src/StrategyManager.sol";
-import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
-import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
-import { IStrategyManager } from "../../src/interfaces/core/IStrategyManager.sol";
-import { IGaugeController } from "../../src/interfaces/vyper/IGaugeController.sol";
-import { IJigsawToken } from "../../src/interfaces/vyper/IJigsawToken.sol";
-import { IMinter } from "../../src/interfaces/vyper/IMinter.sol";
-import { IReceiptToken } from "../../src/interfaces/vyper/IReceiptToken.sol";
-
+import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
+import { HoldingManager } from "../../src/HoldingManager.sol";
+import { JigsawUSD } from "../../src/JigsawUSD.sol";
+import { LiquidationManager } from "../../src/LiquidationManager.sol";
+import { Manager } from "../../src/Manager.sol";
+import { ManagerContainer } from "../../src/ManagerContainer.sol";
+import { ReceiptToken } from "../../src/ReceiptToken.sol";
+import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
+import { SharesRegistry } from "../../src/SharesRegistry.sol";
+import { StablesManager } from "../../src/StablesManager.sol";
+import { StrategyManager } from "../../src/StrategyManager.sol";
 
+import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
+import { IReceiptToken } from "../../src/interfaces/core/IReceiptToken.sol";
+import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
+import { IStrategyManager } from "../../src/interfaces/core/IStrategyManager.sol";
+
+import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
 import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 import { StrategyWithoutRewardsMock } from "../utils/mocks/StrategyWithoutRewardsMock.sol";
-
-import { VyperDeployer } from "../utils/VyperDeployer.sol";
-
-import { JigsawUSD } from "../../src/stablecoin/JigsawUSD.sol";
-import { SharesRegistry } from "../../src/stablecoin/SharesRegistry.sol";
 import { wETHMock } from "../utils/mocks/wETHMock.sol";
-import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 abstract contract BasicContractsFixture is Test {
     address internal constant OWNER = address(uint160(uint256(keccak256("owner"))));
 
     using Math for uint256;
 
+    IReceiptToken public receiptTokenReference;
     HoldingManager internal holdingManager;
-    IGaugeController internal gaugeController;
-    IJigsawToken internal jigsawToken;
-    IMinter internal jigsawMinter;
-    IReceiptToken internal receiptTokenReference;
     LiquidationManager internal liquidationManager;
-    LiquidityGaugeFactory internal liquidityGaugeFactory;
     Manager internal manager;
     ManagerContainer internal managerContainer;
     JigsawUSD internal jUsd;
@@ -70,7 +56,6 @@ abstract contract BasicContractsFixture is Test {
     function init() public {
         vm.startPrank(OWNER);
         vm.warp(1_641_070_800);
-        VyperDeployer vyperDeployer = new VyperDeployer();
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new wETHMock();
         jUsdOracle = new SampleOracle();
@@ -94,52 +79,30 @@ abstract contract BasicContractsFixture is Test {
         manager.whitelistToken(address(weth));
 
         usdcOracle = new SampleOracle();
-        sharesRegistry = new SharesRegistry(
-            msg.sender, address(managerContainer), address(usdc), address(usdcOracle), bytes(""), 50_000
-        );
+        sharesRegistry =
+            new SharesRegistry(OWNER, address(managerContainer), address(usdc), address(usdcOracle), bytes(""), 50_000);
         stablesManager.registerOrUpdateShareRegistry(address(sharesRegistry), address(usdc), true);
         registries[address(usdc)] = address(sharesRegistry);
 
         SampleOracle wethOracle = new SampleOracle();
-        wethSharesRegistry = new SharesRegistry(
-            msg.sender, address(managerContainer), address(weth), address(wethOracle), bytes(""), 50_000
-        );
+        wethSharesRegistry =
+            new SharesRegistry(OWNER, address(managerContainer), address(weth), address(wethOracle), bytes(""), 50_000);
         stablesManager.registerOrUpdateShareRegistry(address(wethSharesRegistry), address(weth), true);
         registries[address(weth)] = address(wethSharesRegistry);
 
-        jigsawToken =
-            IJigsawToken(vyperDeployer.deployContract("JigsawToken", abi.encode("Jigsaw Token", "JIG", uint256(18))));
-
-        receiptTokenReference = IReceiptToken(vyperDeployer.deployContract("ReceiptToken"));
-
-        address votingEscrow = vyperDeployer.deployContract(
-            "VotingEscrow", abi.encode(address(jigsawToken), "veJigsaw Token", "vePTO", "1")
-        );
-
-        gaugeController = IGaugeController(
-            vyperDeployer.deployContract("GaugeController", abi.encode(address(jigsawToken), address(votingEscrow)))
-        );
-
-        address liquidityGaugeReference = vyperDeployer.deployContract("LiquidityGauge");
-
-        liquidityGaugeFactory = new LiquidityGaugeFactory(address(liquidityGaugeReference));
-        manager.setLiquidityGaugeFactory(address(liquidityGaugeFactory));
-
-        jigsawMinter =
-            IMinter(vyperDeployer.deployContract("Minter", abi.encode(address(jigsawToken), address(gaugeController))));
-
-        receiptTokenFactory = new ReceiptTokenFactory(address(receiptTokenReference));
+        receiptTokenFactory = new ReceiptTokenFactory(OWNER);
         manager.setReceiptTokenFactory(address(receiptTokenFactory));
+        receiptTokenReference = IReceiptToken(new ReceiptToken());
+        receiptTokenFactory.setReceiptTokenReferenceImplementation(address(receiptTokenReference));
 
-        strategyWithoutRewardsMock = new StrategyWithoutRewardsMock(
-            address(managerContainer),
-            address(usdc),
-            address(usdc),
-            address(0),
-            address(jigsawMinter),
-            "RUsdc-Mock",
-            "RUSDCM"
-        );
+        strategyWithoutRewardsMock = new StrategyWithoutRewardsMock({
+            _managerContainer: address(managerContainer),
+            _tokenIn: address(usdc),
+            _tokenOut: address(usdc),
+            _rewardToken: address(0),
+            _receiptTokenName: "RUsdc-Mock",
+            _receiptTokenSymbol: "RUSDCM"
+        });
         strategyManager.addStrategy(address(strategyWithoutRewardsMock));
         vm.stopPrank();
     }

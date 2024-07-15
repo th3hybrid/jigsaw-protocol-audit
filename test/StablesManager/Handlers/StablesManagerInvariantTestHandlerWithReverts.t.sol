@@ -11,8 +11,8 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import { HoldingManager } from "../../../src/HoldingManager.sol";
 
+import { SharesRegistry } from "../../../src/SharesRegistry.sol";
 import { StablesManager } from "../../../src/StablesManager.sol";
-import { SharesRegistry } from "../../../src/stablecoin/SharesRegistry.sol";
 import { IHandler } from "./IHandler.sol";
 
 contract StablesManagerInvariantTestHandlerWithReverts is CommonBase, StdCheats, StdUtils, IHandler {

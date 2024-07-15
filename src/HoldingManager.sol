@@ -17,10 +17,11 @@ import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
 import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
+
+import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 import { IStrategy } from "./interfaces/core/IStrategy.sol";
 import { IStrategyManager } from "./interfaces/core/IStrategyManager.sol";
-import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
 
 /**
  * @title HoldingManager
@@ -394,15 +395,6 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         }
 
         emit RepaidMultiple({ holding: holding, length: _data.length, repaidFromUser: _repayFromUser });
-    }
-
-    /**
-     * @notice Mints Jigsaw Token.
-     * @param _minter Minter address.
-     * @param _gauge Gauge to mint for.
-     */
-    function mint(address _minter, address _gauge) external override whenNotPaused {
-        IHolding(userHolding[msg.sender]).mint({ _minter: _minter, _gauge: _gauge });
     }
 
     /**

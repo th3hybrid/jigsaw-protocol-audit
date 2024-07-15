@@ -5,11 +5,11 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { IManager } from "../interfaces/core/IManager.sol";
-import { IManagerContainer } from "../interfaces/core/IManagerContainer.sol";
-import { IStablesManager } from "../interfaces/core/IStablesManager.sol";
-import { IOracle } from "../interfaces/oracle/IOracle.sol";
-import { ISharesRegistry } from "../interfaces/stablecoin/ISharesRegistry.sol";
+import { IManager } from "./interfaces/core/IManager.sol";
+import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
+import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
+import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
+import { IOracle } from "./interfaces/oracle/IOracle.sol";
 
 /**
  * @title SharesRegistry

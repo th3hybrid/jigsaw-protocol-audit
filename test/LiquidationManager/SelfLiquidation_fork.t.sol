@@ -4,46 +4,34 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import { HoldingManager } from "../../src/HoldingManager.sol";
-
-import { LiquidationManager } from "../../src/LiquidationManager.sol";
-
-import { Manager } from "../../src/Manager.sol";
-import { ManagerContainer } from "../../src/ManagerContainer.sol";
-import { LiquidityGaugeFactory } from "../../src/vyper/LiquidityGaugeFactory.sol";
-
-import { ReceiptTokenFactory } from "../../src/vyper/ReceiptTokenFactory.sol";
-
-import { StablesManager } from "../../src/StablesManager.sol";
-import { StrategyManager } from "../../src/StrategyManager.sol";
-
-import { SwapManager } from "../../src/SwapManager.sol";
-import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
-import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
-import { IGaugeController } from "../../src/interfaces/vyper/IGaugeController.sol";
-import { IMinter } from "../../src/interfaces/vyper/IMinter.sol";
-import { IReceiptToken } from "../../src/interfaces/vyper/IReceiptToken.sol";
-
-import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
+import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-
-import { TickMath } from "../utils/TickMath.sol";
-import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
-
-import { SampleOracleUniswap } from "../utils/mocks/SampleOracleUniswap.sol";
-
-import { JigsawUSD } from "../../src/stablecoin/JigsawUSD.sol";
-import { SharesRegistry } from "../../src/stablecoin/SharesRegistry.sol";
-
-import { StrategyWithoutRewardsMock } from "../utils/mocks/StrategyWithoutRewardsMock.sol";
-
-import { INonfungiblePositionManager } from "../utils/INonfungiblePositionManager.sol";
-import { VyperDeployer } from "../utils/VyperDeployer.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IUniswapV3Factory } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import { IQuoterV2 } from "@uniswap/v3-periphery/contracts/interfaces/IQuoterV2.sol";
+
+import { HoldingManager } from "../../src/HoldingManager.sol";
+import { JigsawUSD } from "../../src/JigsawUSD.sol";
+import { LiquidationManager } from "../../src/LiquidationManager.sol";
+import { Manager } from "../../src/Manager.sol";
+import { ManagerContainer } from "../../src/ManagerContainer.sol";
+import { ReceiptToken } from "../../src/ReceiptToken.sol";
+import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
+import { SharesRegistry } from "../../src/SharesRegistry.sol";
+import { StablesManager } from "../../src/StablesManager.sol";
+import { StrategyManager } from "../../src/StrategyManager.sol";
+import { SwapManager } from "../../src/SwapManager.sol";
+
+import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
+import { IReceiptToken } from "../../src/interfaces/core/IReceiptToken.sol";
+import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
+
+import { INonfungiblePositionManager } from "../utils/INonfungiblePositionManager.sol";
+import { TickMath } from "../utils/TickMath.sol";
+import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
+import { SampleOracleUniswap } from "../utils/mocks/SampleOracleUniswap.sol";
+import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
+import { StrategyWithoutRewardsMock } from "../utils/mocks/StrategyWithoutRewardsMock.sol";
 
 interface IUSDC is IERC20Metadata {
     function balanceOf(address account) external view returns (uint256);
@@ -61,15 +49,12 @@ contract SelfLiquidationTest is Test {
 
     HoldingManager public holdingManager;
     IERC20Metadata public weth;
-    IGaugeController public gaugeController;
-    IMinter public jigsawMinter;
     INonfungiblePositionManager public nonfungiblePositionManager;
     IReceiptToken public receiptTokenReference;
     IUniswapV3Factory public uniswapFactory;
     IUSDC public usdc;
     IQuoterV2 public quoter;
     LiquidationManager public liquidationManager;
-    LiquidityGaugeFactory public liquidityGaugeFactory;
     Manager public manager;
     ManagerContainer public managerContainer;
     JigsawUSD public jUsd;
@@ -91,7 +76,7 @@ contract SelfLiquidationTest is Test {
     address UniswapSwapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     mapping(address => SharesRegistry) public registries;
-    uint256 internal uniswapPoolCap = 1_000_000_000_000_000;
+    uint256 internal uniswapPoolCap = 1_000_000_000;
 
     address public jUsdPool;
     uint256 public jUsdPoolMintTokenId;
@@ -115,8 +100,6 @@ contract SelfLiquidationTest is Test {
     function setUp() public {
         vm.createSelectFork(vm.envString("ARBITRUM_RPC_URL"));
 
-        VyperDeployer vyperDeployer = new VyperDeployer();
-
         uniswapFactory = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
         nonfungiblePositionManager = INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
         quoter = IQuoterV2(0x61fFE014bA17989E743c5F6cB21bF9697530B21e);
@@ -127,12 +110,12 @@ contract SelfLiquidationTest is Test {
         manager = new Manager(address(this), USDC, WETH, address(1), bytes(""));
         managerContainer = new ManagerContainer(address(this), address(manager));
 
-        jUsd = new JigsawUSD(address(this), address(managerContainer));
-
         SampleOracle jUsdOracle = new SampleOracle();
         manager.requestNewJUsdOracle(address(jUsdOracle));
         vm.warp(block.timestamp + manager.timelockAmount());
         manager.setJUsdOracle();
+
+        jUsd = new JigsawUSD(address(this), address(managerContainer));
 
         liquidationManager = new LiquidationManager(address(this), address(managerContainer));
         holdingManager = new HoldingManager(address(this), address(managerContainer));
@@ -173,41 +156,15 @@ contract SelfLiquidationTest is Test {
         );
         stablesManager.registerOrUpdateShareRegistry(address(registries[USDT]), USDT, true);
 
-        address jigsawToken =
-            vyperDeployer.deployContract("JigsawToken", abi.encode("Jigsaw Token", "JIG", uint256(18)));
-
-        receiptTokenReference = IReceiptToken(vyperDeployer.deployContract("ReceiptToken"));
-
-        address votingEscrow =
-            vyperDeployer.deployContract("VotingEscrow", abi.encode(jigsawToken, "veJigsaw Token", "vePTO", "1"));
-
-        gaugeController = IGaugeController(
-            vyperDeployer.deployContract("GaugeController", abi.encode(jigsawToken, address(votingEscrow)))
-        );
-
-        address liquidityGaugeReference = vyperDeployer.deployContract("LiquidityGauge");
-
-        liquidityGaugeFactory = new LiquidityGaugeFactory(address(liquidityGaugeReference));
-        manager.setLiquidityGaugeFactory(address(liquidityGaugeFactory));
-
-        jigsawMinter =
-            IMinter(vyperDeployer.deployContract("Minter", abi.encode(jigsawToken, address(gaugeController))));
-
-        receiptTokenFactory = new ReceiptTokenFactory(address(receiptTokenReference));
+        receiptTokenFactory = new ReceiptTokenFactory(address(this));
         manager.setReceiptTokenFactory(address(receiptTokenFactory));
+        receiptTokenReference = IReceiptToken(new ReceiptToken());
+        receiptTokenFactory.setReceiptTokenReferenceImplementation(address(receiptTokenReference));
 
         strategyWithoutRewardsMock = new StrategyWithoutRewardsMock(
-            address(managerContainer),
-            address(usdc),
-            address(usdc),
-            address(0),
-            address(jigsawMinter),
-            "RUsdc-Mock",
-            "RUSDCM"
+            address(managerContainer), address(usdc), address(usdc), address(0), "RUsdc-Mock", "RUSDCM"
         );
         strategyManager.addStrategy(address(strategyWithoutRewardsMock));
-
-        // (jUsdPool, jUsdPoolMintTokenId) = _createJUsdUsdcPool();
     }
 
     // This test evaluates the self-liquidation mechanism when user doesn't have a holding
@@ -1127,19 +1084,19 @@ contract SelfLiquidationTest is Test {
         usdc.approve(address(nonfungiblePositionManager), type(uint256).max);
 
         (tokenId,,,) = nonfungiblePositionManager.mint(
-            INonfungiblePositionManager.MintParams(
-                token0,
-                token1,
-                fee,
-                TickMath.MIN_TICK,
-                TickMath.MAX_TICK,
-                jUsdAmount,
-                usdcAmount,
-                0,
-                0,
-                address(this),
-                block.timestamp + 3600
-            )
+            INonfungiblePositionManager.MintParams({
+                token0: token0,
+                token1: token1,
+                fee: fee,
+                tickLower: TickMath.MIN_TICK,
+                tickUpper: TickMath.MAX_TICK,
+                amount0Desired: jUsdAmount,
+                amount1Desired: usdcAmount,
+                amount0Min: 1,
+                amount1Min: 1,
+                recipient: address(this),
+                deadline: block.timestamp
+            })
         );
     }
 }

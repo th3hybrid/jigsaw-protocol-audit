@@ -102,13 +102,7 @@ contract StrategyManagerTest is BasicContractsFixture {
     function test_addStrategy_when_authorized() public {
         address strategy = address(
             new StrategyWithoutRewardsMock(
-                address(managerContainer),
-                address(usdc),
-                address(usdc),
-                address(0),
-                address(jigsawMinter),
-                "AnotherMock",
-                "ARM"
+                address(managerContainer), address(usdc), address(usdc), address(0), "AnotherMock", "ARM"
             )
         );
 
@@ -169,283 +163,6 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         (,, bool whitelisted) = strategyManager.strategyInfo(strategy);
         assertEq(whitelisted, false, "Strategy not updated when authorized");
-    }
-
-    // Tests adding new gauge to the strategy when unauthorized
-    function test_addStrategyGauge_when_unauthorized(address _caller) public {
-        address strategy = address(uint160(uint256(keccak256("random address"))));
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.assume(_caller != strategyManager.owner());
-        vm.prank(_caller, _caller);
-        vm.expectRevert();
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        assertEq(strategyManager.strategyGauges(strategy), address(0), "Strategy gauge added when unauthorized");
-    }
-
-    // Tests adding new gauge to the strategy when invalid strategy address
-    function test_addStrategyGauge_when_invalidStrategy() public {
-        address strategy = address(0);
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectRevert(bytes("3029"));
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        assertEq(
-            strategyManager.strategyGauges(strategy), address(0), "Strategy gauge added when invalid strategy address"
-        );
-    }
-
-    // Tests adding new gauge when already added
-    function test_addStrategyGauge_when_alreadyAdded() public {
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-        address strategy = address(strategyWithoutRewardsMock);
-
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, gauge);
-        vm.expectRevert(bytes("1103"));
-        strategyManager.addStrategyGauge(strategy, gauge);
-        vm.stopPrank();
-
-        assertEq(strategyManager.strategyGauges(strategy), gauge, "Strategy gauge wrong");
-    }
-
-    // Tests adding new gauge to the strategy when invalid gauge address
-    function test_addStrategyGauge_when_invalidGauge() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        address gauge = address(0);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectRevert(bytes("3000"));
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        assertEq(
-            strategyManager.strategyGauges(strategy), address(0), "Strategy gauge added when invalid gauge address"
-        );
-    }
-
-    // Tests successful addition of the new gauge to the strategy
-    function test_addStrategyGauge_when_authorized() public {
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-        address strategy = address(strategyWithoutRewardsMock);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectEmit();
-        emit GaugeAdded(strategy, gauge);
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        assertEq(strategyManager.strategyGauges(strategy), gauge, "Strategy gauge not added when authorized ");
-    }
-
-    // Tests adding new gauge to the strategy when unauthorized
-    function test_removeStrategyGauge_when_unauthorized(address _caller) public {
-        vm.assume(_caller != strategyManager.owner());
-
-        address strategy = address(strategyWithoutRewardsMock);
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, gauge);
-        vm.stopPrank();
-
-        vm.prank(_caller, _caller);
-        vm.expectRevert();
-        strategyManager.removeStrategyGauge(strategy);
-
-        assertEq(strategyManager.strategyGauges(strategy), gauge, "Strategy gauge removed when unauthorized");
-    }
-
-    // Tests removing gauge from strategy when invalid strategy address
-    function test_removeStrategyGauge_when_invalidStrategy() public {
-        address strategy = address(0);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectRevert(bytes("3029"));
-        strategyManager.removeStrategyGauge(strategy);
-    }
-
-    // Tests removing gauge from strategy when there is no gauge
-    function test_removeStrategyGauge_when_noGauge() public {
-        address strategy = address(strategyWithoutRewardsMock);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectRevert(bytes("1104"));
-        strategyManager.removeStrategyGauge(strategy);
-
-        assertEq(strategyManager.strategyGauges(strategy), address(0), "Strategy gauge not added when authorized ");
-    }
-
-    // Tests successful removal of the gauge from strategy
-    function test_removeStrategyGauge_when_authorized() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        vm.expectEmit();
-        emit GaugeRemoved(strategy);
-        strategyManager.removeStrategyGauge(strategy);
-        vm.stopPrank();
-
-        assertEq(strategyManager.strategyGauges(strategy), address(0), "Strategy gauge not removed when authorized ");
-    }
-
-    // Tests updating the gauge of the strategy when unauthorized
-    function test_updateStrategyGauge_when_unauthorized(address _caller) public {
-        address strategy = address(uint160(uint256(keccak256("random address"))));
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.assume(_caller != strategyManager.owner());
-        vm.prank(_caller, _caller);
-        vm.expectRevert();
-        strategyManager.updateStrategyGauge(strategy, gauge);
-
-        assertEq(strategyManager.strategyGauges(strategy), address(0), "Strategy gauge updated when unauthorized");
-    }
-
-    // Tests updating the gauge of the strategy when invalid strategy address
-    function test_updateStrategyGauge_when_invalidStrategy() public {
-        address strategy = address(0);
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectRevert(bytes("3029"));
-        strategyManager.updateStrategyGauge(strategy, gauge);
-
-        assertEq(
-            strategyManager.strategyGauges(strategy), address(0), "Strategy gauge updated when invalid strategy address"
-        );
-    }
-
-    // Tests updating the gauge of the strategy when invalid gauge address
-    function test_updateStrategyGauge_when_invalidGauge() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        address gauge = address(0);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectRevert(bytes("3000"));
-        strategyManager.updateStrategyGauge(strategy, gauge);
-
-        assertEq(
-            strategyManager.strategyGauges(strategy), address(0), "Strategy gauge updated when invalid gauge address"
-        );
-    }
-
-    // Tests updating the gauge of the strategy when there was no gauge added previously
-    function test_updateStrategyGauge_when_noOldGauge() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        address newGauge = address(uint160(uint256(keccak256("new random gauge address"))));
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectRevert(bytes("1104"));
-        strategyManager.updateStrategyGauge(strategy, newGauge);
-
-        assertNotEq(strategyManager.strategyGauges(strategy), newGauge, "Strategy gauge updated when no old gauge ");
-    }
-
-    // Tests updating the gauge of the strategy when the new gauge address is the same
-    function test_updateStrategyGauge_when_sameGauge() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        address oldGauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, oldGauge);
-
-        vm.expectRevert(bytes("1105"));
-        strategyManager.updateStrategyGauge(strategy, oldGauge);
-
-        vm.stopPrank();
-
-        assertEq(strategyManager.strategyGauges(strategy), oldGauge, "Strategy gauge wrongfully changed ");
-    }
-
-    // Tests successful update of the gauge of the strategy
-    function test_updateStrategyGauge_when_authorized() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        address oldGauge = address(uint160(uint256(keccak256("random gauge address"))));
-        address newGauge = address(uint160(uint256(keccak256("new random gauge address"))));
-
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, oldGauge);
-
-        vm.expectEmit();
-        emit GaugeUpdated(strategy, oldGauge, newGauge);
-        strategyManager.updateStrategyGauge(strategy, newGauge);
-
-        vm.stopPrank();
-
-        assertEq(strategyManager.strategyGauges(strategy), newGauge, "Strategy gauge not updated when authorized ");
-    }
-
-    // Tests configuring of the strategy when unauthorized
-    function test_configStrategy_when_unauthorized(address _caller) public {
-        address strategy = address(uint160(uint256(keccak256("random strategy"))));
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.assume(_caller != strategyManager.owner());
-        vm.prank(_caller, _caller);
-        vm.expectRevert();
-        strategyManager.configStrategy(strategy, gauge);
-
-        (,, bool whitelisted) = strategyManager.strategyInfo(strategy);
-        assertEq(whitelisted, false, "Strategy added when unauthorized");
-        assertEq(strategyManager.strategyGauges(strategy), address(0), "Strategy gauge added when unauthorized");
-    }
-
-    // Tests configuring of the strategy when invalid strategy
-    function test_configStrategy_when_invalidStrategy() public {
-        address strategy = address(0);
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectRevert(bytes("3000"));
-        strategyManager.configStrategy(strategy, gauge);
-
-        (,, bool whitelisted) = strategyManager.strategyInfo(strategy);
-        assertEq(whitelisted, false, "Strategy added when invalid address");
-        assertEq(
-            strategyManager.strategyGauges(strategy), address(0), "Strategy gauge updated when invalid strategy address"
-        );
-    }
-
-    // Tests configuring of the strategy when invalid gauge
-    function test_configStrategy_when_invalidGauge() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        address gauge = address(0);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        vm.expectRevert(bytes("3000"));
-        strategyManager.configStrategy(strategy, gauge);
-
-        assertEq(
-            strategyManager.strategyGauges(strategy), address(0), "Strategy gauge updated when invalid strategy address"
-        );
-    }
-
-    // Tests successful configuration of the  strategy
-    function test_configStrategy_when_authorized() public {
-        address strategy = address(
-            new StrategyWithoutRewardsMock(
-                address(managerContainer),
-                address(usdc),
-                address(usdc),
-                address(0),
-                address(jigsawMinter),
-                "AnotherMock",
-                "ARM"
-            )
-        );
-        address gauge = address(uint160(uint256(keccak256("random gauge address"))));
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.configStrategy(strategy, gauge);
-
-        (,, bool whitelisted) = strategyManager.strategyInfo(strategy);
-        assertEq(whitelisted, true, "Strategy not added when authorized");
-        assertEq(strategyManager.strategyGauges(strategy), gauge, "Strategy gauge not updated when authorized");
     }
 
     // Tests if invest function reverts correctly when invalid strategy
@@ -570,13 +287,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.startPrank(strategyManager.owner(), strategyManager.owner());
         StrategyWithoutRewardsMockBroken strategyWithoutRewardsMockBroken = new StrategyWithoutRewardsMockBroken(
-            address(managerContainer),
-            address(weth),
-            address(weth),
-            address(0),
-            address(jigsawMinter),
-            "Broken-Mock",
-            "BRM"
+            address(managerContainer), address(weth), address(weth), address(0), "Broken-Mock", "BRM"
         );
         strategyManager.addStrategy(address(strategyWithoutRewardsMockBroken));
         vm.stopPrank();
@@ -677,13 +388,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         IStrategyManager.MoveInvestmentData memory moveInvestmentData;
         moveInvestmentData.strategyFrom = address(
             new StrategyWithoutRewardsMock(
-                address(managerContainer),
-                address(usdc),
-                address(usdc),
-                address(0),
-                address(jigsawMinter),
-                "AnotherMock",
-                "ARM"
+                address(managerContainer), address(usdc), address(usdc), address(0), "AnotherMock", "ARM"
             )
         );
         vm.startPrank(strategyManager.owner(), strategyManager.owner());
@@ -700,7 +405,7 @@ contract StrategyManagerTest is BasicContractsFixture {
     function test_moveInvestment_when_claimResult0() public {
         vm.startPrank(strategyManager.owner(), strategyManager.owner());
         MaliciousStrategy strategyFrom =
-            new MaliciousStrategy(address(managerContainer), address(usdc), address(jigsawMinter), "AnotherMock", "ARM");
+            new MaliciousStrategy(address(managerContainer), address(usdc), "AnotherMock", "ARM");
         strategyManager.addStrategy(address(strategyFrom));
         vm.stopPrank();
 
@@ -743,13 +448,7 @@ contract StrategyManagerTest is BasicContractsFixture {
     function test_moveInvestment_when_authorized() public {
         vm.startPrank(strategyManager.owner(), strategyManager.owner());
         StrategyWithoutRewardsMock strategyTo = new StrategyWithoutRewardsMock(
-            address(managerContainer),
-            address(usdc),
-            address(usdc),
-            address(0),
-            address(jigsawMinter),
-            "AnotherMock",
-            "ARM"
+            address(managerContainer), address(usdc), address(usdc), address(0), "AnotherMock", "ARM"
         );
         strategyManager.addStrategy(address(strategyTo));
         vm.stopPrank();
@@ -861,43 +560,6 @@ contract StrategyManagerTest is BasicContractsFixture {
         strategyManager.claimInvestment(holding, strategy, shares, asset, data);
     }
 
-    // Tests if claimInvestment works  correctly when not enough Receipt Tokens in holding and need to unstake
-    function test_claimInvestment_when_unstake(address user, uint256 amount) public {
-        vm.assume(user != address(0));
-        vm.assume(amount > 0 && amount < 1e20);
-        address asset = address(usdc);
-        address holding = initiateUser(user, asset, amount);
-        address strategy = address(strategyWithoutRewardsMock);
-        address receiptToken = strategyWithoutRewardsMock.getReceiptTokenAddress();
-        address gauge = liquidityGaugeFactory.createLiquidityGauge(receiptToken, address(jigsawMinter), OWNER);
-        bytes memory data = bytes("");
-        uint256 holdingBalanceBefore = usdc.balanceOf(holding);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        vm.startPrank(user, user);
-        strategyManager.invest(asset, strategy, holdingBalanceBefore, data);
-        uint256 holdingReceiptTokenBalanceAfterInvest = IERC20(receiptToken).balanceOf(holding);
-        strategyManager.stakeReceiptTokens(strategy, holdingReceiptTokenBalanceAfterInvest);
-
-        (, uint256 shares) = strategyWithoutRewardsMock.recipients(holding);
-        uint256 claimAmount = shares;
-
-        strategyManager.claimInvestment(holding, strategy, claimAmount, asset, data);
-        vm.stopPrank();
-
-        address[] memory holdingStrategies = strategyManager.getHoldingToStrategy(holding);
-
-        assertEq(holdingStrategies.length, 0, "Holding's strategies' count incorrect");
-        assertEq(
-            IERC20(receiptToken).balanceOf(holding), shares - claimAmount, "Holding's receipt tokens count incorrect"
-        );
-        assertEq(IERC20(receiptToken).balanceOf(holding), 0, "Gauge's receipt tokens count incorrect");
-        assertEq(usdc.balanceOf(strategy), shares - claimAmount, "Funds weren't taken from strategy");
-        assertEq(usdc.balanceOf(holding), claimAmount, "Holding didn't receive funds invested in strategy");
-    }
-
     // Tests if claimInvestment works  correctly when receiptToken has big decimals
     function test_claimInvestment_when_bigDecimals(address user, uint256 amount) public {
         vm.assume(user != address(0));
@@ -917,23 +579,16 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         address strategy = address(
             new StrategyWithRewardsMock(
-                address(managerContainer),
-                address(asset),
-                address(asset),
-                address(0),
-                address(jigsawMinter),
-                "RandomToken",
-                "RT"
+                address(managerContainer), address(asset), address(asset), address(0), "RandomToken", "RT"
             )
         );
 
         address receiptToken = IStrategy(strategy).getReceiptTokenAddress();
-        address gauge = liquidityGaugeFactory.createLiquidityGauge(receiptToken, address(jigsawMinter), OWNER);
+
         bytes memory data = bytes("");
 
         vm.startPrank(strategyManager.owner(), strategyManager.owner());
         strategyManager.addStrategy(strategy);
-        strategyManager.addStrategyGauge(strategy, gauge);
         vm.stopPrank();
 
         uint256 holdingBalanceBefore = asset.balanceOf(holding);
@@ -941,8 +596,6 @@ contract StrategyManagerTest is BasicContractsFixture {
         vm.startPrank(user, user);
         strategyManager.invest(address(asset), strategy, holdingBalanceBefore, data);
         uint256 holdingReceiptTokenBalanceAfterInvest = IERC20(receiptToken).balanceOf(holding);
-
-        strategyManager.stakeReceiptTokens(strategy, holdingReceiptTokenBalanceAfterInvest);
 
         (, uint256 shares) = IStrategy(strategy).recipients(holding);
         uint256 claimAmount = shares;
@@ -1051,7 +704,6 @@ contract StrategyManagerTest is BasicContractsFixture {
                 address(usdc),
                 address(usdc),
                 address(strategyRewardToken),
-                address(jigsawMinter),
                 "RandomToken",
                 "RT"
             )
@@ -1094,7 +746,6 @@ contract StrategyManagerTest is BasicContractsFixture {
                 address(usdc),
                 address(usdc),
                 address(strategyRewardToken),
-                address(jigsawMinter),
                 "RandomToken",
                 "RT"
             )
@@ -1205,213 +856,6 @@ contract StrategyManagerTest is BasicContractsFixture {
         strategyManager.invokeTransferal(holding, token, to, amount);
 
         assertEq(usdc.balanceOf(to), amount, "invokeTransferal failed");
-    }
-
-    // Tests if stakeReceiptTokens function reverts correctly when contract is paused
-    function test_stakeReceiptTokens_when_paused() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        uint256 amount = 10e18;
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.pause();
-
-        vm.expectRevert();
-        strategyManager.stakeReceiptTokens(strategy, amount);
-    }
-
-    // Tests if stakeReceiptTokens function reverts correctly when invalidStrategy
-    function test_stakeReceiptTokens_when_invalidStrategy() public {
-        address strategy = address(uint160(uint256(keccak256("random strategy"))));
-        uint256 amount = 10e18;
-
-        vm.expectRevert(bytes("3029"));
-        strategyManager.stakeReceiptTokens(strategy, amount);
-    }
-
-    // Tests if stakeReceiptTokens function reverts correctly when invalid amount
-    function test_stakeReceiptTokens_when_invalidAmount() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        uint256 amount = 0;
-
-        vm.expectRevert(bytes("2001"));
-        strategyManager.stakeReceiptTokens(strategy, amount);
-    }
-
-    // Tests if stakeReceiptTokens function reverts correctly when invalid gauge
-    function test_stakeReceiptTokens_when_invalidGauge() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        uint256 amount = 10e18;
-
-        vm.expectRevert(bytes("1104"));
-        strategyManager.stakeReceiptTokens(strategy, amount);
-    }
-
-    // Tests if stakeReceiptTokens function reverts correctly when insufficient balance
-    function test_stakeReceiptTokens_when_insufficientBalance() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        address gauge = address(uint160(uint256(keccak256("random gauge"))));
-        uint256 amount = 10e18;
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        vm.expectRevert(bytes("2002"));
-        strategyManager.stakeReceiptTokens(strategy, amount);
-    }
-
-    // Tests if stakeReceiptTokens function works correctly when genericCall fails
-    function test_stakeReceiptTokens_when_fail(address _user) public {
-        vm.assume(_user != address(0));
-        uint256 _amount = type(uint256).max;
-
-        address holding = initiateUser(_user, address(usdc), 42);
-        address strategy = address(strategyWithoutRewardsMock);
-        address receiptToken = strategyWithoutRewardsMock.getReceiptTokenAddress();
-        address gauge = liquidityGaugeFactory.createLiquidityGauge(receiptToken, address(jigsawMinter), OWNER);
-
-        deal(receiptToken, holding, _amount);
-        uint256 receiptTokenBalanceBefore = IERC20(receiptToken).balanceOf(holding);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        vm.prank(_user, _user);
-        vm.expectRevert(bytes("3015"));
-        strategyManager.stakeReceiptTokens(strategy, _amount);
-
-        assertEq(
-            IERC20(receiptToken).balanceOf(holding),
-            receiptTokenBalanceBefore,
-            "Holding's receiptTokenBalance after stake is incorrect"
-        );
-        assertEq(IERC20(receiptToken).balanceOf(gauge), 0, "Gauge balance after stake is incorrect");
-    }
-
-    // Tests if stakeReceiptTokens function works correctly when authorized
-    function test_stakeReceiptTokens_when_authorized(address _user, uint256 _amount) public {
-        vm.assume(_user != address(0));
-        vm.assume(_amount > 0 && _amount < 1e40);
-
-        address holding = initiateUser(_user, address(usdc), 42);
-        address strategy = address(strategyWithoutRewardsMock);
-        address receiptToken = strategyWithoutRewardsMock.getReceiptTokenAddress();
-        address gauge = liquidityGaugeFactory.createLiquidityGauge(receiptToken, address(jigsawMinter), OWNER);
-
-        deal(receiptToken, holding, _amount);
-        uint256 receiptTokenBalanceBefore = IERC20(receiptToken).balanceOf(holding);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        vm.prank(_user, _user);
-        strategyManager.stakeReceiptTokens(strategy, _amount);
-
-        assertEq(
-            IERC20(receiptToken).balanceOf(holding),
-            receiptTokenBalanceBefore - _amount,
-            "Holding's receiptTokenBalance after stake is incorrect"
-        );
-        assertEq(IERC20(receiptToken).balanceOf(gauge), _amount, "Gauge balance after stake is incorrect");
-    }
-
-    // Tests if unstakeReceiptTokens function reverts correctly when contract is paused
-    function test_unstakeReceiptTokens_when_paused() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        uint256 amount = 10e18;
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.pause();
-
-        vm.expectRevert();
-        strategyManager.unstakeReceiptTokens(strategy, amount);
-    }
-
-    // Tests if unstakeReceiptTokens function reverts correctly when invalidStrategy
-    function test_unstakeReceiptTokens_when_invalidStrategy() public {
-        address strategy = address(uint160(uint256(keccak256("random strategy"))));
-        uint256 amount = 10e18;
-
-        vm.expectRevert(bytes("3029"));
-        strategyManager.unstakeReceiptTokens(strategy, amount);
-    }
-
-    // Tests if unstakeReceiptTokens function reverts correctly when invalid amount
-    function test_unstakeReceiptTokens_when_invalidAmount() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        uint256 amount = 0;
-
-        vm.expectRevert(bytes("2001"));
-        strategyManager.unstakeReceiptTokens(strategy, amount);
-    }
-
-    // Tests if unstakeReceiptTokens function reverts correctly when invalid gauge
-    function test_unstakeReceiptTokens_when_invalidGauge() public {
-        address strategy = address(strategyWithoutRewardsMock);
-        uint256 amount = 10e18;
-
-        vm.expectRevert(bytes("1104"));
-        strategyManager.unstakeReceiptTokens(strategy, amount);
-    }
-
-    // Tests if unstakeReceiptTokens function works correctly when genericCall fails
-    function test_unstakeReceiptTokens_when_fail(address _user) public {
-        vm.assume(_user != address(0));
-        uint256 amount = 1e30;
-
-        address holding = initiateUser(_user, address(usdc), 42);
-        address strategy = address(strategyWithoutRewardsMock);
-        address receiptToken = strategyWithoutRewardsMock.getReceiptTokenAddress();
-        address gauge = liquidityGaugeFactory.createLiquidityGauge(receiptToken, address(jigsawMinter), OWNER);
-
-        deal(receiptToken, holding, amount);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        vm.startPrank(_user, _user);
-        strategyManager.stakeReceiptTokens(strategy, amount);
-        uint256 receiptTokenBalanceBefore = IERC20(receiptToken).balanceOf(holding);
-        vm.expectRevert(bytes("3016"));
-        strategyManager.unstakeReceiptTokens(strategy, type(uint256).max);
-        vm.stopPrank();
-
-        assertEq(
-            IERC20(receiptToken).balanceOf(holding),
-            receiptTokenBalanceBefore,
-            "Holding's receiptTokenBalance after failed unstake is incorrect"
-        );
-        assertEq(IERC20(receiptToken).balanceOf(gauge), amount, "Gauge balance after stake is incorrect");
-    }
-
-    // Tests if unstakeReceiptTokens function works correctly when authorized
-    function test_unstakeReceiptTokens_when_authorized(address _user, uint256 _amount) public {
-        vm.assume(_user != address(0));
-        vm.assume(_amount > 0 && _amount < 1e40);
-
-        address holding = initiateUser(_user, address(usdc), 42);
-        address strategy = address(strategyWithoutRewardsMock);
-        address receiptToken = strategyWithoutRewardsMock.getReceiptTokenAddress();
-        address gauge = liquidityGaugeFactory.createLiquidityGauge(receiptToken, address(jigsawMinter), OWNER);
-
-        deal(receiptToken, holding, _amount);
-
-        vm.prank(strategyManager.owner(), strategyManager.owner());
-        strategyManager.addStrategyGauge(strategy, gauge);
-
-        vm.startPrank(_user, _user);
-        strategyManager.stakeReceiptTokens(strategy, _amount);
-        uint256 receiptTokenBalanceBefore = IERC20(receiptToken).balanceOf(gauge);
-        strategyManager.unstakeReceiptTokens(strategy, _amount);
-        vm.stopPrank();
-
-        assertEq(
-            IERC20(receiptToken).balanceOf(holding), _amount, "Holding's receiptTokenBalance after unstake is incorrect"
-        );
-        assertEq(
-            IERC20(receiptToken).balanceOf(gauge),
-            receiptTokenBalanceBefore - _amount,
-            "Gauge balance after unstake is incorrect"
-        );
     }
 
     //Tests if renouncing ownership reverts with error code 1000

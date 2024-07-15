@@ -6,9 +6,9 @@ import "forge-std/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { SharesRegistry } from "../../src/SharesRegistry.sol";
 import { StablesManager } from "../../src/StablesManager.sol";
-import { ISharesRegistry } from "../../src/interfaces/stablecoin/ISharesRegistry.sol";
-import { SharesRegistry } from "../../src/stablecoin/SharesRegistry.sol";
+import { ISharesRegistry } from "../../src/interfaces/core/ISharesRegistry.sol";
 import { BasicContractsFixture } from "../fixtures/BasicContractsFixture.t.sol";
 
 contract StablesManagerTest is BasicContractsFixture {

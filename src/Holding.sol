@@ -12,7 +12,6 @@ import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
 import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 import { IStrategyManagerMin } from "./interfaces/core/IStrategyManagerMin.sol";
-import { IMinter } from "./interfaces/vyper/IMinter.sol";
 
 /**
  * @title Holding Contract
@@ -43,7 +42,7 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
     // --- Constructor ---
 
     /**
-     * To prevent the implementation contract from being used, the _disableInitializers function is invoked
+     * @dev To prevent the implementation contract from being used, the _disableInitializers function is invoked
      * in the constructor to automatically lock it when it is deployed.
      */
     constructor() {
@@ -106,22 +105,6 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
      */
     function transfer(address _token, address _to, uint256 _amount) external override nonReentrant onlyAllowed {
         IERC20(_token).safeTransfer({ to: _to, value: _amount });
-    }
-
-    /**
-     * @notice Mints Jigsaw Token.
-     *
-     * @notice Requirements:
-     * - The caller must be allowed.
-     *
-     * @notice Effects:
-     * - Calls `mint` on the `_minter` with `_gauge`.
-     *
-     * @param _minter IMinter address.
-     * @param _gauge Gauge to mint for.
-     */
-    function mint(address _minter, address _gauge) external override nonReentrant onlyAllowed {
-        IMinter(_minter).mint(_gauge);
     }
 
     /**

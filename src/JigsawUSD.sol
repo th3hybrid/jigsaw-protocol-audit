@@ -6,10 +6,10 @@ import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-import { IManager } from "../interfaces/core/IManager.sol";
-import { IManagerContainer } from "../interfaces/core/IManagerContainer.sol";
-import { IStablesManager } from "../interfaces/core/IStablesManager.sol";
-import { IJigsawUSD } from "../interfaces/stablecoin/IJigsawUSD.sol";
+import { IJigsawUSD } from "./interfaces/core/IJigsawUSD.sol";
+import { IManager } from "./interfaces/core/IManager.sol";
+import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
+import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 
 /**
  * @title Jigsaw Stablecoin
@@ -70,7 +70,7 @@ contract JigsawUSD is IJigsawUSD, ERC20, Ownable2Step, ERC20Permit {
      * @notice Mints tokens.
      *
      * @notice Requirements:
-     * - Must be called by the Stables Manager Contract
+     * - Must be called by the Stables Manager Contract.
      *  .
      * @notice Effects:
      * - Mints the specified amount of tokens to the given address.
@@ -101,9 +101,11 @@ contract JigsawUSD is IJigsawUSD, ERC20, Ownable2Step, ERC20Permit {
     /**
      * @notice Burns tokens from an address.
      *
+     * @notice Requirements:
      * - Must be called by the Stables Manager Contract
      *
-     * @notice Effects: Burns the specified amount of tokens from the specified address.
+     * @notice Effects:
+     *   - Burns the specified amount of tokens from the specified address.
      *
      * @param _user The user to burn it from.
      * @param _amount The amount of tokens to be burnt.

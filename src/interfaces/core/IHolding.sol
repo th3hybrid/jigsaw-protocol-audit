@@ -44,20 +44,6 @@ interface IHolding {
     function transfer(address _token, address _to, uint256 _amount) external;
 
     /**
-     * @notice Mints Jigsaw Token.
-     *
-     * @notice Requirements:
-     * - The caller must be allowed.
-     *
-     * @notice Effects:
-     * - Calls `mint` on the `_minter` with `_gauge`.
-     *
-     * @param _minter IMinter address.
-     * @param _gauge Gauge to mint for.
-     */
-    function mint(address _minter, address _gauge) external;
-
-    /**
      * @notice Executes generic call on the `contract`.
      *
      * @notice Requirements:
