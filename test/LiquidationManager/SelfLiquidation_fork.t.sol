@@ -76,7 +76,7 @@ contract SelfLiquidationTest is Test {
     address UniswapSwapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     mapping(address => SharesRegistry) public registries;
-    uint256 internal uniswapPoolCap = 1_000_000_000_000_000;
+    uint256 internal uniswapPoolCap = 1_000_000_000;
 
     address public jUsdPool;
     uint256 public jUsdPoolMintTokenId;
@@ -110,12 +110,12 @@ contract SelfLiquidationTest is Test {
         manager = new Manager(address(this), USDC, WETH, address(1), bytes(""));
         managerContainer = new ManagerContainer(address(this), address(manager));
 
-        jUsd = new JigsawUSD(address(this), address(managerContainer));
-
         SampleOracle jUsdOracle = new SampleOracle();
         manager.requestNewJUsdOracle(address(jUsdOracle));
         vm.warp(block.timestamp + manager.timelockAmount());
         manager.setJUsdOracle();
+
+        jUsd = new JigsawUSD(address(this), address(managerContainer));
 
         liquidationManager = new LiquidationManager(address(this), address(managerContainer));
         holdingManager = new HoldingManager(address(this), address(managerContainer));
@@ -158,7 +158,7 @@ contract SelfLiquidationTest is Test {
 
         receiptTokenFactory = new ReceiptTokenFactory(address(this));
         manager.setReceiptTokenFactory(address(receiptTokenFactory));
-        receiptTokenReference = IReceiptToken(new ReceiptToken(address(receiptTokenFactory)));
+        receiptTokenReference = IReceiptToken(new ReceiptToken());
         receiptTokenFactory.setReceiptTokenReferenceImplementation(address(receiptTokenReference));
 
         strategyWithoutRewardsMock = new StrategyWithoutRewardsMock(
@@ -1084,19 +1084,19 @@ contract SelfLiquidationTest is Test {
         usdc.approve(address(nonfungiblePositionManager), type(uint256).max);
 
         (tokenId,,,) = nonfungiblePositionManager.mint(
-            INonfungiblePositionManager.MintParams(
-                token0,
-                token1,
-                fee,
-                TickMath.MIN_TICK,
-                TickMath.MAX_TICK,
-                jUsdAmount,
-                usdcAmount,
-                0,
-                0,
-                address(this),
-                block.timestamp + 3600
-            )
+            INonfungiblePositionManager.MintParams({
+                token0: token0,
+                token1: token1,
+                fee: fee,
+                tickLower: TickMath.MIN_TICK,
+                tickUpper: TickMath.MAX_TICK,
+                amount0Desired: jUsdAmount,
+                amount1Desired: usdcAmount,
+                amount0Min: 1,
+                amount1Min: 1,
+                recipient: address(this),
+                deadline: block.timestamp
+            })
         );
     }
 }

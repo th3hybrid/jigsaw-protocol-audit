@@ -79,27 +79,30 @@ abstract contract BasicContractsFixture is Test {
         manager.whitelistToken(address(weth));
 
         usdcOracle = new SampleOracle();
-        sharesRegistry = new SharesRegistry(
-            msg.sender, address(managerContainer), address(usdc), address(usdcOracle), bytes(""), 50_000
-        );
+        sharesRegistry =
+            new SharesRegistry(OWNER, address(managerContainer), address(usdc), address(usdcOracle), bytes(""), 50_000);
         stablesManager.registerOrUpdateShareRegistry(address(sharesRegistry), address(usdc), true);
         registries[address(usdc)] = address(sharesRegistry);
 
         SampleOracle wethOracle = new SampleOracle();
-        wethSharesRegistry = new SharesRegistry(
-            msg.sender, address(managerContainer), address(weth), address(wethOracle), bytes(""), 50_000
-        );
+        wethSharesRegistry =
+            new SharesRegistry(OWNER, address(managerContainer), address(weth), address(wethOracle), bytes(""), 50_000);
         stablesManager.registerOrUpdateShareRegistry(address(wethSharesRegistry), address(weth), true);
         registries[address(weth)] = address(wethSharesRegistry);
 
         receiptTokenFactory = new ReceiptTokenFactory(OWNER);
         manager.setReceiptTokenFactory(address(receiptTokenFactory));
-        receiptTokenReference = IReceiptToken(new ReceiptToken(address(receiptTokenFactory)));
+        receiptTokenReference = IReceiptToken(new ReceiptToken());
         receiptTokenFactory.setReceiptTokenReferenceImplementation(address(receiptTokenReference));
 
-        strategyWithoutRewardsMock = new StrategyWithoutRewardsMock(
-            address(managerContainer), address(usdc), address(usdc), address(0), "RUsdc-Mock", "RUSDCM"
-        );
+        strategyWithoutRewardsMock = new StrategyWithoutRewardsMock({
+            _managerContainer: address(managerContainer),
+            _tokenIn: address(usdc),
+            _tokenOut: address(usdc),
+            _rewardToken: address(0),
+            _receiptTokenName: "RUsdc-Mock",
+            _receiptTokenSymbol: "RUSDCM"
+        });
         strategyManager.addStrategy(address(strategyWithoutRewardsMock));
         vm.stopPrank();
     }

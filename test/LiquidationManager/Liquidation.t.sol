@@ -91,7 +91,7 @@ contract LiquidationTest is Test {
 
         receiptTokenFactory = new ReceiptTokenFactory(address(this));
         manager.setReceiptTokenFactory(address(receiptTokenFactory));
-        receiptTokenReference = IReceiptToken(new ReceiptToken(address(receiptTokenFactory)));
+        receiptTokenReference = IReceiptToken(new ReceiptToken());
         receiptTokenFactory.setReceiptTokenReferenceImplementation(address(receiptTokenReference));
 
         strategyWithoutRewardsMock = new StrategyWithoutRewardsMock(
