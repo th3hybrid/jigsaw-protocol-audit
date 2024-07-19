@@ -610,11 +610,11 @@ contract Manager is IManager, Ownable2Step {
     function setJUsdOracle() external override onlyOwner {
         require(_isActiveChange, "1000");
         require(_newOracleTimestamp + timelockAmount <= block.timestamp, "3066");
+        emit OracleUpdated(address(jUsdOracle), _newOracle);
         jUsdOracle = IOracle(_newOracle);
         _isActiveChange = false;
         _newOracle = address(0);
         _newOracleTimestamp = 0;
-        emit OracleUpdated();
     }
 
     /**
@@ -633,8 +633,8 @@ contract Manager is IManager, Ownable2Step {
      */
     function setJUsdOracleData(bytes calldata _newOracleData) external override onlyOwner {
         require(keccak256(oracleData) != keccak256(_newOracleData), "3017");
+        emit OracleDataUpdated(oracleData, _newOracleData);
         oracleData = _newOracleData;
-        emit OracleDataUpdated();
     }
 
     /**
