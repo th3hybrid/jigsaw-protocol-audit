@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 
 import { Manager } from "../../src/Manager.sol";
 import { OperationsLib } from "../../src/libraries/OperationsLib.sol";
-import { BasicContractsFixture } from "../fixtures/BasicContractsFixture.t.sol";
+import "../fixtures/BasicContractsFixture.t.sol";
 
 contract ManagerTest is BasicContractsFixture {
     event DexManagerUpdated(address indexed oldAddress, address indexed newAddress);
@@ -58,21 +58,25 @@ contract ManagerTest is BasicContractsFixture {
         manager.setLiquidatorBonus(PRECISION + 1000);
     }
 
-    function test_should_set_self_liquidation_fee(address _user, uint256 _amount) public {
-        assumeNotOwnerNotZero(_user);
+    function test_should_set_self_liquidation_fee(uint256 _amount) public {
+        vm.startPrank(OWNER, OWNER);
+        uint256 invalidAmount = bound(_amount, manager.PRECISION() + 1, 1e60);
+
+        vm.expectRevert(bytes("3066"));
+        manager.setSelfLiquidationFee(invalidAmount);
 
         uint256 newAmount = bound(_amount, 0, manager.PRECISION() - 1);
 
-        vm.prank(_user);
-        vm.expectRevert();
-        manager.setSelfLiquidationFee(newAmount);
-
         vm.startPrank(OWNER, OWNER);
         uint256 oldAmount = manager.selfLiquidationFee();
+
         vm.expectEmit(true, true, false, false);
         emit SelfLiquidationFeeUpdated(oldAmount, newAmount);
+
         manager.setSelfLiquidationFee(newAmount);
+
         assertEq(manager.selfLiquidationFee(), newAmount);
+        assertEq(ILiquidationManager(manager.liquidationManager()).selfLiquidationFee(), newAmount);
     }
 
     function test_should_set_fee_address(address _user, address _newAddress) public {
