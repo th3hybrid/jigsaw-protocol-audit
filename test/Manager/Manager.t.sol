@@ -32,6 +32,10 @@ contract ManagerTest is BasicContractsFixture {
     event NonWithdrawableTokenAdded(address indexed token);
     event NonWithdrawableTokenRemoved(address indexed token);
     event InvokerUpdated(address indexed component, bool allowed);
+    event OracleUpdated(address indexed oldOracle, address indexed newOracle);
+    event OracleDataUpdated(bytes indexed oldData, bytes indexed newData);
+    event TimelockAmountUpdateRequested(uint256 oldVal, uint256 newVal);
+    event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
 
     function setUp() public {
         init();
@@ -445,6 +449,97 @@ contract ManagerTest is BasicContractsFixture {
 
         vm.expectRevert(bytes("3070"));
         manager.removeNonWithdrawableToken(_newAddress);
+    }
+
+    function test_requestNewJUsdOracle_when_alreadyRequested() public {
+        vm.prank(OWNER, OWNER);
+        manager.requestNewJUsdOracle(address(1));
+
+        vm.prank(OWNER, OWNER);
+        vm.expectRevert(bytes("1000"));
+        manager.requestNewJUsdOracle(address(1));
+    }
+
+    function test_setJUsdOracle_when_reverts() public {
+        // Test case when oracle is not requested
+        vm.startPrank(OWNER, OWNER);
+        vm.expectRevert(bytes("1000"));
+        manager.setJUsdOracle();
+
+        // Test case when setting too early
+        manager.requestNewJUsdOracle(address(1));
+        vm.expectRevert(bytes("3066"));
+        manager.setJUsdOracle();
+    }
+
+    function test_setJUsdOracleData() public {
+        // Test case when oracle data is the same
+        vm.startPrank(OWNER, OWNER);
+        bytes memory oldData = manager.oracleData();
+        vm.expectRevert(bytes("3017"));
+        manager.setJUsdOracleData(oldData);
+
+        // Test happy case
+        vm.expectEmit();
+        emit OracleDataUpdated(oldData, bytes("New data"));
+        manager.setJUsdOracleData(bytes("New data"));
+    }
+
+    function test_manager_requestTimelockAmountChanger() public {
+        vm.startPrank(OWNER, OWNER);
+        uint256 oldTimelock = manager.timelockAmount();
+        uint256 newTimelock = 1 days;
+
+        // Test case with zero value
+        vm.expectRevert(bytes("2001"));
+        manager.requestTimelockAmountChange(0);
+
+        // Test authorized request
+        vm.expectEmit();
+        emit TimelockAmountUpdateRequested(oldTimelock, newTimelock);
+        manager.requestTimelockAmountChange(newTimelock);
+
+        // Test request when in active change
+        vm.expectRevert(bytes("1000"));
+        manager.requestTimelockAmountChange(newTimelock);
+    }
+
+    function test_acceptTimelockAmountChange() public {
+        vm.startPrank(OWNER, OWNER);
+
+        uint256 oldTimelock = manager.timelockAmount();
+        uint256 newTimelock = 1 days;
+
+        // Test accepting request without any request
+        vm.expectRevert(bytes("1000"));
+        manager.acceptTimelockAmountChange();
+
+        // Make change request
+        manager.requestTimelockAmountChange(newTimelock);
+
+        // Test accepting request too early
+        vm.expectRevert(bytes("3066"));
+        manager.acceptTimelockAmountChange();
+
+        // Test authorized accept
+        vm.warp(block.timestamp + oldTimelock);
+        vm.expectEmit();
+        emit TimelockAmountUpdated(oldTimelock, newTimelock);
+        manager.acceptTimelockAmountChange();
+
+        assertEq(manager.timelockAmount(), newTimelock, "Timelock amount set wrong");
+    }
+
+    function test_getJUsdExchangeRate_when_notUpdated() public {
+        // Test case when rate is 0
+        jUsdOracle.setRateTo0();
+        vm.expectRevert(bytes("2100"));
+        manager.getJUsdExchangeRate();
+
+        // Test case when rate is not updated
+        jUsdOracle.setUpdatedToFalse();
+        vm.expectRevert(bytes("3037"));
+        manager.getJUsdExchangeRate();
     }
 
     function test_should_not_renounce_ownership() public {
