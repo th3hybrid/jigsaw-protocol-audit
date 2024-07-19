@@ -145,13 +145,17 @@ interface IManager {
 
     /**
      * @notice Emitted when the oracle is updated.
+     * @param oldOracle The address of the old oracle.
+     * @param newOracle The address of the new oracle.
      */
-    event OracleUpdated();
+    event OracleUpdated(address indexed oldOracle, address indexed newOracle);
 
     /**
      * @notice Emitted when oracle data is updated.
+     * @param oldData The address of the old oracle data.
+     * @param newData The address of the new oracle data.
      */
-    event OracleDataUpdated();
+    event OracleDataUpdated(bytes indexed oldData, bytes indexed newData);
 
     /**
      * @notice Emitted when a new timelock amount is requested.
