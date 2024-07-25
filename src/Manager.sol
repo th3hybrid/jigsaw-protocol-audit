@@ -134,12 +134,6 @@ contract Manager is IManager, Ownable2Step {
      */
     address public override receiptTokenFactory;
 
-    // @todo delete as we no longer need it
-    /**
-     * @notice Returns the address of the LiquidityGaugeFactory.
-     */
-    address public override liquidityGaugeFactory;
-
     // -- Utility values --
 
     /**
@@ -281,7 +275,6 @@ contract Manager is IManager, Ownable2Step {
         emit TokenRemoved(_token);
     }
 
-    // @todo reconsider strategyManager as allowed caller
     /**
      * @notice Registers the `_token` as non-withdrawable.
      *
@@ -575,26 +568,6 @@ contract Manager is IManager, Ownable2Step {
     }
 
     /**
-     * @notice Sets the liquidity gauge factory's address.
-     *
-     * @notice Requirements:
-     * - `_val` must be different from previous `liquidityGaugeFactory` address.
-     *
-     * @notice Effects:
-     * - Updates the `liquidityGaugeFactory` state variable.
-     *
-     * @notice Emits:
-     * - `LiquidityGaugeFactoryUpdated` event indicating successful setting of the `liquidityGaugeFactory` address.
-     *
-     * @param _factory Liquidity gauge factory's address.
-     */
-    function setLiquidityGaugeFactory(address _factory) external override onlyOwner validAddress(_factory) {
-        require(liquidityGaugeFactory != _factory, "3017");
-        emit LiquidityGaugeFactoryUpdated(liquidityGaugeFactory, _factory);
-        liquidityGaugeFactory = _factory;
-    }
-
-    /**
      * @notice Registers jUSD's oracle change request.
      *
      * @notice Requirements:
@@ -637,11 +610,11 @@ contract Manager is IManager, Ownable2Step {
     function setJUsdOracle() external override onlyOwner {
         require(_isActiveChange, "1000");
         require(_newOracleTimestamp + timelockAmount <= block.timestamp, "3066");
+        emit OracleUpdated(address(jUsdOracle), _newOracle);
         jUsdOracle = IOracle(_newOracle);
         _isActiveChange = false;
         _newOracle = address(0);
         _newOracleTimestamp = 0;
-        emit OracleUpdated();
     }
 
     /**
@@ -660,8 +633,8 @@ contract Manager is IManager, Ownable2Step {
      */
     function setJUsdOracleData(bytes calldata _newOracleData) external override onlyOwner {
         require(keccak256(oracleData) != keccak256(_newOracleData), "3017");
+        emit OracleDataUpdated(oracleData, _newOracleData);
         oracleData = _newOracleData;
-        emit OracleDataUpdated();
     }
 
     /**

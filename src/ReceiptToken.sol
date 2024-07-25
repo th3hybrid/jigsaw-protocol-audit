@@ -55,7 +55,7 @@ contract ReceiptToken is IReceiptToken, ERC20Upgradeable, OwnableUpgradeable, Re
         address __minter,
         address __owner
     ) external override initializer {
-        require(__minter != address(0), "3065");
+        require(__minter != address(0), "3000");
         minter = __minter;
 
         // Initialize OwnableUpgradeable contract.
@@ -113,7 +113,7 @@ contract ReceiptToken is IReceiptToken, ERC20Upgradeable, OwnableUpgradeable, Re
      */
     function setMinter(address _minter) external override nonReentrant onlyMinterOrOwner {
         require(_minter != minter, "3062");
-        emit MinterUpdated(minter, _minter);
+        emit MinterUpdated({ oldMinter: minter, newMinter: _minter });
         minter = _minter;
     }
 

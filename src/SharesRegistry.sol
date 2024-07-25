@@ -271,7 +271,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @param _data The new oracle data.
      */
     function requestNewOracleData(bytes calldata _data) external override onlyOwner {
-        if (_newOracleTimestamp + timelockAmount > block.timestamp) require(!_isOracleDataActiveChange, "3096");
+        if (_newOracleDataTimestamp + timelockAmount > block.timestamp) require(!_isOracleDataActiveChange, "3096");
         require(!_isTimelockActiveChange, "3095");
 
         _isOracleDataActiveChange = true;

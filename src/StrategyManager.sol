@@ -61,7 +61,6 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
 
     // -- User specific methods --
 
-    // @todo Shouldn't we stake receipt tokens automatically?
     /**
      * @notice Invests `_token` into `_strategy`.
      *
@@ -184,8 +183,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * - Specified `_holding` must exist within protocol.
      *
      * @notice Effects:
-     * - Unstakes receipt tokens.
-     * - Withdraws investment from `withdraw`.
+     * - Withdraws investment from `_strategy`.
      * - Updates `holdingToStrategy` if needed.
      *
      * @notice Emits:
@@ -476,7 +474,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         bytes calldata _data
     ) private returns (uint256, uint256) {
         IStrategy strategyContract = IStrategy(_strategy);
-        // First check if holding has enough receipt tokens to burn and unstake if necessary
+        // First check if holding has enough receipt tokens to burn.
         _checkReceiptTokenAvailability({ _strategy: strategyContract, _shares: _shares, _holding: _holding });
 
         (uint256 assetResult, uint256 tokenInResult) = strategyContract.withdraw(_shares, _holding, _asset, _data);
@@ -490,20 +488,16 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
     }
 
     /**
-     * @notice Checks the availability of receipt tokens in the holding address and unstakes the difference if
-     * necessary.
+     * @notice Checks the availability of receipt tokens in the holding.
      *
      * @notice Requirements:
      * - Holding must have enough receipt tokens for the specified number of shares.
-     *
-     * @notice Effects:
-     * - If there is not enough receipt tokens, unstakes the difference from the strategy.
      *
      * @param _strategy contract's instance.
      * @param _shares number being checked for receipt token availability.
      * @param _holding address for which the receipt token availability is being checked.
      */
-    function _checkReceiptTokenAvailability(IStrategy _strategy, uint256 _shares, address _holding) private {
+    function _checkReceiptTokenAvailability(IStrategy _strategy, uint256 _shares, address _holding) private view {
         uint256 tokenDecimals = _strategy.sharesDecimals();
         (, uint256 totalShares) = _strategy.recipients(_holding);
         uint256 rtAmount = _shares > totalShares ? totalShares : _shares;
@@ -514,8 +508,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
             rtAmount = rtAmount * (10 ** (18 - tokenDecimals));
         }
 
-        IERC20 receiptToken = IERC20(_strategy.getReceiptTokenAddress());
-        require(receiptToken.balanceOf(_holding) >= rtAmount);
+        require(IERC20(_strategy.getReceiptTokenAddress()).balanceOf(_holding) >= rtAmount);
     }
 
     /**

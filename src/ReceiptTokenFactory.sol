@@ -26,7 +26,7 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
      */
     constructor(address _initialOwner) Ownable(_initialOwner) { }
 
-    // -- Setter --
+    // -- Administration --
 
     /**
      * @notice Sets the reference implementation address for the receipt token.
@@ -55,10 +55,23 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
         address _minter,
         address _owner
     ) external override returns (address newReceiptTokenAddress) {
+        // Clone the Receipt Token implementation for the new receipt token.
         newReceiptTokenAddress = Clones.clone(referenceImplementation);
 
-        IReceiptToken(newReceiptTokenAddress).initialize(_name, _symbol, _minter, _owner);
+        // Emit the event indicating the successful Receipt Token creation
+        emit ReceiptTokenCreated({
+            newReceiptTokenAddress: newReceiptTokenAddress,
+            creator: msg.sender,
+            name: _name,
+            symbol: _symbol
+        });
 
-        emit ReceiptTokenCreated(newReceiptTokenAddress, msg.sender, _name, _symbol);
+        // Initialize the new receipt token's contract.
+        IReceiptToken(newReceiptTokenAddress).initialize({
+            __name: _name,
+            __symbol: _symbol,
+            __minter: _minter,
+            __owner: _owner
+        });
     }
 }

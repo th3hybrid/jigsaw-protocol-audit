@@ -268,7 +268,6 @@ contract HoldingManagerTest is BasicContractsFixture {
     }
 
     // Tests if withdraw works when withdrawable token has no registry in the system
-    // @audit IS THIS OK?
     function test_withdraw_when_noRegistryForToken(address _user) public {
         vm.assume(_user != address(0));
 
