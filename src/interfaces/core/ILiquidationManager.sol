@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import { IHoldingManager } from "./IHoldingManager.sol";
 import { IManagerContainer } from "./IManagerContainer.sol";
@@ -32,13 +32,6 @@ interface ILiquidationManager {
     event Liquidated(address indexed holding, address indexed token, uint256 amount, uint256 collateralUsed);
 
     /**
-     * @notice Emitted when the pause state is updated.
-     * @param oldVal The old value of the pause state.
-     * @param newVal The new value of the pause state.
-     */
-    event PauseUpdated(bool oldVal, bool newVal);
-
-    /**
      * @notice Emitted when collateral is retrieved from a strategy.
      * @param token address retrieved as collateral.
      * @param holding address from which collateral is retrieved.
@@ -68,11 +61,6 @@ interface ILiquidationManager {
      * @notice returns utility variable used for preciser computations
      */
     function LIQUIDATION_PRECISION() external view returns (uint256);
-
-    /**
-     * @notice returns the pause state of the contract
-     */
-    function paused() external view returns (bool);
 
     // -- User specific methods --
 
@@ -166,10 +154,16 @@ interface ILiquidationManager {
     function setSelfLiquidationFee(uint256 _val) external;
 
     /**
-     * @notice Sets a new value for the pause state
-     * @param _val The new value for the pause state
+     * @notice Triggers stopped state.
      */
-    function setPaused(bool _val) external;
+    function pause() external;
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external;
+
+    // -- Structs --
 
     /**
      * @notice Temporary data structure used in the self-liquidation process.

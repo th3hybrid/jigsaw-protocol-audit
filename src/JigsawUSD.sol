@@ -1,35 +1,25 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-import { IManager } from "../interfaces/core/IManager.sol";
-import { IManagerContainer } from "../interfaces/core/IManagerContainer.sol";
-import { IStablesManager } from "../interfaces/core/IStablesManager.sol";
-import { IJigsawUSD } from "../interfaces/stablecoin/IJigsawUSD.sol";
+import { IJigsawUSD } from "./interfaces/core/IJigsawUSD.sol";
+import { IManager } from "./interfaces/core/IManager.sol";
+import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
+import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 
 /**
  * @title Jigsaw Stablecoin
  * @notice This contract implements a stablecoin named Jigsaw USD.
- * @dev This contract uses OpenZeppelin's ERC20 implementation.
+ *
+ * @dev This contract inherits functionalities from `ERC20`, `Ownable2Step`, and `ERC20Permit`.
+ *
  * It has additional features such as minting and burning, and specific roles for the owner and the Stables Manager.
  */
-contract JigsawUSD is IJigsawUSD, ERC20 {
-    /**
-     * @notice Token's symbol.
-     */
-    string private constant SYMBOL = "jUSD";
-
-    /**
-     * @notice Token's name.
-     */
-    string private constant NAME = "Jigsaw USD";
-
-    /**
-     * @notice Token's decimals.
-     */
-    uint8 private constant DECIMALS = 18;
-
+contract JigsawUSD is IJigsawUSD, ERC20, Ownable2Step, ERC20Permit {
     /**
      * @notice Contract that contains the address of the manager contract.
      */
@@ -41,19 +31,17 @@ contract JigsawUSD is IJigsawUSD, ERC20 {
     uint256 public override mintLimit;
 
     /**
-     * @notice Owner of the contract.
-     */
-    address private _owner;
-
-    /**
      * @notice Creates the JigsawUSD Contract.
+     * @param _initialOwner The initial owner of the contract
      * @param _managerContainer Contract that contains the address of the manager contract.
      */
-    constructor(address _managerContainer) ERC20(NAME, SYMBOL) {
+    constructor(
+        address _initialOwner,
+        address _managerContainer
+    ) Ownable(_initialOwner) ERC20("Jigsaw USD", "jUSD") ERC20Permit("Jigsaw USD") {
         require(_managerContainer != address(0), "3065");
         managerContainer = IManagerContainer(_managerContainer);
-        _owner = msg.sender;
-        mintLimit = 1e6 * (10 ** DECIMALS); // initial 1M limit
+        mintLimit = 1e6 * (10 ** decimals()); // initial 1M limit
     }
 
     // -- Owner specific methods --
@@ -82,7 +70,7 @@ contract JigsawUSD is IJigsawUSD, ERC20 {
      * @notice Mints tokens.
      *
      * @notice Requirements:
-     * - Must be called by the Stables Manager Contract
+     * - Must be called by the Stables Manager Contract.
      *  .
      * @notice Effects:
      * - Mints the specified amount of tokens to the given address.
@@ -113,9 +101,11 @@ contract JigsawUSD is IJigsawUSD, ERC20 {
     /**
      * @notice Burns tokens from an address.
      *
+     * @notice Requirements:
      * - Must be called by the Stables Manager Contract
      *
-     * @notice Effects: Burns the specified amount of tokens from the specified address.
+     * @notice Effects:
+     *   - Burns the specified amount of tokens from the specified address.
      *
      * @param _user The user to burn it from.
      * @param _amount The amount of tokens to be burnt.
@@ -139,14 +129,6 @@ contract JigsawUSD is IJigsawUSD, ERC20 {
      */
     modifier onlyStablesManager() {
         require(msg.sender == IManager(managerContainer.manager()).stablesManager(), "1000");
-        _;
-    }
-
-    /**
-     * Ensures that the caller is the owner
-     */
-    modifier onlyOwner() {
-        require(_owner == msg.sender, "1000");
         _;
     }
 }

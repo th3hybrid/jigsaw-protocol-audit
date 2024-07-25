@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import { IStaker } from "./interfaces/core/IStaker.sol";
 
@@ -11,13 +13,13 @@ import { IStaker } from "./interfaces/core/IStaker.sol";
  * @title Staker
  * @notice Staker is a synthetix based contract responsible for distributing rewards.
  *
- * @dev This contract inherits functionalities from `Ownable2Step` and `ReentrancyGuard`.
+ * @dev This contract inherits functionalities from `Ownable2Step` and `ReentrancyGuard`, `Pausable`.
  *
  * @author Hovooo (@hovooo)
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract Staker is IStaker, Ownable, ReentrancyGuard {
+contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     /**
@@ -70,11 +72,6 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
      */
     uint256 public constant override totalSupplyLimit = 1e34;
 
-    /**
-     * @notice returns the pause state of the contract
-     */
-    bool public override paused;
-
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
@@ -82,15 +79,18 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
 
     /**
      * @notice Constructor function for initializing the Staker contract.
+     *
+     * @param _initialOwner The initial owner of the contract.
      * @param _tokenIn The address of the token to be staked
      * @param _rewardToken The address of the reward token
      * @param _rewardsDuration The duration of the rewards period, in seconds
      */
     constructor(
+        address _initialOwner,
         address _tokenIn,
         address _rewardToken,
         uint256 _rewardsDuration
-    ) validAddress(_tokenIn) validAddress(_rewardToken) validAmount(_rewardsDuration) {
+    ) Ownable(_initialOwner) validAddress(_tokenIn) validAddress(_rewardToken) validAmount(_rewardsDuration) {
         tokenIn = _tokenIn;
         rewardToken = _rewardToken;
         rewardsDuration = _rewardsDuration;
@@ -105,9 +105,14 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
      *
      * @param _amount to deposit.
      */
-    function deposit(uint256 _amount) external override nonReentrant updateReward(msg.sender) validAmount(_amount) {
-        require(!paused, "1200");
-
+    function deposit(uint256 _amount)
+        external
+        override
+        nonReentrant
+        whenNotPaused
+        updateReward(msg.sender)
+        validAmount(_amount)
+    {
         uint256 rewardBalance = IERC20(rewardToken).balanceOf(address(this));
         require(rewardBalance != 0, "3090");
 
@@ -126,7 +131,14 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
      *
      * @param _amount to withdraw.
      */
-    function withdraw(uint256 _amount) public override nonReentrant updateReward(msg.sender) validAmount(_amount) {
+    function withdraw(uint256 _amount)
+        public
+        override
+        nonReentrant
+        whenNotPaused
+        updateReward(msg.sender)
+        validAmount(_amount)
+    {
         _totalSupply -= _amount;
         _balances[msg.sender] = _balances[msg.sender] - _amount;
         emit Withdrawn({ user: msg.sender, amount: _amount });
@@ -137,7 +149,7 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
      * @notice Claims the rewards for the caller.
      * @dev This function allows the caller to claim their earned rewards.
      */
-    function claimRewards() public override nonReentrant updateReward(msg.sender) {
+    function claimRewards() public override whenNotPaused nonReentrant updateReward(msg.sender) {
         uint256 reward = rewards[msg.sender];
         require(reward != 0, "3092");
 
@@ -207,12 +219,17 @@ contract Staker is IStaker, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Sets a new value for pause state.
-     * @param _val the new value.
+     * @notice Triggers stopped state.
      */
-    function setPaused(bool _val) external onlyOwner {
-        emit PauseUpdated({ oldVal: paused, newVal: _val });
-        paused = _val;
+    function pause() external override onlyOwner whenNotPaused {
+        _pause();
+    }
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external override onlyOwner whenPaused {
+        _unpause();
     }
 
     /**

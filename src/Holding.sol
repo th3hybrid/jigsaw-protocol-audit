@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import { OperationsLib } from "./libraries/OperationsLib.sol";
 
@@ -9,7 +12,6 @@ import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
 import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 import { IStrategyManagerMin } from "./interfaces/core/IStrategyManagerMin.sol";
-import { IMinter } from "./interfaces/vyper/IMinter.sol";
 
 /**
  * @title Holding Contract
@@ -18,11 +20,13 @@ import { IMinter } from "./interfaces/vyper/IMinter.sol";
  * approving spenders, making generic calls, and minting Jigsaw Tokens. It is intended to be cloned and initialized to
  * ensure unique instances with specific managers.
  *
+ * @dev This contract inherits functionalities from `ReentrancyGuard` and `Initializable`.
+ *
  * @author Hovooo (@hovooo), Cosmin Grigore (@gcosmintech).
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract Holding is IHolding {
+contract Holding is IHolding, Initializable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /**
@@ -34,6 +38,18 @@ contract Holding is IHolding {
      * @notice Indicates if the contract has been initialized.
      */
     bool private _initialized;
+
+    // --- Constructor ---
+
+    /**
+     * @dev To prevent the implementation contract from being used, the _disableInitializers function is invoked
+     * in the constructor to automatically lock it when it is deployed.
+     */
+    constructor() {
+        _disableInitializers();
+    }
+
+    // --- Initialization ---
 
     /**
      * @notice This function initializes the contract (instead of a constructor) to be cloned.
@@ -87,24 +103,8 @@ contract Holding is IHolding {
      * @param _to Address to move token to.
      * @param _amount Transfer amount.
      */
-    function transfer(address _token, address _to, uint256 _amount) external override onlyAllowed {
+    function transfer(address _token, address _to, uint256 _amount) external override nonReentrant onlyAllowed {
         IERC20(_token).safeTransfer({ to: _to, value: _amount });
-    }
-
-    /**
-     * @notice Mints Jigsaw Token.
-     *
-     * @notice Requirements:
-     * - The caller must be allowed.
-     *
-     * @notice Effects:
-     * - Calls `mint` on the `_minter` with `_gauge`.
-     *
-     * @param _minter IMinter address.
-     * @param _gauge Gauge to mint for.
-     */
-    function mint(address _minter, address _gauge) external override onlyAllowed {
-        IMinter(_minter).mint(_gauge);
     }
 
     /**
@@ -125,7 +125,7 @@ contract Holding is IHolding {
     function genericCall(
         address _contract,
         bytes calldata _call
-    ) external override onlyAllowed returns (bool success, bytes memory result) {
+    ) external override nonReentrant onlyAllowed returns (bool success, bytes memory result) {
         (success, result) = _contract.call(_call);
     }
 

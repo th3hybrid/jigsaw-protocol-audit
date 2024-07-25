@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import { IManagerContainer } from "./IManagerContainer.sol";
 import { IStrategyManagerMin } from "./IStrategyManagerMin.sol";
@@ -30,27 +30,6 @@ interface IStrategyManager is IStrategyManagerMin {
      * @param fee The fee associated with the strategy.
      */
     event StrategyUpdated(address indexed strategy, bool active, uint256 fee);
-
-    /**
-     * @notice Emitted when a gauge is added to a strategy.
-     * @param strategy The address of the strategy to which the gauge was added.
-     * @param gauge The address of the gauge that was added.
-     */
-    event GaugeAdded(address indexed strategy, address indexed gauge);
-
-    /**
-     * @notice Emitted when a gauge is removed from a strategy.
-     * @param strategy The address of the strategy from which the gauge was removed.
-     */
-    event GaugeRemoved(address indexed strategy);
-
-    /**
-     * @notice Emitted when a gauge is updated for a strategy.
-     * @param strategy The address of the strategy for which the gauge was updated.
-     * @param oldGauge The address of the old gauge.
-     * @param newGauge The address of the new gauge.
-     */
-    event GaugeUpdated(address indexed strategy, address indexed oldGauge, address indexed newGauge);
 
     /**
      * @notice Emitted when an investment is created.
@@ -132,44 +111,10 @@ interface IStrategyManager is IStrategyManagerMin {
     event RewardsClaimed(address indexed token, address indexed holding, uint256 amount);
 
     /**
-     * @notice Emitted when the pause state is changed.
-     * @param oldVal The old pause state.
-     * @param newVal The new pause state.
-     */
-    event PauseUpdated(bool oldVal, bool newVal);
-
-    /**
-     * @notice Emitted when a user stakes receipt tokens into a strategy gauge.
-     * @param strategy The address of the strategy where tokens are staked.
-     * @param amount The amount of receipt tokens staked.
-     */
-    event ReceiptTokensStaked(address indexed strategy, uint256 amount);
-
-    /**
-     * @notice Emitted when a user unstakes receipt tokens from a strategy gauge.
-     * @param strategy The address of the strategy from which tokens are unstaked.
-     * @param amount The amount of receipt tokens unstaked.
-     */
-    event ReceiptTokensUnstaked(address indexed strategy, uint256 amount);
-
-    /**
-     * @notice Returns the address of the gauge corresponding to the Strategy.
-     * @dev This function returns the gauge address associated with a given strategy address.
-     * @param _strategy The address of the strategy whose gauge address is to be retrieved.
-     * @return gauge The address of the gauge corresponding to the specified strategy address.
-     */
-    function strategyGauges(address _strategy) external view returns (address gauge);
-
-    /**
      * @notice Returns the contract that contains the address of the Manager contract.
      * @return IManagerContainer The contract instance containing the Manager contract address.
      */
     function managerContainer() external view returns (IManagerContainer);
-
-    /**
-     * @notice Returns the pause state of the contract.
-     */
-    function paused() external view returns (bool);
 
     // -- User specific methods --
 
@@ -343,53 +288,7 @@ interface IStrategyManager is IStrategyManagerMin {
      */
     function invokeTransferal(address _holding, address _token, address _to, uint256 _amount) external;
 
-    /**
-     * @notice deposits receipt tokens into the liquidity gauge of the strategy.
-     *
-     * @notice Requirements:
-     * - `_strategy` must be valid (not zero address).
-     * - `_amount` must be valid (greater than zero).
-     * - `_strategy` must have gauge associated with it.
-     * - Msg.sender's holding should have enough receipt tokens.
-     *
-     * @notice Effects:
-     * - Approves spending for `_strategy`'s gauge on holding's behalf.
-     * - Deposits receipt tokens to `_strategy`'s gauge on holding's behalf.
-     *
-     * @notice Emits:
-     * - ReceiptTokensStaked event indicating successful receipt token staking operation.
-     *
-     * @param _strategy strategy's address.
-     * @param _amount amount of receipt tokens to stake.
-     */
-    function stakeReceiptTokens(address _strategy, uint256 _amount) external;
-
-    /**
-     * @notice Withdraws staked receipt tokens from the liquidity gauge of the strategy.
-     *
-     * @notice Requirements:
-     * - `_strategy` must be valid (not zero address).
-     * - `_amount` must be valid (greater than zero).
-     * - `_strategy` must have gauge associated with it.
-     *
-     * @notice Effects:
-     * - Withdraws receipt tokens from `_strategy`'s gauge through holding.
-     *
-     * @notice Emits:
-     * - ReceiptTokensUnstaked event indicating successful receipt token unstaking operation.
-     *
-     * @param _strategy strategy's address.
-     * @param _amount amount of receipt tokens to unstake.
-     */
-    function unstakeReceiptTokens(address _strategy, uint256 _amount) external;
-
     // -- Administration --
-
-    /**
-     * @notice Sets a new value for pause state.
-     * @param _val the new value
-     */
-    function setPaused(bool _val) external;
 
     /**
      * @notice Adds a new strategy to the whitelist.
@@ -405,31 +304,14 @@ interface IStrategyManager is IStrategyManagerMin {
     function updateStrategy(address _strategy, StrategyInfo calldata _info) external;
 
     /**
-     * @notice Adds a new gauge to a strategy.
-     * @param _strategy strategy's address.
-     * @param _gauge gauge's address.
+     * @notice Triggers stopped state.
      */
-    function addStrategyGauge(address _strategy, address _gauge) external;
+    function pause() external;
 
     /**
-     * @notice Removes a gauge from the strategy.
-     * @param _strategy strategy's address.
+     * @notice Returns to normal state.
      */
-    function removeStrategyGauge(address _strategy) external;
-
-    /**
-     * @notice Updates the strategy's gauge.
-     * @param _strategy strategy's address.
-     * @param _gauge gauge's address.
-     */
-    function updateStrategyGauge(address _strategy, address _gauge) external;
-
-    /**
-     * @notice Performs several actions to config a strategy.
-     * @param _strategy strategy's address.
-     * @param _gauge gauge's address.
-     */
-    function configStrategy(address _strategy, address _gauge) external;
+    function unpause() external;
 
     // -- Getters --
 

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 pragma abicoder v2;
-
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import { TransferHelper } from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
@@ -27,7 +27,7 @@ import { ISwapManager } from "./interfaces/core/ISwapManager.sol";
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract SwapManager is ISwapManager, Ownable {
+contract SwapManager is ISwapManager, Ownable2Step {
     using SafeERC20 for IERC20;
 
     /**
@@ -52,11 +52,18 @@ contract SwapManager is ISwapManager, Ownable {
 
     /**
      * @notice Creates a new SwapManager contract.
+     *
+     * @param _initialOwner The initial owner of the contract.
      * @param _uniswapFactory the address of the UniswapV3 Factory.
      * @param _swapRouter the address of the UniswapV3 Swap Router.
      * @param _managerContainer contract that contains the address of the Manager contract.
      */
-    constructor(address _uniswapFactory, address _swapRouter, address _managerContainer) {
+    constructor(
+        address _initialOwner,
+        address _uniswapFactory,
+        address _swapRouter,
+        address _managerContainer
+    ) Ownable(_initialOwner) {
         require(_uniswapFactory != address(0), "3000");
         require(_swapRouter != address(0), "3000");
         require(_managerContainer != address(0), "3000");

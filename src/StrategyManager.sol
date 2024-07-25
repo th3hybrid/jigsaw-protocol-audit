@@ -1,34 +1,36 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
 import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
+
+import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 import { IStrategy } from "./interfaces/core/IStrategy.sol";
 import { IStrategyManager } from "./interfaces/core/IStrategyManager.sol";
-import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
 
 /**
  * @title StrategyManager
  *
  * @notice Manages investments of the user's assets into the whitelisted strategies to generate applicable revenue.
  *
- * @dev This contract inherits functionalities from `ReentrancyGuard`, and `Ownable`.
+ * @dev This contract inherits functionalities from  `Ownable2Step`, `ReentrancyGuard`, and `Pausable`.
  *
  * @author Hovooo (@hovooo), Cosmin Grigore (@gcosmintech).
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
+contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
 
@@ -36,11 +38,6 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
      * @notice Returns whitelisted Strategies' info.
      */
     mapping(address strategy => StrategyInfo info) public override strategyInfo;
-
-    /**
-     * @notice Returns the address of the gauge corresponding to the Strategy.
-     */
-    mapping(address strategy => address gauge) public override strategyGauges;
 
     /**
      * @notice Stores the strategies holding has invested in.
@@ -53,22 +50,17 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
     IManagerContainer public immutable override managerContainer;
 
     /**
-     * @notice Returns the pause state of the contract.
-     */
-    bool public override paused;
-
-    /**
      * @notice Creates a new StrategyManager contract.
+     * @param _initialOwner The initial owner of the contract.
      * @param _managerContainer contract that contains the address of the Manager contract.
      */
-    constructor(address _managerContainer) {
+    constructor(address _initialOwner, address _managerContainer) Ownable(_initialOwner) {
         require(_managerContainer != address(0), "3065");
         managerContainer = IManagerContainer(_managerContainer);
     }
 
     // -- User specific methods --
 
-    // @todo Shouldn't we stake receipt tokens automatically?
     /**
      * @notice Invests `_token` into `_strategy`.
      *
@@ -108,7 +100,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         validStrategy(_strategy)
         validAmount(_amount)
         validToken(_token)
-        notPaused
+        whenNotPaused
         nonReentrant
         returns (uint256 tokenOutAmount, uint256 tokenInAmount)
     {
@@ -156,7 +148,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         validStrategy(_data.strategyFrom)
         validStrategy(_data.strategyTo)
         nonReentrant
-        notPaused
+        whenNotPaused
         returns (uint256 tokenOutAmount, uint256 tokenInAmount)
     {
         address _holding = _getHoldingManager().userHolding(msg.sender);
@@ -191,8 +183,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
      * - Specified `_holding` must exist within protocol.
      *
      * @notice Effects:
-     * - Unstakes receipt tokens.
-     * - Withdraws investment from `withdraw`.
+     * - Withdraws investment from `_strategy`.
      * - Updates `holdingToStrategy` if needed.
      *
      * @notice Emits:
@@ -224,7 +215,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         onlyAllowed(_holding)
         validAmount(_shares)
         nonReentrant
-        notPaused
+        whenNotPaused
         returns (uint256 assetAmount, uint256 tokenInAmount)
     {
         require(_getHoldingManager().isHolding(_holding), "3002");
@@ -259,7 +250,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         override
         validStrategy(_strategy)
         nonReentrant
-        notPaused
+        whenNotPaused
         returns (uint256[] memory rewards, address[] memory tokens)
     {
         address _holding = _getHoldingManager().userHolding(msg.sender);
@@ -338,84 +329,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         IHolding(_holding).transfer({ _token: _token, _to: _to, _amount: _amount });
     }
 
-    /**
-     * @notice Deposits receipt tokens into the liquidity gauge of the strategy.
-     *
-     * @notice Requirements:
-     * - `_strategy` must be valid (not zero address).
-     * - `_amount` must be valid (greater than zero).
-     * - `_strategy` must have gauge associated with it.
-     * - Msg.sender's holding should have enough receipt tokens.
-     *
-     * @notice Effects:
-     * - Approves spending for `_strategy`'s gauge through holding.
-     * - Deposits receipt tokens to `_strategy`'s gauge through holding.
-     *
-     * @notice Emits:
-     * - ReceiptTokensStaked event indicating successful receipt token staking operation.
-     *
-     * @param _strategy strategy's address.
-     * @param _amount amount of receipt tokens to stake.
-     */
-    function stakeReceiptTokens(
-        address _strategy,
-        uint256 _amount
-    ) external override notPaused validStrategy(_strategy) validAmount(_amount) {
-        address gaugeAddress = strategyGauges[_strategy];
-        require(gaugeAddress != address(0), "1104");
-        IHolding holding = IHolding(_getHoldingManager().userHolding(msg.sender));
-        address receiptTokenAddress = IStrategy(_strategy).getReceiptTokenAddress();
-        require(IERC20(receiptTokenAddress).balanceOf(address(holding)) >= _amount, "2002");
-        emit ReceiptTokensStaked(_strategy, _amount);
-        holding.approve(receiptTokenAddress, gaugeAddress, _amount);
-        (bool success,) = holding.genericCall(
-            gaugeAddress, abi.encodeWithSignature("deposit(uint256,address)", _amount, address(holding))
-        );
-        require(success, "3015");
-    }
-
-    /**
-     * @notice Withdraws staked receipt tokens from the liquidity gauge of the strategy.
-     *
-     * @notice Requirements:
-     * - `_strategy` must be valid (not zero address).
-     * - `_amount` must be valid (greater than zero).
-     * - `_strategy` must have gauge associated with it.
-     *
-     * @notice Effects:
-     * - Withdraws receipt tokens from `_strategy`'s gauge through holding.
-     *
-     * @notice Emits:
-     * - ReceiptTokensUnstaked event indicating successful receipt token unstaking operation.
-     *
-     * @param _strategy strategy's address.
-     * @param _amount amount of receipt tokens to unstake.
-     */
-    function unstakeReceiptTokens(
-        address _strategy,
-        uint256 _amount
-    ) public override notPaused validStrategy(_strategy) validAmount(_amount) {
-        address gaugeAddress = strategyGauges[_strategy];
-        require(gaugeAddress != address(0), "1104");
-        IHolding holding = IHolding(_getHoldingManager().userHolding(msg.sender));
-        address receiptTokenAddress = IStrategy(_strategy).getReceiptTokenAddress();
-        uint256 oldBalance = IERC20(receiptTokenAddress).balanceOf(address(holding));
-        emit ReceiptTokensUnstaked(_strategy, _amount);
-        holding.genericCall(gaugeAddress, abi.encodeWithSignature("withdraw(uint256)", _amount));
-        uint256 newBalance = IERC20(receiptTokenAddress).balanceOf(address(holding));
-        require(newBalance - oldBalance == _amount, "3016");
-    }
-
     // -- Administration --
-
-    /**
-     * @notice Sets a new value for pause state.
-     * @param _val the new value.
-     */
-    function setPaused(bool _val) external override onlyOwner {
-        emit PauseUpdated(paused, _val);
-        paused = _val;
-    }
 
     /**
      * @notice Adds a new strategy to the whitelist.
@@ -448,56 +362,24 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Adds a new gauge to a strategy.
-     * @param _strategy strategy's address.
-     * @param _gauge gauge's address.
+     * @notice Triggers stopped state.
      */
-    function addStrategyGauge(
-        address _strategy,
-        address _gauge
-    ) public override onlyOwner validStrategy(_strategy) validAddress(_gauge) {
-        require(strategyGauges[_strategy] == address(0), "1103");
-        emit GaugeAdded(_strategy, _gauge);
-        strategyGauges[_strategy] = _gauge;
+    function pause() external override onlyOwner whenNotPaused {
+        _pause();
     }
 
     /**
-     * @notice Removes a gauge from the strategy.
-     * @param _strategy strategy's address.
+     * @notice Returns to normal state.
      */
-    function removeStrategyGauge(address _strategy) external override onlyOwner validStrategy(_strategy) {
-        require(strategyGauges[_strategy] != address(0), "1104");
-        strategyGauges[_strategy] = address(0);
-        emit GaugeRemoved(_strategy);
+    function unpause() external override onlyOwner whenPaused {
+        _unpause();
     }
 
     /**
-     * @notice Updates the strategy's gauge.
-     * @param _strategy strategy's address.
-     * @param _gauge gauge's address.
+     * @notice Override to avoid losing contract ownership.
      */
-    function updateStrategyGauge(
-        address _strategy,
-        address _gauge
-    ) external override onlyOwner validStrategy(_strategy) validAddress(_gauge) {
-        address oldGauge = strategyGauges[_strategy];
-        require(oldGauge != address(0), "1104");
-        require(oldGauge != _gauge, "1105");
-        emit GaugeUpdated(_strategy, oldGauge, _gauge);
-        strategyGauges[_strategy] = _gauge;
-    }
-
-    /**
-     * @notice Performs several actions to config a strategy.
-     * @param _strategy strategy's address.
-     * @param _gauge gauge's address.
-     */
-    function configStrategy(
-        address _strategy,
-        address _gauge
-    ) external override onlyOwner validAddress(_strategy) validAddress(_gauge) {
-        addStrategy(_strategy);
-        addStrategyGauge(_strategy, _gauge);
+    function renounceOwnership() public pure override {
+        revert("1000");
     }
 
     // -- Getters --
@@ -592,7 +474,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
         bytes calldata _data
     ) private returns (uint256, uint256) {
         IStrategy strategyContract = IStrategy(_strategy);
-        // First check if holding has enough receipt tokens to burn and unstake if necessary
+        // First check if holding has enough receipt tokens to burn.
         _checkReceiptTokenAvailability({ _strategy: strategyContract, _shares: _shares, _holding: _holding });
 
         (uint256 assetResult, uint256 tokenInResult) = strategyContract.withdraw(_shares, _holding, _asset, _data);
@@ -606,20 +488,16 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Checks the availability of receipt tokens in the holding address and unstakes the difference if
-     * necessary.
+     * @notice Checks the availability of receipt tokens in the holding.
      *
      * @notice Requirements:
      * - Holding must have enough receipt tokens for the specified number of shares.
-     *
-     * @notice Effects:
-     * - If there is not enough receipt tokens, unstakes the difference from the strategy.
      *
      * @param _strategy contract's instance.
      * @param _shares number being checked for receipt token availability.
      * @param _holding address for which the receipt token availability is being checked.
      */
-    function _checkReceiptTokenAvailability(IStrategy _strategy, uint256 _shares, address _holding) private {
+    function _checkReceiptTokenAvailability(IStrategy _strategy, uint256 _shares, address _holding) private view {
         uint256 tokenDecimals = _strategy.sharesDecimals();
         (, uint256 totalShares) = _strategy.recipients(_holding);
         uint256 rtAmount = _shares > totalShares ? totalShares : _shares;
@@ -630,13 +508,7 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
             rtAmount = rtAmount * (10 ** (18 - tokenDecimals));
         }
 
-        IERC20 receiptToken = IERC20(_strategy.getReceiptTokenAddress());
-        uint256 holdingReceiptTokenBalance = receiptToken.balanceOf(_holding);
-
-        if (holdingReceiptTokenBalance < rtAmount) {
-            // Not enough Receipt Tokens in holding, need to unstake the difference
-            unstakeReceiptTokens(address(_strategy), (rtAmount - holdingReceiptTokenBalance));
-        }
+        require(IERC20(_strategy.getReceiptTokenAddress()).balanceOf(_holding) >= rtAmount);
     }
 
     /**
@@ -661,13 +533,6 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
      */
     function _getStablesManager() private view returns (IStablesManager) {
         return IStablesManager(_getManager().stablesManager());
-    }
-
-    /**
-     * @notice Override to avoid losing contract ownership.
-     */
-    function renounceOwnership() public pure override {
-        revert("1000");
     }
 
     // -- Modifiers --
@@ -718,14 +583,6 @@ contract StrategyManager is IStrategyManager, ReentrancyGuard, Ownable {
      */
     modifier validToken(address _token) {
         require(_getManager().isTokenWhitelisted(_token), "3001");
-        _;
-    }
-
-    /**
-     * @dev Modifier to check if the contract is not paused.
-     */
-    modifier notPaused() {
-        require(!paused, "1200");
         _;
     }
 }

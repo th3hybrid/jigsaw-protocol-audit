@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import { IManagerContainer } from "../core/IManagerContainer.sol";
 import { IOracle } from "../oracle/IOracle.sol";
@@ -31,20 +31,6 @@ interface ISharesRegistry {
      * @param share The amount of shares.
      */
     event CollateralRemoved(address indexed user, uint256 share);
-
-    /**
-     * @notice Event emitted when accrue was called.
-     * @param updatedTotalBorrow The updated total borrow.
-     * @param extraAmount The extra amount.
-     */
-    event Accrued(uint256 updatedTotalBorrow, uint256 extraAmount);
-
-    /**
-     * @notice Event emitted when interest per second is updated.
-     * @param oldVal The old value.
-     * @param newVal The new value.
-     */
-    event InterestUpdated(uint256 oldVal, uint256 newVal);
 
     /**
      * @notice Event emitted when the collateralization rate is updated.
@@ -90,19 +76,6 @@ interface ISharesRegistry {
     event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
 
     /**
-     * @notice Event emitted when contract ownership transferal was initiated.
-     * @param oldOwner The address of the old owner.
-     * @param newOwner The address of the new owner.
-     */
-    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
-
-    /**
-     * @notice Event emitted when contract new ownership is accepted.
-     * @param newOwner The address of the new owner.
-     */
-    event OwnershipAccepted(address indexed newOwner);
-
-    /**
      * @notice Returns holding's borrowed amount.
      * @param _holding The address of the holding.
      * @return The borrowed amount.
@@ -133,25 +106,6 @@ interface ISharesRegistry {
      * @return The manager container.
      */
     function managerContainer() external view returns (IManagerContainer);
-
-    /**
-     * @notice Current owner.
-     * @return The owner address.
-     */
-    function owner() external view returns (address);
-
-    /**
-     * @notice Possible new owner.
-     * @dev If different than `owner`, an ownership transfer is in progress and has to be accepted by the new owner.
-     * @return The temporary owner address.
-     */
-    function temporaryOwner() external view returns (address);
-
-    /**
-     * @notice Info about the accrued data.
-     * @return lastAccrued, feesEarned, and INTEREST_PER_SECOND.
-     */
-    function accrueInfo() external view returns (uint64, uint128, uint64);
 
     /**
      * @notice Oracle contract associated with this share registry.
@@ -224,36 +178,7 @@ interface ISharesRegistry {
      */
     function unregisterCollateral(address _holding, uint256 _share) external;
 
-    /**
-     * @notice Accrues the interest on the borrowed tokens and handles the accumulation of fees.
-     *
-     * @notice Requirements:
-     * - `msg.sender` must be the Stables Manager Contract.
-     *
-     * @notice Effects:
-     * - Updates `collateral` mapping.
-     *
-     * @notice Emits:
-     * - `Accrued`.
-     *
-     * @param _totalBorrow Total borrow amount.
-     */
-    function accrue(uint256 _totalBorrow) external returns (uint256);
-
     // -- Administration --
-
-    /**
-     * @notice Sets a new interest per second.
-     *
-     * @notice Effects:
-     * - Updates `accrueInfo` state variable.
-     *
-     * @notice Emits:
-     * - `InterestUpdated` event indicating interest update operation.
-     *
-     * @param _newVal The new value.
-     */
-    function setInterestPerSecond(uint64 _newVal) external;
 
     /**
      * @notice Updates the collateralization rate.
@@ -384,38 +309,6 @@ interface ISharesRegistry {
      */
     function acceptTimelockAmountChange() external;
 
-    /**
-     * @notice Initiates the ownership transferal.
-     *
-     * @notice Requirements:
-     * - `_newOwner` must be different from the current owner.
-     *
-     * @notice Effects:
-     * - Updates `temporaryOwner` state variable.
-     *
-     * @notice Emits:
-     * - `OwnershipTransferred` event indicating ownership transferal initiation.
-     *
-     * @param _newOwner The address of the new owner.
-     */
-    function transferOwnership(address _newOwner) external;
-
-    /**
-     * @notice Finalizes the ownership transferal process.
-     *
-     * @notice Requirements:
-     * - Must be called after `transferOwnership` was executed successfully, by the new temporary owner.
-     * - `msg.sender` must be the temporary owner.
-     *
-     * @notice Effects:
-     * - Updates `owner` state variable.
-     * - Updates `temporaryOwner` state variable.
-     *
-     * @notice Emits:
-     * - `OwnershipAccepted` event indicating ownership transferal finalization.
-     */
-    function acceptOwnership() external;
-
     // -- Getters --
 
     /**
@@ -427,13 +320,4 @@ interface ISharesRegistry {
      * @return The updated exchange rate.
      */
     function getExchangeRate() external view returns (uint256);
-
-    /**
-     * @notice Accrue info data.
-     */
-    struct AccrueInfo {
-        uint64 lastAccrued;
-        uint128 feesEarned;
-        uint64 INTEREST_PER_SECOND;
-    }
 }

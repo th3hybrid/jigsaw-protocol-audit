@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import { IOracle } from "../oracle/IOracle.sol";
 
@@ -145,13 +145,17 @@ interface IManager {
 
     /**
      * @notice Emitted when the oracle is updated.
+     * @param oldOracle The address of the old oracle.
+     * @param newOracle The address of the new oracle.
      */
-    event OracleUpdated();
+    event OracleUpdated(address indexed oldOracle, address indexed newOracle);
 
     /**
      * @notice Emitted when oracle data is updated.
+     * @param oldData The address of the old oracle data.
+     * @param newData The address of the new oracle data.
      */
-    event OracleDataUpdated();
+    event OracleDataUpdated(bytes indexed oldData, bytes indexed newData);
 
     /**
      * @notice Emitted when a new timelock amount is requested.
@@ -283,11 +287,6 @@ interface IManager {
      * @notice Returns the address of the ReceiptTokenFactory.
      */
     function receiptTokenFactory() external view returns (address);
-
-    /**
-     * @notice Returns the address of the LiquidityGaugeFactory.
-     */
-    function liquidityGaugeFactory() external view returns (address);
 
     // -- Utility values --
 
@@ -606,22 +605,6 @@ interface IManager {
      * @param _factory Receipt token factory's address.
      */
     function setReceiptTokenFactory(address _factory) external;
-
-    /**
-     * @notice Sets the liquidity gauge factory's address.
-     *
-     * @notice Requirements:
-     * - `_val` must be different from previous `liquidityGaugeFactory` address.
-     *
-     * @notice Effects:
-     * - Updates the `liquidityGaugeFactory` state variable.
-     *
-     * @notice Emits:
-     * - `LiquidityGaugeFactoryUpdated` event indicating successful setting of the `liquidityGaugeFactory` address.
-     *
-     * @param _factory Liquidity gauge factory's address.
-     */
-    function setLiquidityGaugeFactory(address _factory) external;
 
     /**
      * @notice Registers jUSD's oracle change request.

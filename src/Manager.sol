@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 import { ILiquidationManager } from "./interfaces/core/ILiquidationManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
@@ -13,13 +14,13 @@ import { OperationsLib } from "./libraries/OperationsLib.sol";
  *
  * @notice This contract manages various configurations necessary for the functioning of the protocol.
  *
- * @dev This contract inherits functionalities from `Ownable`.
+ * @dev This contract inherits functionalities from `Ownable2Step`.
  *
  * @author Hovooo (@hovooo), Cosmin Grigore (@gcosmintech).
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract Manager is IManager, Ownable {
+contract Manager is IManager, Ownable2Step {
     // -- Mappings --
 
     /**
@@ -133,11 +134,6 @@ contract Manager is IManager, Ownable {
      */
     address public override receiptTokenFactory;
 
-    /**
-     * @notice Returns the address of the LiquidityGaugeFactory.
-     */
-    address public override liquidityGaugeFactory;
-
     // -- Utility values --
 
     /**
@@ -178,17 +174,19 @@ contract Manager is IManager, Ownable {
     /**
      * @notice Creates a new Manager Contract.
      *
+     * @param _initialOwner The initial owner of the contract.
      * @param _usdc The USDC address.
      * @param _weth The WETH address.
      * @param _oracle The jUSD oracle address.
      * @param _oracleData The jUSD initial oracle data.
      */
     constructor(
+        address _initialOwner,
         address _usdc,
         address _weth,
         address _oracle,
         bytes memory _oracleData
-    ) validAddress(_usdc) validAddress(_weth) validAddress(_oracle) {
+    ) Ownable(_initialOwner) validAddress(_usdc) validAddress(_weth) validAddress(_oracle) {
         USDC = _usdc;
         WETH = _weth;
         jUsdOracle = IOracle(_oracle);
@@ -277,7 +275,6 @@ contract Manager is IManager, Ownable {
         emit TokenRemoved(_token);
     }
 
-    // @todo reconsider strategyManager as allowed caller
     /**
      * @notice Registers the `_token` as non-withdrawable.
      *
@@ -571,26 +568,6 @@ contract Manager is IManager, Ownable {
     }
 
     /**
-     * @notice Sets the liquidity gauge factory's address.
-     *
-     * @notice Requirements:
-     * - `_val` must be different from previous `liquidityGaugeFactory` address.
-     *
-     * @notice Effects:
-     * - Updates the `liquidityGaugeFactory` state variable.
-     *
-     * @notice Emits:
-     * - `LiquidityGaugeFactoryUpdated` event indicating successful setting of the `liquidityGaugeFactory` address.
-     *
-     * @param _factory Liquidity gauge factory's address.
-     */
-    function setLiquidityGaugeFactory(address _factory) external override onlyOwner validAddress(_factory) {
-        require(liquidityGaugeFactory != _factory, "3017");
-        emit LiquidityGaugeFactoryUpdated(liquidityGaugeFactory, _factory);
-        liquidityGaugeFactory = _factory;
-    }
-
-    /**
      * @notice Registers jUSD's oracle change request.
      *
      * @notice Requirements:
@@ -633,11 +610,11 @@ contract Manager is IManager, Ownable {
     function setJUsdOracle() external override onlyOwner {
         require(_isActiveChange, "1000");
         require(_newOracleTimestamp + timelockAmount <= block.timestamp, "3066");
+        emit OracleUpdated(address(jUsdOracle), _newOracle);
         jUsdOracle = IOracle(_newOracle);
         _isActiveChange = false;
         _newOracle = address(0);
         _newOracleTimestamp = 0;
-        emit OracleUpdated();
     }
 
     /**
@@ -656,8 +633,8 @@ contract Manager is IManager, Ownable {
      */
     function setJUsdOracleData(bytes calldata _newOracleData) external override onlyOwner {
         require(keccak256(oracleData) != keccak256(_newOracleData), "3017");
+        emit OracleDataUpdated(oracleData, _newOracleData);
         oracleData = _newOracleData;
-        emit OracleDataUpdated();
     }
 
     /**

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import { IManagerContainer } from "./IManagerContainer.sol";
 
@@ -60,13 +60,6 @@ interface IHoldingManager {
     event RepaidMultiple(address indexed holding, uint256 length, bool repaidFromUser);
 
     /**
-     * @notice Emitted when the pause state is changed.
-     * @param oldVal The old pause state.
-     * @param newVal The new pause state.
-     */
-    event PauseUpdated(bool oldVal, bool newVal);
-
-    /**
      * @notice Emitted when the user wraps native coin.
      * @param user The address of the user.
      * @param amount The amount wrapped.
@@ -121,11 +114,6 @@ interface IHoldingManager {
      * @return The address of the manager container contract.
      */
     function managerContainer() external view returns (IManagerContainer);
-
-    /**
-     * @notice Returns the pause state of the contract.
-     */
-    function paused() external view returns (bool);
 
     // -- User specific methods --
 
@@ -296,30 +284,19 @@ interface IHoldingManager {
      */
     function repayMultiple(BorrowOrRepayData[] calldata _data, bool _repayFromUser) external;
 
-    /**
-     * @notice Mints Jigsaw Token.
-     * @param _minter Minter address.
-     * @param _gauge Gauge to mint for.
-     */
-    function mint(address _minter, address _gauge) external;
-
     // -- Administration --
 
     /**
-     * @notice Sets a new value for pause state.
-     *
-     * @notice Requirements:
-     * - Only the contract owner can call this function.
-     *
-     * @notice Effects:
-     * - Updates the paused state.
-     *
-     * @notice Emits:
-     * - `PauseUpdated` event with the old and new values.
-     *
-     * @param _val The new value.
+     * @notice Triggers stopped state.
      */
-    function setPaused(bool _val) external;
+    function pause() external;
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external;
+
+    // -- Structs --
 
     /**
      * @notice Data used for multiple borrow.

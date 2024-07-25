@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { ILiquidationManager } from "./interfaces/core/ILiquidationManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
 import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
+
+import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 import { IStrategy } from "./interfaces/core/IStrategy.sol";
 import { IStrategyManager } from "./interfaces/core/IStrategyManager.sol";
 import { ISwapManager } from "./interfaces/core/ISwapManager.sol";
-import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
 
 /**
  * @title LiquidationManager
@@ -29,46 +32,44 @@ import { ISharesRegistry } from "./interfaces/stablecoin/ISharesRegistry.sol";
  * stablecoin debt. The liquidator uses their funds (stablecoin) in exchange for the user's collateral, plus a
  * liquidator's bonus.
  *
- * @dev This contract inherits functionalities from `ReentrancyGuard`, and `Ownable`.
+ * @dev This contract inherits functionalities from `Ownable2Step`, `Pausable`, `ReentrancyGuard.
  *
  * @author Hovooo (@hovooo), Cosmin Grigore (@gcosmintech).
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
+contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using Math for uint256;
 
     /**
-     * @notice contract that contains the address of the Manager Container
+     * @notice contract that contains the address of the Manager Container.
      */
     IManagerContainer public immutable override managerContainer;
 
     /**
-     * @notice returns the liquidator's bonus amount
+     * @notice returns the liquidator's bonus amount.
      */
     uint256 public liquidatorBonus;
 
     /**
-     * @notice returns the self-liquidation fee
+     * @notice returns the self-liquidation fee.
      */
     uint256 public selfLiquidationFee;
 
     /**
-     * @notice utility variable used for preciser computations
+     * @notice utility variable used for preciser computations.
      */
     uint256 public constant LIQUIDATION_PRECISION = 1e5;
 
-    /**
-     * @notice returns the pause state of the contract
-     */
-    bool public override paused;
+    // -- Constructor --
 
     /**
-     * @notice creates a new LiquidationManager contract
-     * @param _managerContainer contract that contains the address of the manager contract
+     * @notice Creates a new LiquidationManager contract.
+     * @param _initialOwner The initial owner of the contract.
+     * @param _managerContainer Contract that contains the address of the manager contract.
      */
-    constructor(address _managerContainer) {
+    constructor(address _initialOwner, address _managerContainer) Ownable(_initialOwner) {
         require(_managerContainer != address(0), "3065");
         managerContainer = IManagerContainer(_managerContainer);
         liquidatorBonus = _getManager().liquidatorBonus();
@@ -98,13 +99,13 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
      * @notice Emits:
      * - `SelfLiquidated` event indicating self-liquidation.
      *
-     * @param _collateral address of the token used as collateral for borrowing
-     * @param _jUsdAmount to repay
-     * @param _swapParams used for the swap operation: swap path, maximum input amount, and slippage percentage
-     * @param _strategiesParams data for strategies to retrieve collateral from
+     * @param _collateral address of the token used as collateral for borrowing.
+     * @param _jUsdAmount to repay.
+     * @param _swapParams used for the swap operation: swap path, maximum input amount, and slippage percentage.
+     * @param _strategiesParams data for strategies to retrieve collateral from.
      *
-     * @return collateralUsed for self-liquidation
-     * @return jUsdAmountRepaid amount repaid
+     * @return collateralUsed for self-liquidation.
+     * @return jUsdAmountRepaid amount repaid.
      */
     function selfLiquidate(
         address _collateral,
@@ -115,7 +116,7 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
         external
         override
         nonReentrant
-        notPaused
+        whenNotPaused
         validAddress(_collateral)
         validAmount(_jUsdAmount)
         returns (uint256 collateralUsed, uint256 jUsdAmountRepaid)
@@ -179,9 +180,9 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
         // Calculate the total self-liquidatable collateral required to perform self-liquidation.
         tempData.totalSelfLiquidatableCollateral = tempData.totalRequiredCollateral + tempData.totalFeeCollateral;
 
-        // Ensure that amountInMaximum is within acceptable range specified by user
-        // Set totalSelfLiquidatableCollateral equal to amountInMaximum if it is within acceptable range
-        // See the interface for specs on `slippagePercentage`
+        // Ensure that amountInMaximum is within acceptable range specified by user.
+        // Set totalSelfLiquidatableCollateral equal to amountInMaximum if it is within acceptable range.
+        // See the interface for specs on `slippagePercentage`.
         if (tempData.amountInMaximum > tempData.totalSelfLiquidatableCollateral) {
             // Ensure safe computation.
             require(_swapParams.slippagePercentage <= precision, "3081");
@@ -297,8 +298,8 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
      * @param _jUsdAmount to repay.
      * @param _data  for strategies to retrieve collateral from in case the Holding balance is not enough.
      *
-     * @return collateralUsed The amount of collateral used for liquidation
-     * @return jUsdAmountRepaid The amount of jUsd repaid
+     * @return collateralUsed The amount of collateral used for liquidation.
+     * @return jUsdAmountRepaid The amount of jUsd repaid.
      */
     function liquidate(
         address _user,
@@ -309,7 +310,7 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
         external
         override
         nonReentrant
-        notPaused
+        whenNotPaused
         validAddress(_collateral)
         validAmount(_jUsdAmount)
         returns (uint256 collateralUsed, uint256 jUsdAmountRepaid)
@@ -460,9 +461,9 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
     // -- Administration --
 
     /**
-     * @notice Sets a new value for the liquidator bonus
-     * @dev The value must be less than LIQUIDATION_PRECISION
-     * @param _val The new value for the liquidator bonus
+     * @notice Sets a new value for the liquidator bonus.
+     * @dev The value must be less than LIQUIDATION_PRECISION.
+     * @param _val The new value for the liquidator bonus.
      */
     function setLiquidatorBonus(uint256 _val) external override onlyAllowed {
         require(_val < LIQUIDATION_PRECISION, "2001");
@@ -470,9 +471,9 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Sets a new value for the self-liquidation fee
-     * @dev The value must be less than LIQUIDATION_PRECISION
-     * @param _val The new value for the self-liquidation fee
+     * @notice Sets a new value for the self-liquidation fee.
+     * @dev The value must be less than LIQUIDATION_PRECISION.
+     * @param _val The new value for the self-liquidation fee.
      */
     function setSelfLiquidationFee(uint256 _val) external override onlyAllowed {
         require(_val < LIQUIDATION_PRECISION, "2001");
@@ -480,16 +481,21 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Sets a new value for the pause state
-     * @param _val The new value for the pause state
+     * @notice Triggers stopped state.
      */
-    function setPaused(bool _val) external override onlyOwner {
-        emit PauseUpdated(paused, _val);
-        paused = _val;
+    function pause() external override onlyOwner whenNotPaused {
+        _pause();
     }
 
     /**
-     * @notice Renounce ownership override to avoid losing contract's ownership
+     * @notice Returns to normal state.
+     */
+    function unpause() external override onlyOwner whenPaused {
+        _unpause();
+    }
+
+    /**
+     * @notice Renounce ownership override to avoid losing contract's ownership.
      */
     function renounceOwnership() public pure override {
         revert("1000");
@@ -534,7 +540,7 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
      * @param _strategiesData array of data associated with each strategy.
      * @param useHoldingBalance boolean indicating whether to use the holding balance.
      *
-     * @return The amount of collateral retrieved
+     * @return The amount of collateral retrieved.
      */
     function _retrieveCollateral(
         address _token,
@@ -584,28 +590,28 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Utility function do get available Manager Contract
+     * @notice Utility function do get available Manager Contract.
      */
     function _getManager() private view returns (IManager) {
         return IManager(managerContainer.manager());
     }
 
     /**
-     * @notice Utility function do get available StablesManager Contract
+     * @notice Utility function do get available StablesManager Contract.
      */
     function _getStablesManager() private view returns (IStablesManager) {
         return IStablesManager(_getManager().stablesManager());
     }
 
     /**
-     * @notice Utility function do get available HoldingManager Contract
+     * @notice Utility function do get available HoldingManager Contract.
      */
     function _getHoldingManager() private view returns (IHoldingManager) {
         return IHoldingManager(_getManager().holdingManager());
     }
 
     /**
-     * @notice Utility function do get available SwapManager Contract
+     * @notice Utility function do get available SwapManager Contract.
      */
     function _getSwapManager() private view returns (ISwapManager) {
         return ISwapManager(_getManager().swapManager());
@@ -636,14 +642,6 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard, Ownable {
      */
     modifier validAmount(uint256 _amount) {
         require(_amount > 0, "2001");
-        _;
-    }
-
-    /**
-     * @notice Modifier to ensure that the contract is not paused.
-     */
-    modifier notPaused() {
-        require(!paused, "1200");
         _;
     }
 }

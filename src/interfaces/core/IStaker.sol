@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 /**
  * @title IStaker
@@ -40,13 +40,6 @@ interface IStaker {
      * @param reward The amount of added rewards.
      */
     event RewardAdded(uint256 reward);
-
-    /**
-     * @notice Event emitted when pause state is modified.
-     * @param oldVal The old value of the pause state.
-     * @param newVal The new value of the pause state.
-     */
-    event PauseUpdated(bool oldVal, bool newVal);
 
     /**
      * @notice Address of the staking token.
@@ -100,11 +93,6 @@ interface IStaker {
      */
     function totalSupplyLimit() external view returns (uint256);
 
-    /**
-     * @notice Returns the pause state of the contract.
-     */
-    function paused() external view returns (bool);
-
     // -- User specific methods  --
 
     /**
@@ -152,10 +140,14 @@ interface IStaker {
     function addRewards(address _from, uint256 _amount) external;
 
     /**
-     * @notice Sets a new value for pause state.
-     * @param _val the new value.
+     * @notice Triggers stopped state.
      */
-    function setPaused(bool _val) external;
+    function pause() external;
+
+    /**
+     * @notice Returns to normal state.
+     */
+    function unpause() external;
 
     // -- Getters --
 
