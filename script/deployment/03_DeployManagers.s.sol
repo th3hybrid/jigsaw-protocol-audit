@@ -1,0 +1,76 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.20;
+
+import { Script, console2 as console, stdJson as StdJson } from "forge-std/Script.sol";
+
+import { HoldingManager } from "../../src/HoldingManager.sol";
+import { LiquidationManager } from "../../src/LiquidationManager.sol";
+
+import { Manager } from "../../src/Manager.sol";
+import { ManagerContainer } from "../../src/ManagerContainer.sol";
+import { StablesManager } from "../../src/StablesManager.sol";
+import { StrategyManager } from "../../src/StrategyManager.sol";
+import { SwapManager } from "../../src/SwapManager.sol";
+
+/**
+ * @notice Deploys the HoldingManager, LiquidationManager, StablesManager, StrategyManager & SwapManager Contracts
+ * @notice Updates the Manager Contract with addresses of the deployed Contracts
+ */
+contract DeployManagers is Script {
+    using StdJson for string;
+
+    string internal configPath = "./deployment-config/03_ManagersConfig.json";
+    string internal config = vm.readFile(configPath);
+
+    address internal INITIAL_OWNER = config.readAddress(".INITIAL_OWNER");
+    address internal MANAGER_CONTAINER = config.readAddress(".MANAGER_CONTAINER");
+    address internal JUSD = config.readAddress(".JUSD");
+    address internal UNISWAP_FACTORY = config.readAddress(".UNISWAP_FACTORY");
+    address internal UNISWAP_SWAP_ROUTER = config.readAddress(".UNISWAP_SWAP_ROUTER");
+
+    function run()
+        external
+        returns (
+            HoldingManager holdingManager,
+            LiquidationManager liquidationManager,
+            StablesManager stablesManager,
+            StrategyManager strategyManager,
+            SwapManager swapManager
+        )
+    {
+        // Get manager address from the MANAGER_CONTAINER
+        Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
+
+        // Deploy HoldingManager Contract
+        holdingManager = new HoldingManager({ _initialOwner: INITIAL_OWNER, _managerContainer: MANAGER_CONTAINER });
+        // Save HoldingManager Contract to the Manager Contract
+        manager.setHoldingManager(address(holdingManager));
+
+        // Deploy Liquidation Manager Contract
+        liquidationManager =
+            new LiquidationManager({ _initialOwner: INITIAL_OWNER, _managerContainer: MANAGER_CONTAINER });
+        // Save LiquidationManager Contract to the Manager Contract
+        manager.setLiquidationManager(address(liquidationManager));
+
+        // Deploy StablesManager Contract
+        stablesManager =
+            new StablesManager({ _initialOwner: INITIAL_OWNER, _managerContainer: MANAGER_CONTAINER, _jUSD: JUSD });
+        // Save StablesManager Contract to the Manager Contract
+        manager.setStablecoinManager(address(stablesManager));
+
+        // Deploy StrategyManager Contract
+        strategyManager = new StrategyManager({ _initialOwner: INITIAL_OWNER, _managerContainer: MANAGER_CONTAINER });
+        // Save StrategyManager Contract to the Manager Contract
+        manager.setStrategyManager(address(strategyManager));
+
+        // Deploy SwapManager Contract
+        swapManager = new SwapManager({
+            _initialOwner: INITIAL_OWNER,
+            _uniswapFactory: UNISWAP_FACTORY,
+            _swapRouter: UNISWAP_SWAP_ROUTER,
+            _managerContainer: MANAGER_CONTAINER
+        });
+        // Save SwapManager Contract to the Manager Contract
+        manager.setSwapManager(address(swapManager));
+    }
+}
