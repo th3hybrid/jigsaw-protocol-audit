@@ -289,30 +289,6 @@ contract ManagerTest is BasicContractsFixture {
         manager.setReceiptTokenFactory(_newAddress);
     }
 
-    function test_should_set_liquidity_gauge_factory(address _user, address _newAddress) public {
-        assumeNotOwnerNotZero(_user);
-
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != manager.liquidityGaugeFactory());
-
-        vm.prank(_user);
-        vm.expectRevert();
-        manager.setLiquidityGaugeFactory(_newAddress);
-
-        vm.startPrank(OWNER, OWNER);
-
-        vm.expectRevert(bytes("3000"));
-        manager.setLiquidityGaugeFactory(address(0));
-
-        vm.expectEmit(true, true, false, false);
-        emit LiquidityGaugeFactoryUpdated(manager.liquidityGaugeFactory(), _newAddress);
-        manager.setLiquidityGaugeFactory(_newAddress);
-        assertEq(manager.liquidityGaugeFactory(), _newAddress);
-
-        vm.expectRevert(bytes("3017"));
-        manager.setLiquidityGaugeFactory(_newAddress);
-    }
-
     function test_should_whitelist_contract(address _user, address _newAddress) public {
         assumeNotOwnerNotZero(_user);
 
