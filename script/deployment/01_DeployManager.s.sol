@@ -6,6 +6,7 @@ import { Script, console2 as console, stdJson as StdJson } from "forge-std/Scrip
 import { Base } from "../Base.s.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { IOracle } from "../../src/interfaces/oracle/IOracle.sol";
 
@@ -19,15 +20,17 @@ import { ManagerContainer } from "../../src/ManagerContainer.sol";
 contract DeployManager is Script, Base {
     using StdJson for string;
 
-    string internal configPath = "./deployment-config/01_ManagerConfig.json";
-    string internal config = vm.readFile(configPath);
+    // Read config files
+    string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
+    string internal managerConfig = vm.readFile("./deployment-config/01_ManagerConfig.json");
 
-    address internal INITIAL_OWNER = config.readAddress(".INITIAL_OWNER");
-    address internal USDC = config.readAddress(".USDC");
-    address internal WETH = config.readAddress(".WETH");
-    address internal JUSD_Oracle = config.readAddress(".JUSD_Oracle");
-    bytes internal JUSD_OracleData = config.readBytes(".JUSD_OracleData");
-    address internal FEE_ADDRESS = config.readAddress(".FEE_ADDRESS");
+    // Get values from configs
+    address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
+    address internal USDC = managerConfig.readAddress(".USDC");
+    address internal WETH = managerConfig.readAddress(".WETH");
+    address internal JUSD_Oracle = managerConfig.readAddress(".JUSD_Oracle");
+    bytes internal JUSD_OracleData = managerConfig.readBytes(".JUSD_OracleData");
+    address internal FEE_ADDRESS = managerConfig.readAddress(".FEE_ADDRESS");
 
     function run() external broadcast returns (Manager manager, ManagerContainer managerContainer) {
         // Validate interfaces
@@ -49,5 +52,10 @@ contract DeployManager is Script, Base {
 
         // Deploy ManagerContainer Contract
         managerContainer = new ManagerContainer({ _initialOwner: INITIAL_OWNER, _manager: address(manager) });
+
+        // Save managerContainer address to the 00_CommonConfig.json for later use
+        Strings.toHexString(uint160(address(managerContainer)), 20).write(
+            "./deployment-config/00_CommonConfig.json", ".MANAGER_CONTAINER"
+        );
     }
 }

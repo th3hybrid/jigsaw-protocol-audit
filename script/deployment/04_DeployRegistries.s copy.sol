@@ -33,14 +33,16 @@ contract DeployRegistries is Script, Base {
     // Array to store deployed registries' addresses
     address[] internal registries;
 
-    string internal configPath = "./deployment-config/04_RegistryConfig.json";
-    string internal config = vm.readFile(configPath);
+    // Read config files
+    string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
+    string internal registryConfig = vm.readFile("./deployment-config/04_RegistryConfig.json");
 
-    address internal INITIAL_OWNER = config.readAddress(".INITIAL_OWNER");
-    address internal MANAGER_CONTAINER = config.readAddress(".MANAGER_CONTAINER");
-    address internal STABLES_MANAGER = config.readAddress(".STABLES_MANAGER");
+    // Get values from configs
+    address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
+    address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
+    address internal STABLES_MANAGER = registryConfig.readAddress(".STABLES_MANAGER");
 
-    // Store configs
+    // Store configuration for each SharesRegistry
     address internal USDC = address(1);
     address internal USDC_Oracle = address(11);
     bytes internal USDC_OracleData = bytes("");

@@ -25,14 +25,16 @@ import { SwapManager } from "../../src/SwapManager.sol";
 contract DeployManagers is Script, Base {
     using StdJson for string;
 
-    string internal configPath = "./deployment-config/03_ManagersConfig.json";
-    string internal config = vm.readFile(configPath);
+    // Read config files
+    string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
+    string internal managersConfig = vm.readFile("./deployment-config/03_ManagersConfig.json");
 
-    address internal INITIAL_OWNER = config.readAddress(".INITIAL_OWNER");
-    address internal MANAGER_CONTAINER = config.readAddress(".MANAGER_CONTAINER");
-    address internal JUSD = config.readAddress(".JUSD");
-    address internal UNISWAP_FACTORY = config.readAddress(".UNISWAP_FACTORY");
-    address internal UNISWAP_SWAP_ROUTER = config.readAddress(".UNISWAP_SWAP_ROUTER");
+    // Get values from configs
+    address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
+    address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
+    address internal JUSD = managersConfig.readAddress(".JUSD");
+    address internal UNISWAP_FACTORY = managersConfig.readAddress(".UNISWAP_FACTORY");
+    address internal UNISWAP_SWAP_ROUTER = managersConfig.readAddress(".UNISWAP_SWAP_ROUTER");
 
     function run()
         external

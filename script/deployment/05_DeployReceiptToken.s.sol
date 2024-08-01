@@ -17,11 +17,12 @@ import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
 contract DeployReceiptToken is Script, Base {
     using StdJson for string;
 
-    string internal configPath = "./deployment-config/05_ReceiptTokenConfig.json";
-    string internal config = vm.readFile(configPath);
+    // Read config file
+    string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
 
-    address internal INITIAL_OWNER = config.readAddress(".INITIAL_OWNER");
-    address internal MANAGER_CONTAINER = config.readAddress(".MANAGER_CONTAINER");
+    // Get values from config
+    address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
+    address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
 
     function run() external broadcast returns (ReceiptTokenFactory receiptTokenFactory, ReceiptToken receiptToken) {
         // Validate interface

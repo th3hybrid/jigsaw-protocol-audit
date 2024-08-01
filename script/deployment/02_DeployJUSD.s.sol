@@ -14,11 +14,12 @@ import { ManagerContainer } from "../../src/ManagerContainer.sol";
 contract DeployJUSD is Script, Base {
     using StdJson for string;
 
-    string internal configPath = "./deployment-config/02_JUSDConfig.json";
-    string internal config = vm.readFile(configPath);
+    // Read config file
+    string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
 
-    address internal INITIAL_OWNER = config.readAddress(".INITIAL_OWNER");
-    address internal MANAGER_CONTAINER = config.readAddress(".MANAGER_CONTAINER");
+    // Get values from config
+    address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
+    address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
 
     function run() external broadcast returns (JigsawUSD jUSD) {
         // Validate interface
@@ -26,5 +27,8 @@ contract DeployJUSD is Script, Base {
 
         // Deploy JigsawUSD contract
         jUSD = new JigsawUSD({ _initialOwner: INITIAL_OWNER, _managerContainer: MANAGER_CONTAINER });
+
+        // Save JigsawUSD address to the 03_ManagersConfig.json for later use
+        Strings.toHexString(uint160(address(jUSD)), 20).write("./deployment-config/03_ManagersConfig.json", ".JUSD");
     }
 }
