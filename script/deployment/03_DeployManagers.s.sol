@@ -3,9 +3,15 @@ pragma solidity ^0.8.20;
 
 import { Script, console2 as console, stdJson as StdJson } from "forge-std/Script.sol";
 
+import { Base } from "../Base.s.sol";
+
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { IUniswapV3Factory } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+
 import { HoldingManager } from "../../src/HoldingManager.sol";
 import { LiquidationManager } from "../../src/LiquidationManager.sol";
-
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 import { StablesManager } from "../../src/StablesManager.sol";
@@ -16,7 +22,7 @@ import { SwapManager } from "../../src/SwapManager.sol";
  * @notice Deploys the HoldingManager, LiquidationManager, StablesManager, StrategyManager & SwapManager Contracts
  * @notice Updates the Manager Contract with addresses of the deployed Contracts
  */
-contract DeployManagers is Script {
+contract DeployManagers is Script, Base {
     using StdJson for string;
 
     string internal configPath = "./deployment-config/03_ManagersConfig.json";
@@ -30,6 +36,7 @@ contract DeployManagers is Script {
 
     function run()
         external
+        broadcast
         returns (
             HoldingManager holdingManager,
             LiquidationManager liquidationManager,
@@ -38,6 +45,12 @@ contract DeployManagers is Script {
             SwapManager swapManager
         )
     {
+        // Validate interfaces
+        _validateInterface(ManagerContainer(MANAGER_CONTAINER));
+        _validateInterface(IERC20(JUSD));
+        _validateInterface(IUniswapV3Factory(UNISWAP_FACTORY));
+        _validateInterface(ISwapRouter(UNISWAP_SWAP_ROUTER));
+
         // Get manager address from the MANAGER_CONTAINER
         Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
 

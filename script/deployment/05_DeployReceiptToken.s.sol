@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import { Script, console2 as console, stdJson as StdJson } from "forge-std/Script.sol";
 
+import { Base } from "../Base.s.sol";
+
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 import { ReceiptToken } from "../../src/ReceiptToken.sol";
@@ -12,7 +14,7 @@ import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
  * @notice Deploys ReceiptTokenFactory & ReceiptToken Contracts, sets ReceiptToken implementation in the
  * ReceiptTokenFactory Contract
  */
-contract DeployReceiptToken is Script {
+contract DeployReceiptToken is Script, Base {
     using StdJson for string;
 
     string internal configPath = "./deployment-config/05_ReceiptTokenConfig.json";
@@ -21,7 +23,10 @@ contract DeployReceiptToken is Script {
     address internal INITIAL_OWNER = config.readAddress(".INITIAL_OWNER");
     address internal MANAGER_CONTAINER = config.readAddress(".MANAGER_CONTAINER");
 
-    function run() external returns (ReceiptTokenFactory receiptTokenFactory, ReceiptToken receiptToken) {
+    function run() external broadcast returns (ReceiptTokenFactory receiptTokenFactory, ReceiptToken receiptToken) {
+        // Validate interface
+        _validateInterface(ManagerContainer(MANAGER_CONTAINER));
+
         // Get manager address from the MANAGER_CONTAINER
         Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
 

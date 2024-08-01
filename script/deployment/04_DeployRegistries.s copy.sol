@@ -3,6 +3,12 @@ pragma solidity ^0.8.20;
 
 import { Script, console2 as console, stdJson as StdJson } from "forge-std/Script.sol";
 
+import { Base } from "../Base.s.sol";
+
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { IOracle } from "../../src/interfaces/oracle/IOracle.sol";
+
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 import { SharesRegistry } from "../../src/SharesRegistry.sol";
@@ -11,7 +17,7 @@ import { StablesManager } from "../../src/StablesManager.sol";
 /**
  * @notice Deploys SharesRegistry Contracts for each configured token (a.k.a. collateral)
  */
-contract DeployRegistries is Script {
+contract DeployRegistries is Script, Base {
     using StdJson for string;
 
     struct RegistryConfig {
@@ -67,11 +73,19 @@ contract DeployRegistries is Script {
         );
     }
 
-    function run() external returns (address[] memory deployedRegistries) {
+    function run() external broadcast returns (address[] memory deployedRegistries) {
+        // Validate interfaces
+        _validateInterface(ManagerContainer(MANAGER_CONTAINER));
+        _validateInterface(StablesManager(STABLES_MANAGER));
+
         // Get manager address from the MANAGER_CONTAINER
         Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
 
         for (uint256 i = 0; i < registryConfigs.length; i += 1) {
+            // Validate interfaces
+            _validateInterface(IERC20(registryConfigs[i].token));
+            _validateInterface(IOracle(registryConfigs[i].oracle));
+
             // Deploy SharesRegistry contract
             SharesRegistry registry = new SharesRegistry({
                 _initialOwner: INITIAL_OWNER,

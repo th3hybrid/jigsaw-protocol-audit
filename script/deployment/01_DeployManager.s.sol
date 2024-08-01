@@ -3,6 +3,12 @@ pragma solidity ^0.8.20;
 
 import { Script, console2 as console, stdJson as StdJson } from "forge-std/Script.sol";
 
+import { Base } from "../Base.s.sol";
+
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { IOracle } from "../../src/interfaces/oracle/IOracle.sol";
+
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 
@@ -10,7 +16,7 @@ import { ManagerContainer } from "../../src/ManagerContainer.sol";
  * @notice Deploys Manager and ManagerContainer Contracts
  * @notice Configures feeAddress in the Manager Contract
  */
-contract DeployManager is Script {
+contract DeployManager is Script, Base {
     using StdJson for string;
 
     string internal configPath = "./deployment-config/01_ManagerConfig.json";
@@ -23,7 +29,12 @@ contract DeployManager is Script {
     bytes internal JUSD_OracleData = config.readBytes(".JUSD_OracleData");
     address internal FEE_ADDRESS = config.readAddress(".FEE_ADDRESS");
 
-    function run() external returns (Manager manager, ManagerContainer managerContainer) {
+    function run() external broadcast returns (Manager manager, ManagerContainer managerContainer) {
+        // Validate interfaces
+        _validateInterface(IERC20(USDC));
+        _validateInterface(IERC20(WETH));
+        _validateInterface(IOracle(JUSD_Oracle));
+
         // Deploy Manager contract
         manager = new Manager({
             _initialOwner: INITIAL_OWNER,
