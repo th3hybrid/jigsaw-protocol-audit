@@ -284,11 +284,6 @@ interface IManager {
      */
     function receiptTokenFactory() external view returns (address);
 
-    /**
-     * @notice Returns the address of the LiquidityGaugeFactory.
-     */
-    function liquidityGaugeFactory() external view returns (address);
-
     // -- Utility values --
 
     /**
@@ -606,22 +601,6 @@ interface IManager {
      * @param _factory Receipt token factory's address.
      */
     function setReceiptTokenFactory(address _factory) external;
-
-    /**
-     * @notice Sets the liquidity gauge factory's address.
-     *
-     * @notice Requirements:
-     * - `_val` must be different from previous `liquidityGaugeFactory` address.
-     *
-     * @notice Effects:
-     * - Updates the `liquidityGaugeFactory` state variable.
-     *
-     * @notice Emits:
-     * - `LiquidityGaugeFactoryUpdated` event indicating successful setting of the `liquidityGaugeFactory` address.
-     *
-     * @param _factory Liquidity gauge factory's address.
-     */
-    function setLiquidityGaugeFactory(address _factory) external;
 
     /**
      * @notice Registers jUSD's oracle change request.

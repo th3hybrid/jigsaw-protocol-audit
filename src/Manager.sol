@@ -134,12 +134,6 @@ contract Manager is IManager, Ownable2Step {
      */
     address public override receiptTokenFactory;
 
-    // @todo delete as we no longer need it
-    /**
-     * @notice Returns the address of the LiquidityGaugeFactory.
-     */
-    address public override liquidityGaugeFactory;
-
     // -- Utility values --
 
     /**
@@ -572,26 +566,6 @@ contract Manager is IManager, Ownable2Step {
         require(receiptTokenFactory != _factory, "3017");
         emit ReceiptTokenFactoryUpdated(receiptTokenFactory, _factory);
         receiptTokenFactory = _factory;
-    }
-
-    /**
-     * @notice Sets the liquidity gauge factory's address.
-     *
-     * @notice Requirements:
-     * - `_val` must be different from previous `liquidityGaugeFactory` address.
-     *
-     * @notice Effects:
-     * - Updates the `liquidityGaugeFactory` state variable.
-     *
-     * @notice Emits:
-     * - `LiquidityGaugeFactoryUpdated` event indicating successful setting of the `liquidityGaugeFactory` address.
-     *
-     * @param _factory Liquidity gauge factory's address.
-     */
-    function setLiquidityGaugeFactory(address _factory) external override onlyOwner validAddress(_factory) {
-        require(liquidityGaugeFactory != _factory, "3017");
-        emit LiquidityGaugeFactoryUpdated(liquidityGaugeFactory, _factory);
-        liquidityGaugeFactory = _factory;
     }
 
     /**
