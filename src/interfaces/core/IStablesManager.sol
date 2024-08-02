@@ -67,10 +67,10 @@ interface IStablesManager {
 
     /**
      * @notice Returns config info for each token.
-     * @param _registry The address of the registry.
+     * @param _token The address of the token to get registry info for.
      * @return Boolean indicating if the registry is active and the address of the registry.
      */
-    function shareRegistryInfo(address _registry) external view returns (bool, address);
+    function shareRegistryInfo(address _token) external view returns (bool, address);
 
     /**
      * @notice Returns protocol's stablecoin address.
