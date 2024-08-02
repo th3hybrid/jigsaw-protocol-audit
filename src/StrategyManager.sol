@@ -503,7 +503,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @param _shares number being checked for receipt token availability.
      * @param _holding address for which the receipt token availability is being checked.
      */
-    function _checkReceiptTokenAvailability(IStrategy _strategy, uint256 _shares, address _holding) private {
+    function _checkReceiptTokenAvailability(IStrategy _strategy, uint256 _shares, address _holding) private view {
         uint256 tokenDecimals = _strategy.sharesDecimals();
         (, uint256 totalShares) = _strategy.recipients(_holding);
         uint256 rtAmount = _shares > totalShares ? totalShares : _shares;
