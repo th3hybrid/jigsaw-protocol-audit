@@ -32,7 +32,7 @@ abstract contract ValidateInterface {
 
     function _validateInterface(StablesManager stablesManager) internal view {
         require(address(stablesManager).code.length > 0, "StablesManager must have code");
-        stablesManager.isSolvent(address(1), address(1));
+        stablesManager.shareRegistryInfo(address(1));
         stablesManager.totalBorrowed(address(1));
         stablesManager.jUSD();
     }
