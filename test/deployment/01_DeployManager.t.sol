@@ -20,8 +20,6 @@ import { wETHMock } from "../utils/mocks/wETHMock.sol";
 contract DeployManagerTest is Test {
     using StdJson for string;
 
-    DeployManager internal script;
-
     string internal managerConfigPath = "./deployment-config/01_ManagerConfig.json";
     string internal commonConfigPath = "./deployment-config/00_CommonConfig.json";
 
@@ -30,6 +28,9 @@ contract DeployManagerTest is Test {
     address internal USDC;
     address internal WETH;
     address internal JUSD_Oracle;
+
+    Manager internal manager;
+    ManagerContainer internal managerContainer;
 
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
@@ -48,13 +49,12 @@ contract DeployManagerTest is Test {
         Strings.toHexString(uint256(bytes32("")), 32).write(managerConfigPath, ".JUSD_OracleData");
         Strings.toHexString(uint160(FEE_ADDRESS), 20).write(managerConfigPath, ".FEE_ADDRESS");
 
-        script = new DeployManager();
+        //Run Manager deployment script
+        DeployManager deployManagerScript = new DeployManager();
+        (manager, managerContainer) = deployManagerScript.run();
     }
 
-    function test_deploy_manager() public {
-        //Run deployment script
-        (Manager manager, ManagerContainer managerContainer) = script.run();
-
+    function test_deploy_manager() public view {
         // Perform checks on the Manager Contract
         assertEq(manager.owner(), INITIAL_OWNER, "Initial owner in Manager is wrong");
         assertEq(manager.USDC(), USDC, "USDC address in Manager is wrong");
