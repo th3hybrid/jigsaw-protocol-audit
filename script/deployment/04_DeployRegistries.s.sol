@@ -5,7 +5,8 @@ import { Script, console2 as console, stdJson as StdJson } from "forge-std/Scrip
 
 import { Base } from "../Base.s.sol";
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { IOracle } from "../../src/interfaces/oracle/IOracle.sol";
 
@@ -43,15 +44,10 @@ contract DeployRegistries is Script, Base {
     address internal STABLES_MANAGER = registryConfig.readAddress(".STABLES_MANAGER");
 
     // Store configuration for each SharesRegistry
-    address internal USDC = address(1);
-    address internal USDC_Oracle = address(11);
+    address internal USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address internal USDC_Oracle = 0xfD07C974e33dd1626640bA3a5acF0418FaacCA7a;
     bytes internal USDC_OracleData = bytes("");
     uint256 internal USDC_CR = 50_000;
-
-    address internal WETH = address(2);
-    address internal WETH_Oracle = address(22);
-    bytes internal WETH_OracleData = bytes("");
-    uint256 internal WETH_CR = 50_000;
 
     constructor() {
         // Add configs for USDC registry
@@ -61,16 +57,6 @@ contract DeployRegistries is Script, Base {
                 oracle: USDC_Oracle,
                 oracleData: USDC_OracleData,
                 collateralizationRate: USDC_CR
-            })
-        );
-
-        // Add configs for WETH registry
-        registryConfigs.push(
-            RegistryConfig({
-                token: WETH,
-                oracle: WETH_Oracle,
-                oracleData: WETH_OracleData,
-                collateralizationRate: WETH_CR
             })
         );
     }
@@ -110,6 +96,11 @@ contract DeployRegistries is Script, Base {
 
             // Save the registry deployment address locally
             registries.push(address(registry));
+
+            string memory jsonKey = string.concat(".REGISTRY_", IERC20Metadata(registryConfigs[i].token).symbol());
+
+            // Save addresses of all the deployed contracts to the deployments.json
+            Strings.toHexString(uint160(address(registry)), 20).write("./deployments.json", jsonKey);
         }
 
         return registries;

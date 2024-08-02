@@ -5,6 +5,8 @@ import { Script, console2 as console, stdJson as StdJson } from "forge-std/Scrip
 
 import { Base } from "../Base.s.sol";
 
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 import { ReceiptToken } from "../../src/ReceiptToken.sol";
@@ -42,5 +44,11 @@ contract DeployReceiptToken is Script, Base {
 
         // Set receipt token factory in the Manager Contract
         manager.setReceiptTokenFactory({ _factory: address(receiptTokenFactory) });
+
+        // Save addresses of all the deployed contracts to the deployments.json
+        Strings.toHexString(uint160(address(receiptTokenFactory)), 20).write(
+            "./deployments.json", ".RECEIPT_TOKEN_FACTORY"
+        );
+        Strings.toHexString(uint160(address(receiptToken)), 20).write("./deployments.json", ".RECEIPT_TOKEN_REFERENCE");
     }
 }

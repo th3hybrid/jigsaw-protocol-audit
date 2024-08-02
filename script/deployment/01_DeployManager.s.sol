@@ -57,5 +57,9 @@ contract DeployManager is Script, Base {
         Strings.toHexString(uint160(address(managerContainer)), 20).write(
             "./deployment-config/00_CommonConfig.json", ".MANAGER_CONTAINER"
         );
+
+        // Save addresses of all the deployed contracts to the deployments.json
+        Strings.toHexString(uint160(address(managerContainer)), 20).write("./deployments.json", ".MANAGER_CONTAINER");
+        Strings.toHexString(uint160(address(manager)), 20).write("./deployments.json", ".MANAGER");
     }
 }

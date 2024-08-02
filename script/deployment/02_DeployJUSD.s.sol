@@ -5,6 +5,8 @@ import { Script, console2 as console, stdJson as StdJson } from "forge-std/Scrip
 
 import { Base } from "../Base.s.sol";
 
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+
 import { JigsawUSD } from "../../src/JigsawUSD.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 
@@ -30,5 +32,8 @@ contract DeployJUSD is Script, Base {
 
         // Save JigsawUSD address to the 03_ManagersConfig.json for later use
         Strings.toHexString(uint160(address(jUSD)), 20).write("./deployment-config/03_ManagersConfig.json", ".JUSD");
+
+        // Save addresses of all the deployed contracts to the deployments.json
+        Strings.toHexString(uint160(address(jUSD)), 20).write("./deployments.json", ".jUSD");
     }
 }

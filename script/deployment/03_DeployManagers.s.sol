@@ -6,6 +6,7 @@ import { Script, console2 as console, stdJson as StdJson } from "forge-std/Scrip
 import { Base } from "../Base.s.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { IUniswapV3Factory } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -87,5 +88,14 @@ contract DeployManagers is Script, Base {
         });
         // Save SwapManager Contract to the Manager Contract
         manager.setSwapManager(address(swapManager));
+
+        // Save addresses of all the deployed contracts to the deployments.json
+        Strings.toHexString(uint160(address(holdingManager)), 20).write("./deployments.json", ".HOLDING_MANAGER");
+        Strings.toHexString(uint160(address(liquidationManager)), 20).write(
+            "./deployments.json", ".LIQUIDATION_MANAGER"
+        );
+        Strings.toHexString(uint160(address(stablesManager)), 20).write("./deployments.json", ".STABLES_MANAGER");
+        Strings.toHexString(uint160(address(strategyManager)), 20).write("./deployments.json", ".STRATEGY_MANAGER");
+        Strings.toHexString(uint160(address(swapManager)), 20).write("./deployments.json", ".SWAP_MANAGER");
     }
 }
