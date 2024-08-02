@@ -56,44 +56,51 @@ abstract contract BasicContractsFixture is Test {
     function init() public {
         vm.startPrank(OWNER);
         vm.warp(1_641_070_800);
+
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
+        usdcOracle = new SampleOracle();
+
         weth = new wETHMock();
+        SampleOracle wethOracle = new SampleOracle();
+
         jUsdOracle = new SampleOracle();
+
         manager = new Manager(OWNER, address(usdc), address(weth), address(jUsdOracle), bytes(""));
         managerContainer = new ManagerContainer(OWNER, address(manager));
-        liquidationManager = new LiquidationManager(OWNER, address(managerContainer));
 
-        holdingManager = new HoldingManager(OWNER, address(managerContainer));
         jUsd = new JigsawUSD(OWNER, address(managerContainer));
         jUsd.updateMintLimit(type(uint256).max);
+
+        holdingManager = new HoldingManager(OWNER, address(managerContainer));
+        liquidationManager = new LiquidationManager(OWNER, address(managerContainer));
         stablesManager = new StablesManager(OWNER, address(managerContainer), address(jUsd));
         strategyManager = new StrategyManager(OWNER, address(managerContainer));
 
-        manager.setStablecoinManager(address(stablesManager));
-        manager.setHoldingManager(address(holdingManager));
-        manager.setLiquidationManager(address(liquidationManager));
-        manager.setStrategyManager(address(strategyManager));
-        manager.setFeeAddress(address(uint160(uint256(keccak256(bytes("Fee address"))))));
-
-        manager.whitelistToken(address(usdc));
-        manager.whitelistToken(address(weth));
-
-        usdcOracle = new SampleOracle();
         sharesRegistry =
             new SharesRegistry(OWNER, address(managerContainer), address(usdc), address(usdcOracle), bytes(""), 50_000);
         stablesManager.registerOrUpdateShareRegistry(address(sharesRegistry), address(usdc), true);
         registries[address(usdc)] = address(sharesRegistry);
 
-        SampleOracle wethOracle = new SampleOracle();
         wethSharesRegistry =
             new SharesRegistry(OWNER, address(managerContainer), address(weth), address(wethOracle), bytes(""), 50_000);
         stablesManager.registerOrUpdateShareRegistry(address(wethSharesRegistry), address(weth), true);
         registries[address(weth)] = address(wethSharesRegistry);
 
         receiptTokenFactory = new ReceiptTokenFactory(OWNER);
-        manager.setReceiptTokenFactory(address(receiptTokenFactory));
         receiptTokenReference = IReceiptToken(new ReceiptToken());
         receiptTokenFactory.setReceiptTokenReferenceImplementation(address(receiptTokenReference));
+
+        manager.setReceiptTokenFactory(address(receiptTokenFactory));
+
+        manager.setFeeAddress(address(uint160(uint256(keccak256(bytes("Fee address"))))));
+
+        manager.whitelistToken(address(usdc));
+        manager.whitelistToken(address(weth));
+
+        manager.setStablecoinManager(address(stablesManager));
+        manager.setHoldingManager(address(holdingManager));
+        manager.setLiquidationManager(address(liquidationManager));
+        manager.setStrategyManager(address(strategyManager));
 
         strategyWithoutRewardsMock = new StrategyWithoutRewardsMock({
             _managerContainer: address(managerContainer),
