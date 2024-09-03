@@ -184,6 +184,7 @@ interface ILiquidationManager {
         uint256 exchangeRate; // Current exchange rate.
         uint256 collateralInStrategies; // Total collateral locked in strategies
         bytes swapPath; // Path for token swapping
+        uint256 deadline; // The latest time by which the swap operation must be completed.
         uint256 amountInMaximum; // Maximum amount to swap
         uint256 slippagePercentage; // Slippage percentage for token swapping
         bool useHoldingBalance; // Flag indicating whether to use Holding balance
@@ -214,12 +215,14 @@ interface ILiquidationManager {
      * @notice Defines the necessary properties for self-liquidation for collateral swap.
      * @notice For optimal results, provide `_swapPath` and `_amountInMaximum` following the Uniswap Auto Router
      * guidelines. Refer to: https://blog.uniswap.org/auto-router.
+     * @dev `_deadline` is a timestamp representing the latest time by which the swap operation must be completed.
      * @dev `slippagePercentage` represents the acceptable deviation percentage of `_amountInMaximum` from the
      * `totalSelfLiquidatableCollateral`.
      * @dev `slippagePercentage` is denominated in 5, where 100% is represented as 1e5.
      */
     struct SwapParamsCalldata {
         bytes swapPath;
+        uint256 deadline;
         uint256 amountInMaximum;
         uint256 slippagePercentage;
     }

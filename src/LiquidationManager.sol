@@ -138,6 +138,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
             exchangeRate: 0,
             collateralInStrategies: 0,
             swapPath: _swapParams.swapPath,
+            deadline: _swapParams.deadline,
             amountInMaximum: _swapParams.amountInMaximum,
             slippagePercentage: _swapParams.slippagePercentage,
             useHoldingBalance: _strategiesParams.useHoldingBalance,
@@ -223,6 +224,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
             _tokenIn: _collateral,
             _swapPath: tempData.swapPath,
             _userHolding: tempData.holding,
+            _deadline: tempData.deadline,
             _amountOut: tempData.jUsdAmountToBurn,
             _amountInMaximum: tempData.amountInMaximum
         });

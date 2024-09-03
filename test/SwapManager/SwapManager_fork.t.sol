@@ -129,7 +129,7 @@ contract SwapManagerTest is Test {
         bytes memory swapPath = abi.encodePacked(address(jUsd), uint24(100), USDC);
         vm.prank(caller, caller);
         vm.expectRevert(bytes("1000"));
-        swapManager.swapExactOutputMultihop(USDC, swapPath, address(1), 1, 1);
+        swapManager.swapExactOutputMultihop(USDC, swapPath, address(1), block.timestamp, 1, 1);
     }
 
     // Tests if the function refunds user when there's more funds sent than needed
@@ -152,7 +152,9 @@ contract SwapManagerTest is Test {
 
         // Execute swapExactOutputMultihop on Uniswap.
         vm.prank(manager.liquidationManager(), manager.liquidationManager());
-        uint256 amountIn = swapManager.swapExactOutputMultihop(USDC, swapPath, userHolding, _amountOut, amountInMaximum);
+        uint256 amountIn = swapManager.swapExactOutputMultihop(
+            USDC, swapPath, userHolding, block.timestamp, _amountOut, amountInMaximum
+        );
 
         assertEq(
             expectedTokenOutBalance,
@@ -188,7 +190,9 @@ contract SwapManagerTest is Test {
 
         // Execute swapExactOutputMultihop on Uniswap.
         vm.prank(manager.liquidationManager(), manager.liquidationManager());
-        uint256 amountIn = swapManager.swapExactOutputMultihop(USDC, swapPath, userHolding, _amountOut, amountInMaximum);
+        uint256 amountIn = swapManager.swapExactOutputMultihop(
+            USDC, swapPath, userHolding, block.timestamp, _amountOut, amountInMaximum
+        );
 
         assertEq(
             expectedTokenOutBalance,

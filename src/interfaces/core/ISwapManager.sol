@@ -49,7 +49,7 @@ interface ISwapManager {
      * @notice Swaps a minimum possible amount of `_tokenIn` for a fixed amount of `tokenOut` via `_swapPath`.
      *
      * @notice Requirements:
-     * - The pool should not be empty.
+     * - The jUSD UniswapV3 Pool must be valid.
      * - The caller must be Liquidation Manager Contract.
      *
      * @notice Effects:
@@ -61,6 +61,7 @@ interface ISwapManager {
      * @param _tokenIn The address of the inbound asset.
      * @param _swapPath The optimal path for the multi-hop swap.
      * @param _userHolding The holding address associated with the user.
+     * @param _deadline The timestamp representing the latest time by which the swap operation must be completed.
      * @param _amountOut The desired amount of `tokenOut`.
      * @param _amountInMaximum The maximum amount of `_tokenIn` to be swapped for the specified `_amountOut`.
      *
@@ -70,6 +71,7 @@ interface ISwapManager {
         address _tokenIn,
         bytes calldata _swapPath,
         address _userHolding,
+        uint256 _deadline,
         uint256 _amountOut,
         uint256 _amountInMaximum
     ) external returns (uint256 amountIn);
@@ -99,6 +101,7 @@ interface ISwapManager {
         address tokenIn; // The address of the token to be swapped
         bytes swapPath; // The swap path to be used for swap
         address userHolding; // User's holding address
+        uint256 deadline; // The latest time by which the swap operation must be completed.
         uint256 amountOut; // The exact amount to be received after the swap
         uint256 amountInMaximum; // The maximum amount of `tokenIn` to be swapped
         address router; // The address of the UniswapV3 Swap Router to be used for the swap

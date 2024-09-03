@@ -91,6 +91,7 @@ contract SwapManager is ISwapManager, Ownable2Step {
      * @param _tokenIn The address of the inbound asset.
      * @param _swapPath The optimal path for the multi-hop swap.
      * @param _userHolding The holding address associated with the user.
+     * @param _deadline The timestamp representing the latest time by which the swap operation must be completed.
      * @param _amountOut The desired amount of `tokenOut`.
      * @param _amountInMaximum The maximum amount of `_tokenIn` to be swapped for the specified `_amountOut`.
      *
@@ -100,6 +101,7 @@ contract SwapManager is ISwapManager, Ownable2Step {
         address _tokenIn,
         bytes calldata _swapPath,
         address _userHolding,
+        uint256 _deadline,
         uint256 _amountOut,
         uint256 _amountInMaximum
     ) external override validPool(_swapPath, _amountOut) returns (uint256 amountIn) {
@@ -111,6 +113,7 @@ contract SwapManager is ISwapManager, Ownable2Step {
             tokenIn: _tokenIn,
             swapPath: _swapPath,
             userHolding: _userHolding,
+            deadline: _deadline,
             amountOut: _amountOut,
             amountInMaximum: _amountInMaximum,
             router: swapRouter
@@ -138,7 +141,7 @@ contract SwapManager is ISwapManager, Ownable2Step {
         ISwapRouter.ExactOutputParams memory params = ISwapRouter.ExactOutputParams({
             path: tempData.swapPath,
             recipient: tempData.userHolding,
-            deadline: block.timestamp,
+            deadline: tempData.deadline,
             amountOut: tempData.amountOut,
             amountInMaximum: tempData.amountInMaximum
         });
