@@ -50,10 +50,6 @@ contract StrategyWithRewardsMock is IStrategy, StrategyBase {
         );
     }
 
-    function getRewards(address) external view override returns (uint256) {
-        return 100 * IERC20Metadata(rewardToken).decimals();
-    }
-
     function deposit(
         address _asset,
         uint256 _amount,
