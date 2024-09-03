@@ -533,7 +533,6 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         (, address _tokenRegistry) = _getStablesManager().shareRegistryInfo(_token);
         if (_tokenRegistry != address(0) && ISharesRegistry(_tokenRegistry).collateral(holding) > 0) {
             _getStablesManager().removeCollateral({ _holding: holding, _token: _token, _amount: _amount });
-            require(_getStablesManager().isSolvent({ _token: _token, _holding: holding }), "3009");
         }
         uint256 withdrawalFee = _getManager().withdrawalFee();
         uint256 withdrawalFeeAmount = 0;
