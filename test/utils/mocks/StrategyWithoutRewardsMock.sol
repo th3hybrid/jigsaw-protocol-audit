@@ -46,10 +46,6 @@ contract StrategyWithoutRewardsMock is IStrategy, StrategyBase {
         );
     }
 
-    function getRewards(address) external pure override returns (uint256) {
-        return 0;
-    }
-
     function deposit(
         address _asset,
         uint256 _amount,
