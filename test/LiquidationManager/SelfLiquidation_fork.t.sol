@@ -508,6 +508,7 @@ contract SelfLiquidationTest is Test {
         swapParams.swapPath = abi.encodePacked(address(jUsd), uint24(100), testData.collateral);
         (swapParams.amountInMaximum,,,) = quoter.quoteExactOutput(swapParams.swapPath, testData.selfLiquidationAmount);
         swapParams.slippagePercentage = 0.1e3; // we allow 0.1% slippage for this test case
+        swapParams.deadline = block.timestamp;
 
         uint256 limit = testData.requiredCollateral
             + testData.requiredCollateral.mulDiv(swapParams.slippagePercentage, liquidationManager.LIQUIDATION_PRECISION());
@@ -575,6 +576,7 @@ contract SelfLiquidationTest is Test {
         (swapParams.amountInMaximum,,,) = quoter.quoteExactOutput(swapParams.swapPath, testData.selfLiquidationAmount);
         swapParams.slippagePercentage = 0.1e3; // we allow 0.1% slippage for this test case
         swapParams.amountInMaximum = swapParams.amountInMaximum * 101 / 100;
+        swapParams.deadline = block.timestamp;
 
         vm.prank(testData.user, testData.user);
         liquidationManager.selfLiquidate(
@@ -636,6 +638,7 @@ contract SelfLiquidationTest is Test {
         swapParams.swapPath = abi.encodePacked(address(jUsd), uint24(100), testData.collateral);
         (swapParams.amountInMaximum,,,) = quoter.quoteExactOutput(swapParams.swapPath, testData.selfLiquidationAmount);
         swapParams.slippagePercentage = 0.1e3; // we allow 0.1% slippage for this test case
+        swapParams.deadline = block.timestamp;
 
         vm.startPrank(testData.user, testData.user);
         strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
@@ -713,6 +716,7 @@ contract SelfLiquidationTest is Test {
         swapParams.swapPath = abi.encodePacked(address(jUsd), uint24(100), testData.collateral);
         (swapParams.amountInMaximum,,,) = quoter.quoteExactOutput(swapParams.swapPath, testData.selfLiquidationAmount);
         swapParams.slippagePercentage = 0.1e3; // we allow 0.1% slippage for this test case
+        swapParams.deadline = block.timestamp;
 
         uint256 investAmount = swapParams.amountInMaximum * 2;
 
@@ -805,6 +809,7 @@ contract SelfLiquidationTest is Test {
         swapParams.swapPath = abi.encodePacked(address(jUsd), uint24(100), testData.collateral);
         (swapParams.amountInMaximum,,,) = quoter.quoteExactOutput(swapParams.swapPath, testData.selfLiquidationAmount);
         swapParams.slippagePercentage = 0.1e3; // we allow 0.1% slippage for this test case
+        swapParams.deadline = block.timestamp;
 
         vm.prank(testData.user, testData.user);
         strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
@@ -897,6 +902,7 @@ contract SelfLiquidationTest is Test {
         swapParams.slippagePercentage = 50e3; // we allow 50% slippage for this test case
         swapParams.amountInMaximum = testData.requiredCollateral
             + testData.requiredCollateral.mulDiv(swapParams.slippagePercentage, liquidationManager.LIQUIDATION_PRECISION());
+        swapParams.deadline = block.timestamp;
 
         deal(testData.collateral, testData.userHolding, testData.requiredCollateral * 2);
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);

@@ -56,9 +56,12 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
         address _owner
     ) external override returns (address newReceiptTokenAddress) {
         // Clone the Receipt Token implementation for the new receipt token.
-        newReceiptTokenAddress = Clones.clone(referenceImplementation);
+        newReceiptTokenAddress = Clones.cloneDeterministic({
+            implementation: referenceImplementation,
+            salt: bytes32(uint256(uint160(msg.sender)))
+        });
 
-        // Emit the event indicating the successful Receipt Token creation
+        // Emit the event indicating the successful Receipt Token creation.
         emit ReceiptTokenCreated({
             newReceiptTokenAddress: newReceiptTokenAddress,
             creator: msg.sender,

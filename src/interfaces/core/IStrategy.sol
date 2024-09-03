@@ -89,13 +89,6 @@ interface IStrategy {
     function sharesDecimals() external view returns (uint256);
 
     /**
-     * @notice Returns rewards amount.
-     * @param _recipient The address of the recipient.
-     * @return rewards The rewards amount.
-     */
-    function getRewards(address _recipient) external view returns (uint256 rewards);
-
-    /**
      * @notice Returns the address of the receipt token.
      * @return receiptTokenAddress The address of the receipt token.
      */
