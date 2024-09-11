@@ -80,7 +80,8 @@ abstract contract StrategyBase is Ownable, ReentrancyGuard {
 
         uint256 realAmount = burnAmount;
         if (_tokenDecimals > 18) {
-            realAmount = burnAmount / (10 ** (_tokenDecimals - 18));
+            realAmount =
+                burnAmount / (10 ** (_tokenDecimals - 18)) + (burnAmount % (10 ** (_tokenDecimals - 18)) == 0 ? 0 : 1);
         } else {
             realAmount = burnAmount * (10 ** (18 - _tokenDecimals));
         }
