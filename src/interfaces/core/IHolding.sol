@@ -61,5 +61,5 @@ interface IHolding {
     function genericCall(
         address _contract,
         bytes calldata _call
-    ) external returns (bool success, bytes memory result);
+    ) external payable returns (bool success, bytes memory result);
 }

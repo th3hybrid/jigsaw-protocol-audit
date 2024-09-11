@@ -192,9 +192,9 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         IHolding holding = IHolding(userHolding[msg.sender]);
         (uint256 userAmount, uint256 feeAmount) = _withdraw({ _token: _token, _amount: _amount });
 
-        // Transfer the fee amount to the fee address if applicable.
-        if (feeAmount > 0) holding.transfer({ _token: _token, _to: _getManager().feeAddress(), _amount: feeAmount });
-        // Transfer the remaining amount to the user
+        // Transfer the fee amount to the fee address.
+        holding.transfer({ _token: _token, _to: _getManager().feeAddress(), _amount: feeAmount });
+        // Transfer the remaining amount to the user.
         holding.transfer({ _token: _token, _to: msg.sender, _amount: userAmount });
     }
 
@@ -228,10 +228,9 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         _unwrap(_amount);
         (uint256 userAmount, uint256 feeAmount) = _withdraw({ _token: wethAddress, _amount: _amount });
 
-        if (feeAmount > 0) {
-            (bool feeSuccess,) = payable(_getManager().feeAddress()).call{ value: feeAmount }("");
-            require(feeSuccess, "3016");
-        }
+        (bool feeSuccess,) = payable(_getManager().feeAddress()).call{ value: feeAmount }("");
+        require(feeSuccess, "3016");
+
         (bool success,) = payable(msg.sender).call{ value: userAmount }("");
         require(success, "3016");
     }
