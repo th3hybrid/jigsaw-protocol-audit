@@ -125,8 +125,8 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
     function genericCall(
         address _contract,
         bytes calldata _call
-    ) external override nonReentrant onlyAllowed returns (bool success, bytes memory result) {
-        (success, result) = _contract.call(_call);
+    ) external payable override nonReentrant onlyAllowed returns (bool success, bytes memory result) {
+        (success, result) = _contract.call{ value: msg.value }(_call);
     }
 
     // -- Modifiers
