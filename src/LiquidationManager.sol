@@ -176,7 +176,8 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         require(tempData.totalRequiredCollateral > 0, "3080");
 
         // Calculate the self-liquidation fee amount.
-        tempData.totalFeeCollateral = tempData.totalRequiredCollateral.mulDiv(selfLiquidationFee, precision);
+        tempData.totalFeeCollateral =
+            tempData.totalRequiredCollateral.mulDiv(selfLiquidationFee, precision, Math.Rounding.Ceil);
 
         // Calculate the total self-liquidatable collateral required to perform self-liquidation.
         tempData.totalSelfLiquidatableCollateral = tempData.totalRequiredCollateral + tempData.totalFeeCollateral;
