@@ -370,8 +370,9 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
             : tempData.totalRequiredCollateral;
 
         // Calculate and adjust liquidator's collateral if the liquidator is not the user.
-        tempData.totalLiquidatorCollateral =
-            _user == msg.sender ? 0 : (tempData.totalRequiredCollateral * liquidatorBonus) / LIQUIDATION_PRECISION;
+        tempData.totalLiquidatorCollateral = _user == msg.sender
+            ? 0
+            : tempData.totalRequiredCollateral.mulDiv(liquidatorBonus, LIQUIDATION_PRECISION, Math.Rounding.Ceil);
 
         // Update total required collateral
         tempData.totalRequiredCollateral += tempData.totalLiquidatorCollateral;
