@@ -522,7 +522,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
     ) private view returns (uint256 totalCollateral) {
         uint256 EXCHANGE_RATE_PRECISION = _getManager().EXCHANGE_RATE_PRECISION();
         // Calculate collateral amount based on its USD value.
-        totalCollateral = (_jUsdAmount * EXCHANGE_RATE_PRECISION) / _exchangeRate;
+        totalCollateral = _jUsdAmount.mulDiv(EXCHANGE_RATE_PRECISION, _exchangeRate, Math.Rounding.Ceil);
         // Adjust collateral amount in accordance with current jUSD price.
         totalCollateral = totalCollateral.mulDiv(_getManager().getJUsdExchangeRate(), EXCHANGE_RATE_PRECISION);
         // Perform sanity check to avoid miscalculations.
