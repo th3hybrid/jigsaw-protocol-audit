@@ -264,7 +264,6 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
 
     // -- Utilities --
 
-    // @todo update holding invocation to better control the access and make it safe for user.
     /**
      * @notice Invokes a generic call on the holding.
      *
