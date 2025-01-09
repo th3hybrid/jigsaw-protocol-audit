@@ -10,13 +10,12 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { IOracle } from "../../src/interfaces/oracle/IOracle.sol";
 
-import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
 
 /**
  * @notice Deploys ManagerContainer Contract
  */
-contract DeployManager is Script, Base {
+contract DeployManagerContainer is Script, Base {
     using StdJson for string;
 
     // Read config files
