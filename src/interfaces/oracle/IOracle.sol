@@ -14,7 +14,9 @@ interface IOracle {
      * @return success If no valid (recent) rate is available, returns false else true.
      * @return rate The rate of the requested asset / pair / pool.
      */
-    function get(bytes calldata data) external returns (bool success, uint256 rate);
+    function get(
+        bytes calldata data
+    ) external returns (bool success, uint256 rate);
 
     /**
      * @notice Check the last exchange rate without any state changes.
@@ -26,7 +28,9 @@ interface IOracle {
      * @return success If no valid (recent) rate is available, returns false else true.
      * @return rate The rate of the requested asset / pair / pool.
      */
-    function peek(bytes calldata data) external view returns (bool success, uint256 rate);
+    function peek(
+        bytes calldata data
+    ) external view returns (bool success, uint256 rate);
 
     /**
      * @notice Check the current spot exchange rate without any state changes. For oracles like TWAP this will be
@@ -38,7 +42,9 @@ interface IOracle {
      *
      * @return rate The rate of the requested asset / pair / pool.
      */
-    function peekSpot(bytes calldata data) external view returns (uint256 rate);
+    function peekSpot(
+        bytes calldata data
+    ) external view returns (uint256 rate);
 
     /**
      * @notice Returns a human readable (short) name about this oracle.
@@ -49,7 +55,9 @@ interface IOracle {
      *
      * @return (string) A human readable symbol name about this oracle.
      */
-    function symbol(bytes calldata data) external view returns (string memory);
+    function symbol(
+        bytes calldata data
+    ) external view returns (string memory);
 
     /**
      * @notice Returns a human readable name about this oracle.
@@ -60,5 +68,7 @@ interface IOracle {
      *
      * @return (string) A human readable name about this oracle.
      */
-    function name(bytes calldata data) external view returns (string memory);
+    function name(
+        bytes calldata data
+    ) external view returns (string memory);
 }

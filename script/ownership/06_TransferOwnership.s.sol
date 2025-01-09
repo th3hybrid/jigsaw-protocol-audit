@@ -6,7 +6,9 @@ import { Script, console2 as console } from "forge-std/Script.sol";
 import { Base } from "../Base.s.sol";
 
 interface ITransferOwnership {
-    function transferOwnership(address newOwner) external;
+    function transferOwnership(
+        address newOwner
+    ) external;
 }
 
 /**

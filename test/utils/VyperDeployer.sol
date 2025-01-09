@@ -4,7 +4,9 @@ pragma solidity >=0.8.13;
 ///@notice This cheat codes interface is named _CheatCodes so you can use the CheatCodes interface in other testing
 /// files without errors
 interface _CheatCodes {
-    function ffi(string[] calldata) external returns (bytes memory);
+    function ffi(
+        string[] calldata
+    ) external returns (bytes memory);
 }
 
 contract VyperDeployer {
@@ -19,7 +21,9 @@ contract VyperDeployer {
     /// "SimpleStore"
     ///@return deployedAddress - The address that the contract was deployed to
 
-    function deployContract(string memory fileName) public returns (address) {
+    function deployContract(
+        string memory fileName
+    ) public returns (address) {
         ///@notice create a list of strings with the commands necessary to compile Vyper contracts
         string[] memory cmds = new string[](2);
         cmds[0] = "vyper";
@@ -74,7 +78,9 @@ contract VyperDeployer {
 
     /// @dev Consider listening to the Blueprint if you haven't already
     /// @param fileName - The file name of the Blueprint Contract
-    function deployBlueprint(string memory fileName) public returns (address) {
+    function deployBlueprint(
+        string memory fileName
+    ) public returns (address) {
         ///@notice create a list of strings with the commands necessary to compile Vyper contracts
         string[] memory cmds = new string[](2);
         cmds[0] = "vyper";

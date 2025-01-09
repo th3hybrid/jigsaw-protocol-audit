@@ -24,7 +24,9 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
      * @notice Creates a new StablesManager contract.
      * @param _initialOwner The initial owner of the contract.
      */
-    constructor(address _initialOwner) Ownable(_initialOwner) { }
+    constructor(
+        address _initialOwner
+    ) Ownable(_initialOwner) { }
 
     // -- Administration --
 
@@ -32,7 +34,9 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
      * @notice Sets the reference implementation address for the receipt token.
      * @param _referenceImplementation Address of the new reference implementation contract.
      */
-    function setReceiptTokenReferenceImplementation(address _referenceImplementation) external override onlyOwner {
+    function setReceiptTokenReferenceImplementation(
+        address _referenceImplementation
+    ) external override onlyOwner {
         require(_referenceImplementation != address(0), "3000");
         referenceImplementation = _referenceImplementation;
     }
