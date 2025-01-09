@@ -26,6 +26,9 @@ contract DeployReceiptToken is Script, Base {
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
     address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
 
+    // Salt for deterministic deployment using Create2
+    bytes32 internal salt = "0x";
+
     function run() external broadcast returns (ReceiptTokenFactory receiptTokenFactory, ReceiptToken receiptToken) {
         // Validate interface
         _validateInterface(ManagerContainer(MANAGER_CONTAINER));
@@ -34,14 +37,14 @@ contract DeployReceiptToken is Script, Base {
         Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
 
         // Deploy ReceiptTokenFactory Contract
-        receiptTokenFactory = new ReceiptTokenFactory({ _initialOwner: INITIAL_OWNER });
+        receiptTokenFactory = new ReceiptTokenFactory{ salt: salt }({ _initialOwner: INITIAL_OWNER });
 
         // Deploy ReceiptToken Contract
         receiptToken = new ReceiptToken();
 
+        // @todo change this to safe wallet bundle
         // Set receipt token implementation
         receiptTokenFactory.setReceiptTokenReferenceImplementation({ _referenceImplementation: address(receiptToken) });
-
         // Set receipt token factory in the Manager Contract
         manager.setReceiptTokenFactory({ _factory: address(receiptTokenFactory) });
 

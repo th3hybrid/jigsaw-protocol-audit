@@ -23,12 +23,15 @@ contract DeployJUSD is Script, Base {
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
     address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
 
+    // Salt for deterministic deployment using Create2
+    bytes32 internal salt = "0x";
+
     function run() external broadcast returns (JigsawUSD jUSD) {
         // Validate interface
         _validateInterface(ManagerContainer(MANAGER_CONTAINER));
 
         // Deploy JigsawUSD contract
-        jUSD = new JigsawUSD({ _initialOwner: INITIAL_OWNER, _managerContainer: MANAGER_CONTAINER });
+        jUSD = new JigsawUSD{ salt: salt }({ _initialOwner: INITIAL_OWNER, _managerContainer: MANAGER_CONTAINER });
 
         // Save JigsawUSD address to the 03_ManagersConfig.json for later use
         Strings.toHexString(uint160(address(jUSD)), 20).write("./deployment-config/03_ManagersConfig.json", ".JUSD");
