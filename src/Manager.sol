@@ -111,9 +111,9 @@ contract Manager is IManager, Ownable2Step {
     /**
      * @notice The % amount a liquidator gets.
      * @dev Uses 3 decimal precision, where 1% is represented as 1000.
-     * @dev 10% is the default liquidator's bonus.
+     * @dev 8% is the default liquidator's bonus.
      */
-    uint256 public override liquidatorBonus = 1e4;
+    uint256 public override liquidatorBonus = 8e3;
 
     /**
      * @notice The max % amount the protocol gets when a self-liquidation operation happens.
