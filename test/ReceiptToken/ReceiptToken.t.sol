@@ -39,7 +39,9 @@ contract ReceiptTokenTest is Test {
     }
 
     // Test if setMinter function works correctly when authorized
-    function test_setMinter_when_authorized(address _minter) public {
+    function test_setMinter_when_authorized(
+        address _minter
+    ) public {
         vm.assume(_minter != address(0));
         address oldMinter = receiptToken.minter();
         vm.assume(_minter != oldMinter);

@@ -114,7 +114,9 @@ abstract contract BasicContractsFixture is Test {
         vm.stopPrank();
     }
 
-    function assumeNotOwnerNotZero(address _user) internal pure virtual {
+    function assumeNotOwnerNotZero(
+        address _user
+    ) internal pure virtual {
         vm.assume(_user != OWNER);
         vm.assume(_user != address(0));
     }

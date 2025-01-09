@@ -334,7 +334,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @notice Adds a new strategy to the whitelist.
      * @param _strategy strategy's address.
      */
-    function addStrategy(address _strategy) public override onlyOwner validAddress(_strategy) {
+    function addStrategy(
+        address _strategy
+    ) public override onlyOwner validAddress(_strategy) {
         require(!strategyInfo[_strategy].whitelisted, "3014");
         StrategyInfo memory info = StrategyInfo(0, false, false);
         info.performanceFee = _getManager().performanceFee();
@@ -388,7 +390,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @dev Should be only called off-chain as can be high gas consuming.
      * @param _holding address for which the strategies are requested.
      */
-    function getHoldingToStrategy(address _holding) external view returns (address[] memory) {
+    function getHoldingToStrategy(
+        address _holding
+    ) external view returns (address[] memory) {
         return holdingToStrategy[_holding].values();
     }
 
@@ -540,7 +544,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @dev Modifier to check if the address is valid (not zero address).
      * @param _address being checked.
      */
-    modifier validAddress(address _address) {
+    modifier validAddress(
+        address _address
+    ) {
         require(_address != address(0), "3000");
         _;
     }
@@ -549,7 +555,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @dev Modifier to check if the strategy address is valid (whitelisted).
      * @param _strategy address being checked.
      */
-    modifier validStrategy(address _strategy) {
+    modifier validStrategy(
+        address _strategy
+    ) {
         require(strategyInfo[_strategy].whitelisted, "3029");
         _;
     }
@@ -558,7 +566,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @dev Modifier to check if the amount is valid (greater than zero).
      * @param _amount being checked.
      */
-    modifier validAmount(uint256 _amount) {
+    modifier validAmount(
+        uint256 _amount
+    ) {
         require(_amount > 0, "2001");
         _;
     }
@@ -567,7 +577,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @dev Modifier to check if the sender is allowed to perform the action.
      * @param _holding address being accessed.
      */
-    modifier onlyAllowed(address _holding) {
+    modifier onlyAllowed(
+        address _holding
+    ) {
         require(
             _getManager().holdingManager() == msg.sender || _getManager().liquidationManager() == msg.sender
                 || _getHoldingManager().holdingUser(_holding) == msg.sender,
@@ -580,7 +592,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @dev Modifier to check if the token is valid (whitelisted).
      * @param _token address being checked.
      */
-    modifier validToken(address _token) {
+    modifier validToken(
+        address _token
+    ) {
         require(_getManager().isTokenWhitelisted(_token), "3001");
         _;
     }
