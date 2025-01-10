@@ -97,12 +97,7 @@ contract DeployManagers is Script, Base {
             _managerContainer: MANAGER_CONTAINER
         });
 
-        // @todo change this to safe wallet bundle
-        manager.setHoldingManager(address(holdingManager));
-        manager.setLiquidationManager(address(liquidationManager));
-        manager.setStablecoinManager(address(stablesManager));
-        manager.setStrategyManager(address(strategyManager));
-        manager.setSwapManager(address(swapManager));
+        // @note set deployed managers' addresses in Manager Contract using multisig
 
         // Save addresses of all the deployed contracts to the deployments.json
         Strings.toHexString(uint160(address(holdingManager)), 20).write("./deployments.json", ".HOLDING_MANAGER");

@@ -50,9 +50,7 @@ contract DeployManager is Script, Base {
             _oracleData: JUSD_OracleData
         });
 
-        // @todo change this to safe wallet bundle
-        // Configure the fee address for the Manager Contract
-        manager.setFeeAddress(FEE_ADDRESS);
+        // @note setFeeAddress in Manager Contract using multisig
 
         // Save addresses of all the deployed contracts to the deployments.json
         Strings.toHexString(uint160(address(manager)), 20).write("./deployments.json", ".MANAGER");

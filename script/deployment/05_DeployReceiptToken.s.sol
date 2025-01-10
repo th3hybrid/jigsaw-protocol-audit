@@ -42,11 +42,8 @@ contract DeployReceiptToken is Script, Base {
         // Deploy ReceiptToken Contract
         receiptToken = new ReceiptToken();
 
-        // @todo change this to safe wallet bundle
-        // Set receipt token implementation
-        receiptTokenFactory.setReceiptTokenReferenceImplementation({ _referenceImplementation: address(receiptToken) });
-        // Set receipt token factory in the Manager Contract
-        manager.setReceiptTokenFactory({ _factory: address(receiptTokenFactory) });
+        // @note call setReceiptTokenReferenceImplementation on receiptTokenFactory using multisig
+        // @note call setReceiptTokenFactory on Manager Contract using multisig
 
         // Save addresses of all the deployed contracts to the deployments.json
         Strings.toHexString(uint160(address(receiptTokenFactory)), 20).write(
