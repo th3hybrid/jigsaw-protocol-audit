@@ -29,7 +29,7 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
         // Assert that referenceImplementation has code in it to protect the system from cloning invalid implementation.
         require(_referenceImplementation.code.length > 0, "3096");
 
-        emit StakerLightImplementationUpdated(_referenceImplementation);
+        emit ReceiptTokenImplementationUpdated(_referenceImplementation);
         referenceImplementation = _referenceImplementation;
     }
 
@@ -46,7 +46,7 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
         require(_referenceImplementation.code.length > 0, "3096");
         require(_referenceImplementation != referenceImplementation, "3062");
 
-        emit StakerLightImplementationUpdated(_referenceImplementation);
+        emit ReceiptTokenImplementationUpdated(_referenceImplementation);
         referenceImplementation = _referenceImplementation;
     }
 
