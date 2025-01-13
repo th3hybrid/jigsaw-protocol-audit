@@ -29,7 +29,8 @@ contract TransferOwnershipTest is Test {
     function test_transferOwnershipScript() public {
         vm.startPrank(INITIAL_OWNER, INITIAL_OWNER);
         JigsawUSD jUSD = new JigsawUSD({ _initialOwner: INITIAL_OWNER, _managerContainer: MANAGER_CONTAINER });
-        ReceiptTokenFactory receiptTokenFactory = new ReceiptTokenFactory({ _initialOwner: INITIAL_OWNER });
+        ReceiptTokenFactory receiptTokenFactory =
+            new ReceiptTokenFactory({ _initialOwner: INITIAL_OWNER, _referenceImplementation: address(jUSD) });
         vm.stopPrank();
 
         address[] memory transferOwnershipFrom = new address[](2);

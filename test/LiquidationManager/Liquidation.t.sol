@@ -89,10 +89,9 @@ contract LiquidationTest is Test {
         registries[address(usdc)] = address(sharesRegistry);
         stablesManager.registerOrUpdateShareRegistry(address(sharesRegistry), address(usdc), true);
 
-        receiptTokenFactory = new ReceiptTokenFactory(address(this));
-        manager.setReceiptTokenFactory(address(receiptTokenFactory));
         receiptTokenReference = IReceiptToken(new ReceiptToken());
-        receiptTokenFactory.setReceiptTokenReferenceImplementation(address(receiptTokenReference));
+        receiptTokenFactory = new ReceiptTokenFactory(address(this), (address(receiptTokenReference)));
+        manager.setReceiptTokenFactory(address(receiptTokenFactory));
 
         strategyWithoutRewardsMock = new StrategyWithoutRewardsMock(
             address(managerContainer), address(usdc), address(usdc), address(0), "RUsdc-Mock", "RUSDCM"
