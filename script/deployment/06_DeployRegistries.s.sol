@@ -91,8 +91,7 @@ contract DeployRegistries is Script, Base {
                 _active: true
             });
 
-            // Whitelist token in the Manager Contract
-            manager.whitelistToken(registryConfigs[i].token);
+            // @note whitelistToken on Manager Contract for all the tokens
 
             // Save the registry deployment address locally
             registries.push(address(registry));

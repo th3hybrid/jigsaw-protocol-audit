@@ -9,7 +9,8 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { DeployMocks } from "../../script/deployment/00_DeployMocks.s.sol";
 import { DeployManager } from "../../script/deployment/01_DeployManager.s.sol";
-import { DeployJUSD } from "../../script/deployment/02_DeployJUSD.s.sol";
+import { DeployManagerContainer } from "../../script/deployment/02_DeployManagerContainer.s.sol";
+import { DeployJUSD } from "../../script/deployment/03_DeployJUSD.s.sol";
 
 import { JigsawUSD } from "../../src/JigsawUSD.sol";
 import { Manager } from "../../src/Manager.sol";
@@ -55,7 +56,9 @@ contract DeployJUSDTest is Test {
 
         //Run Manager deployment script
         DeployManager deployManagerScript = new DeployManager();
-        (manager, managerContainer) = deployManagerScript.run();
+        DeployManagerContainer deployManagerContainerScript = new DeployManagerContainer();
+        manager = deployManagerScript.run();
+        managerContainer = deployManagerContainerScript.run();
 
         //Run JUSD deployment script
         DeployJUSD deployJUSDScript = new DeployJUSD();

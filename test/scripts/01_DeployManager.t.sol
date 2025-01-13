@@ -9,6 +9,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { DeployMocks } from "../../script/deployment/00_DeployMocks.s.sol";
 import { DeployManager } from "../../script/deployment/01_DeployManager.s.sol";
+import { DeployManagerContainer } from "../../script/deployment/02_DeployManagerContainer.s.sol";
 
 import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
@@ -51,7 +52,9 @@ contract DeployManagerTest is Test {
 
         //Run Manager deployment script
         DeployManager deployManagerScript = new DeployManager();
-        (manager, managerContainer) = deployManagerScript.run();
+        DeployManagerContainer deployManagerContainerScript = new DeployManagerContainer();
+        manager = deployManagerScript.run();
+        managerContainer = deployManagerContainerScript.run();
     }
 
     function test_deploy_manager() public view {

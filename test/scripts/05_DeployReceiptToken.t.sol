@@ -9,10 +9,12 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { DeployMocks } from "../../script/deployment/00_DeployMocks.s.sol";
 import { DeployManager } from "../../script/deployment/01_DeployManager.s.sol";
-import { DeployJUSD } from "../../script/deployment/02_DeployJUSD.s.sol";
-import { DeployManagers } from "../../script/deployment/03_DeployManagers.s.sol";
-import { DeployRegistries } from "../../script/deployment/04_DeployRegistries.s.sol";
+import { DeployManagerContainer } from "../../script/deployment/02_DeployManagerContainer.s.sol";
+import { DeployJUSD } from "../../script/deployment/03_DeployJUSD.s.sol";
+import { DeployManagers } from "../../script/deployment/04_DeployManagers.s.sol";
+
 import { DeployReceiptToken } from "../../script/deployment/05_DeployReceiptToken.s.sol";
+import { DeployRegistries } from "../../script/deployment/06_DeployRegistries.s.sol";
 
 import { HoldingManager } from "../../src/HoldingManager.sol";
 import { JigsawUSD } from "../../src/JigsawUSD.sol";
@@ -84,7 +86,9 @@ contract DeployReceiptTokenTest is Test {
 
         //Run Manager deployment script
         DeployManager deployManagerScript = new DeployManager();
-        (manager, managerContainer) = deployManagerScript.run();
+        DeployManagerContainer deployManagerContainerScript = new DeployManagerContainer();
+        manager = deployManagerScript.run();
+        managerContainer = deployManagerContainerScript.run();
 
         //Run JUSD deployment script
         DeployJUSD deployJUSDScript = new DeployJUSD();
