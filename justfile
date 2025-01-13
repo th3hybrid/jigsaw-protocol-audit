@@ -82,34 +82,34 @@ mp verbosity path: && _timer
 deploy-manager:  && _timer
 	#!/usr/bin/env bash
 	echo "Deploying Manager to $CHAIN..."
-	eval "forge script DeployManager --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify"
+	eval "forge script DeployManager --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
 
 # Deploy ManagerContainer Contract	
 deploy-managerContainer: && _timer
 	#!/usr/bin/env bash
 	echo "Deploying ManagerContainer to $CHAIN..."
-	eval "forge script DeployManagerContainer --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify"
+	eval "forge script DeployManagerContainer --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
 
 # Deploy jUSD Contract
 deploy-jUSD:  && _timer
 	#!/usr/bin/env bash
 	echo "Deploying jUSD to $CHAIN..."
-	eval "forge script DeployJUSD --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify"
+	eval "forge script DeployJUSD --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
 
 # Deploy HoldingManager, LiquidationManager, StablesManager, StrategyManager & SwapManager Contracts
 deploy-managers:  && _timer
 	#!/usr/bin/env bash
 	echo "Deploying Managers to $CHAIN..."
-	eval "forge script DeployManagers --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify"
+	eval "forge script DeployManagers --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
 
 # Deploy ReceiptTokenFactory & ReceiptToken Contracts
 deploy-receipt:  && _timer
 	#!/usr/bin/env bash
 	echo "Deploying Receipt Token to $CHAIN..."
-	eval "forge script DeployReceiptToken --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify"
+	eval "forge script DeployReceiptToken --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
 	
 # Deploy SharesRegistry Contracts for each configured token (a.k.a. collateral)
 deploy-registries:  && _timer
 	#!/usr/bin/env bash
 	echo "Deploying Registries to $CHAIN..."
-	eval "forge script DeployRegistries --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify"
+	eval "forge script DeployRegistries --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
