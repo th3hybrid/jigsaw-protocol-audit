@@ -23,10 +23,15 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
     /**
      * @notice Creates a new StablesManager contract.
      * @param _initialOwner The initial owner of the contract.
+     * @notice Sets the reference implementation address for the receipt token.
      */
-    constructor(
-        address _initialOwner
-    ) Ownable(_initialOwner) { }
+    constructor(address _initialOwner, address _referenceImplementation) Ownable(_initialOwner) {
+        // Assert that referenceImplementation has code in it to protect the system from cloning invalid implementation.
+        require(_referenceImplementation.code.length > 0, "3096");
+
+        emit StakerLightImplementationUpdated(_referenceImplementation);
+        referenceImplementation = _referenceImplementation;
+    }
 
     // -- Administration --
 
@@ -37,7 +42,11 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
     function setReceiptTokenReferenceImplementation(
         address _referenceImplementation
     ) external override onlyOwner {
-        require(_referenceImplementation != address(0), "3000");
+        // Assert that referenceImplementation has code in it to protect the system from cloning invalid implementation.
+        require(_referenceImplementation.code.length > 0, "3096");
+        require(_referenceImplementation != referenceImplementation, "3062");
+
+        emit StakerLightImplementationUpdated(_referenceImplementation);
         referenceImplementation = _referenceImplementation;
     }
 
@@ -80,5 +89,12 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
             __minter: _minter,
             __owner: _owner
         });
+    }
+
+    /**
+     * @dev Renounce ownership override to avoid losing contract's ownership.
+     */
+    function renounceOwnership() public pure virtual override {
+        revert("1000");
     }
 }
