@@ -36,13 +36,15 @@ contract DeployReceiptToken is Script, Base {
         // Get manager address from the MANAGER_CONTAINER
         Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
 
-        // Deploy ReceiptTokenFactory Contract
-        receiptTokenFactory = new ReceiptTokenFactory{ salt: salt }({ _initialOwner: INITIAL_OWNER });
-
         // Deploy ReceiptToken Contract
         receiptToken = new ReceiptToken();
 
-        // @note call setReceiptTokenReferenceImplementation on receiptTokenFactory using multisig
+        // Deploy ReceiptTokenFactory Contract
+        receiptTokenFactory = new ReceiptTokenFactory{ salt: salt }({
+            _initialOwner: INITIAL_OWNER,
+            _referenceImplementation: address(receiptToken)
+        });
+
         // @note call setReceiptTokenFactory on Manager Contract using multisig
 
         // Save addresses of all the deployed contracts to the deployments.json
