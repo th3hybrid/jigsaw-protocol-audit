@@ -86,9 +86,8 @@ abstract contract BasicContractsFixture is Test {
         stablesManager.registerOrUpdateShareRegistry(address(wethSharesRegistry), address(weth), true);
         registries[address(weth)] = address(wethSharesRegistry);
 
-        receiptTokenFactory = new ReceiptTokenFactory(OWNER);
         receiptTokenReference = IReceiptToken(new ReceiptToken());
-        receiptTokenFactory.setReceiptTokenReferenceImplementation(address(receiptTokenReference));
+        receiptTokenFactory = new ReceiptTokenFactory(OWNER, address(receiptTokenReference));
 
         manager.setReceiptTokenFactory(address(receiptTokenFactory));
 
