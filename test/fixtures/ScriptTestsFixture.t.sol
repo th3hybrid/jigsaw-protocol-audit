@@ -38,7 +38,6 @@ contract ScriptTestsFixture is Test {
     string internal commonConfigPath = "./deployment-config/00_CommonConfig.json";
     string internal managerConfigPath = "./deployment-config/01_ManagerConfig.json";
     string internal managersConfigPath = "./deployment-config/03_ManagersConfig.json";
-    string internal registryConfigPath = "./deployment-config/04_RegistryConfig.json";
 
     address internal INITIAL_OWNER = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
     address internal FEE_ADDRESS = address(uint160(uint256(keccak256("FEE ADDRESS"))));
@@ -74,13 +73,11 @@ contract ScriptTestsFixture is Test {
 
         // Update config files with needed values
         Strings.toHexString(uint160(INITIAL_OWNER), 20).write(commonConfigPath, ".INITIAL_OWNER");
-
         Strings.toHexString(uint160(USDC), 20).write(managerConfigPath, ".USDC");
         Strings.toHexString(uint160(WETH), 20).write(managerConfigPath, ".WETH");
         Strings.toHexString(uint160(JUSD_Oracle), 20).write(managerConfigPath, ".JUSD_Oracle");
         Strings.toHexString(uint256(bytes32("")), 32).write(managerConfigPath, ".JUSD_OracleData");
         Strings.toHexString(uint160(FEE_ADDRESS), 20).write(managerConfigPath, ".FEE_ADDRESS");
-
         Strings.toHexString(uint160(UNISWAP_FACTORY), 20).write(managersConfigPath, ".UNISWAP_FACTORY");
         Strings.toHexString(uint160(UNISWAP_SWAP_ROUTER), 20).write(managersConfigPath, ".UNISWAP_SWAP_ROUTER");
 
@@ -98,8 +95,6 @@ contract ScriptTestsFixture is Test {
         //Run Managers deployment script
         DeployManagers deployManagersScript = new DeployManagers();
         (holdingManager, liquidationManager, stablesManager, strategyManager, swapManager) = deployManagersScript.run();
-
-        Strings.toHexString(uint160(address(stablesManager)), 20).write(registryConfigPath, ".STABLES_MANAGER");
 
         //Run Registries deployment script
         DeployRegistries deployRegistriesScript = new DeployRegistries();
