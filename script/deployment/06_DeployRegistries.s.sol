@@ -36,16 +36,16 @@ contract DeployRegistries is Script, Base {
 
     // Read config files
     string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
-    string internal registryConfig = vm.readFile("./deployment-config/04_RegistryConfig.json");
+    string internal deployments = vm.readFile("./deployments.json");
 
     // Get values from configs
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
-    address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
-    address internal STABLES_MANAGER = registryConfig.readAddress(".STABLES_MANAGER");
+    address internal MANAGER_CONTAINER = deployments.readAddress(".MANAGER_CONTAINER");
+    address internal STABLES_MANAGER = deployments.readAddress(".STABLES_MANAGER");
 
     // Store configuration for each SharesRegistry
-    address internal USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address internal USDC_Oracle = 0xfD07C974e33dd1626640bA3a5acF0418FaacCA7a;
+    address internal USDC = 0x616b359d40Cc645D76F084d048Bf2709f8B3A290;
+    address internal USDC_Oracle = 0xEB8B6f572Fd08851D9ca4C46bfeE80bB2Fc5B5f0;
     bytes internal USDC_OracleData = bytes("");
     uint256 internal USDC_CR = 50_000;
 
@@ -66,9 +66,6 @@ contract DeployRegistries is Script, Base {
         _validateInterface(ManagerContainer(MANAGER_CONTAINER));
         _validateInterface(StablesManager(STABLES_MANAGER));
 
-        // Get manager address from the MANAGER_CONTAINER
-        Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
-
         for (uint256 i = 0; i < registryConfigs.length; i += 1) {
             // Validate interfaces
             _validateInterface(IERC20(registryConfigs[i].token));
@@ -84,13 +81,7 @@ contract DeployRegistries is Script, Base {
                 _collateralizationRate: registryConfigs[i].collateralizationRate
             });
 
-            // Save the deployed SharesRegistry contract to the StablesManager contract
-            StablesManager(STABLES_MANAGER).registerOrUpdateShareRegistry({
-                _registry: address(registry),
-                _token: registryConfigs[i].token,
-                _active: true
-            });
-
+            // @note save the deployed SharesRegistry contract to the StablesManager contract
             // @note whitelistToken on Manager Contract for all the tokens
 
             // Save the registry deployment address locally

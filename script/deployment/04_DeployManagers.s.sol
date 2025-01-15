@@ -29,11 +29,12 @@ contract DeployManagers is Script, Base {
     // Read config files
     string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
     string internal managersConfig = vm.readFile("./deployment-config/03_ManagersConfig.json");
+    string internal deployments = vm.readFile("./deployments.json");
 
     // Get values from configs
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
-    address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
-    address internal JUSD = managersConfig.readAddress(".JUSD");
+    address internal MANAGER_CONTAINER = deployments.readAddress(".MANAGER_CONTAINER");
+    address internal JUSD = deployments.readAddress(".jUSD");
     address internal UNISWAP_FACTORY = managersConfig.readAddress(".UNISWAP_FACTORY");
     address internal UNISWAP_SWAP_ROUTER = managersConfig.readAddress(".UNISWAP_SWAP_ROUTER");
 
@@ -60,9 +61,6 @@ contract DeployManagers is Script, Base {
         _validateInterface(IERC20(JUSD));
         _validateInterface(IUniswapV3Factory(UNISWAP_FACTORY));
         _validateInterface(ISwapRouter(UNISWAP_SWAP_ROUTER));
-
-        // Get manager address from the MANAGER_CONTAINER
-        Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
 
         // Deploy HoldingManager Contract
         holdingManager = new HoldingManager{ salt: holdingManager_salt }({
