@@ -8,7 +8,7 @@ contract DeployManagersTest is Test, ScriptTestsFixture {
         init();
     }
 
-    function test_deploy_managers() public view {
+    function test_deploy_managers() public {
         // Perform checks on the HoldingManager Contract
         assertEq(holdingManager.owner(), INITIAL_OWNER, "Initial owner in HoldingManager is wrong");
         assertEq(
