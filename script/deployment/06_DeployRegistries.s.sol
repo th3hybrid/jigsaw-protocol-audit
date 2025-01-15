@@ -66,9 +66,6 @@ contract DeployRegistries is Script, Base {
         _validateInterface(ManagerContainer(MANAGER_CONTAINER));
         _validateInterface(StablesManager(STABLES_MANAGER));
 
-        // Get manager address from the MANAGER_CONTAINER
-        Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
-
         for (uint256 i = 0; i < registryConfigs.length; i += 1) {
             // Validate interfaces
             _validateInterface(IERC20(registryConfigs[i].token));

@@ -33,9 +33,6 @@ contract DeployReceiptToken is Script, Base {
         // Validate interface
         _validateInterface(ManagerContainer(MANAGER_CONTAINER));
 
-        // Get manager address from the MANAGER_CONTAINER
-        Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
-
         // Deploy ReceiptToken Contract
         receiptToken = new ReceiptToken();
 

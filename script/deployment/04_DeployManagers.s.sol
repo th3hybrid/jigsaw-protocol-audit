@@ -61,9 +61,6 @@ contract DeployManagers is Script, Base {
         _validateInterface(IUniswapV3Factory(UNISWAP_FACTORY));
         _validateInterface(ISwapRouter(UNISWAP_SWAP_ROUTER));
 
-        // Get manager address from the MANAGER_CONTAINER
-        Manager manager = Manager(address(ManagerContainer(MANAGER_CONTAINER).manager()));
-
         // Deploy HoldingManager Contract
         holdingManager = new HoldingManager{ salt: holdingManager_salt }({
             _initialOwner: INITIAL_OWNER,
