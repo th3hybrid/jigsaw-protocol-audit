@@ -62,12 +62,7 @@ contract DeployManagersTest is Test, ScriptTestsFixture {
         vm.stopPrank();
 
         assertEq(manager.holdingManager(), address(holdingManager), "HoldingManager in Manager is wrong");
-        assertEq(
-            manager.liquidationManager(),
-            address(liquidationManager),
-            "LiquidationManager in Manager is
-        wrong"
-        );
+        assertEq(manager.liquidationManager(), address(liquidationManager), "LiquidationManager in Manager is wrong");
         assertEq(manager.stablesManager(), address(stablesManager), "StablesManager in Manager is wrong");
         assertEq(manager.strategyManager(), address(strategyManager), "StrategyManager in Manager is wrong");
         assertEq(manager.swapManager(), address(swapManager), "SwapManager in Manager is wrong");
