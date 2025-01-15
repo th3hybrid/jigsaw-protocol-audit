@@ -24,9 +24,6 @@ contract DeployRegistriesTest is Test, ScriptTestsFixture {
             (bool active, address _registry) = stablesManager.shareRegistryInfo(registry.token());
             assertEq(active, true, "Active flag in StablesManager is wrong");
             assertEq(_registry, address(registry), "Registry address in StablesManager is wrong");
-
-            // @note imitate multisig to whitelist token
-            // assertEq(manager.isTokenWhitelisted(registry.token()), true, "Token not whitelisted in Manager");
         }
     }
 }

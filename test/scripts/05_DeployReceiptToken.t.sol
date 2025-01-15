@@ -16,10 +16,5 @@ contract DeployReceiptTokenTest is Test, ScriptTestsFixture {
             address(receiptToken),
             "ReferenceImplementation in ReceiptTokenFactory is wrong"
         );
-
-        // Perform checks on the Manger Contract
-        // @note imitate multisig to add ReceiptTokenFactory to the Manager
-        // assertEq(manager.receiptTokenFactory(), address(receiptTokenFactory), "ReceiptTokenFactory in Manager is
-        // wrong");
     }
 }

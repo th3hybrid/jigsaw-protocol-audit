@@ -52,12 +52,24 @@ contract DeployManagersTest is Test, ScriptTestsFixture {
             "ManagerContainer in  SwapManager is wrong"
         );
 
-        // @note Imitate this with multisig
-        // assertEq(manager.holdingManager(), address(holdingManager), "HoldingManager in Manager is wrong");
-        // assertEq(manager.liquidationManager(), address(liquidationManager), "LiquidationManager in Manager is
-        // wrong");
-        // assertEq(manager.stablesManager(), address(stablesManager), "StablesManager in Manager is wrong");
-        // assertEq(manager.strategyManager(), address(strategyManager), "StrategyManager in Manager is wrong");
-        // assertEq(manager.swapManager(), address(swapManager), "SwapManager in Manager is wrong");
+        // Imitate multisig calls
+        vm.startPrank(INITIAL_OWNER, INITIAL_OWNER);
+        manager.setHoldingManager(address(holdingManager));
+        manager.setHoldingManager(address(liquidationManager));
+        manager.setHoldingManager(address(stablesManager));
+        manager.setHoldingManager(address(strategyManager));
+        manager.setHoldingManager(address(swapManager));
+        vm.stopPrank();
+
+        assertEq(manager.holdingManager(), address(holdingManager), "HoldingManager in Manager is wrong");
+        assertEq(
+            manager.liquidationManager(),
+            address(liquidationManager),
+            "LiquidationManager in Manager is
+        wrong"
+        );
+        assertEq(manager.stablesManager(), address(stablesManager), "StablesManager in Manager is wrong");
+        assertEq(manager.strategyManager(), address(strategyManager), "StrategyManager in Manager is wrong");
+        assertEq(manager.swapManager(), address(swapManager), "SwapManager in Manager is wrong");
     }
 }
