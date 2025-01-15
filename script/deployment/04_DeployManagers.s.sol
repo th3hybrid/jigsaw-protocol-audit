@@ -34,7 +34,7 @@ contract DeployManagers is Script, Base {
     // Get values from configs
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
     address internal MANAGER_CONTAINER = deployments.readAddress(".MANAGER_CONTAINER");
-    address internal JUSD = managersConfig.readAddress(".JUSD");
+    address internal JUSD = deployments.readAddress(".jUSD");
     address internal UNISWAP_FACTORY = managersConfig.readAddress(".UNISWAP_FACTORY");
     address internal UNISWAP_SWAP_ROUTER = managersConfig.readAddress(".UNISWAP_SWAP_ROUTER");
 

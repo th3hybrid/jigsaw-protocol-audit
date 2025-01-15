@@ -34,9 +34,6 @@ contract DeployJUSD is Script, Base {
         // Deploy JigsawUSD contract
         jUSD = new JigsawUSD{ salt: salt }({ _initialOwner: INITIAL_OWNER, _managerContainer: MANAGER_CONTAINER });
 
-        // Save JigsawUSD address to the 03_ManagersConfig.json for later use
-        Strings.toHexString(uint160(address(jUSD)), 20).write("./deployment-config/03_ManagersConfig.json", ".JUSD");
-
         // Save addresses of all the deployed contracts to the deployments.json
         Strings.toHexString(uint160(address(jUSD)), 20).write("./deployments.json", ".jUSD");
     }
