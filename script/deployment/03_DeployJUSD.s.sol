@@ -18,10 +18,11 @@ contract DeployJUSD is Script, Base {
 
     // Read config file
     string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
+    string internal deployments = vm.readFile("./deployments.json");
 
     // Get values from config
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
-    address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
+    address internal MANAGER_CONTAINER = deployments.readAddress(".MANAGER_CONTAINER");
 
     // Salt for deterministic deployment using Create2
     bytes32 internal salt = "0x";

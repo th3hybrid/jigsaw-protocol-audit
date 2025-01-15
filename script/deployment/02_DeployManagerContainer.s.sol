@@ -33,11 +33,6 @@ contract DeployManagerContainer is Script, Base {
         // Deploy ManagerContainer Contract
         managerContainer = new ManagerContainer{ salt: salt }({ _initialOwner: INITIAL_OWNER, _manager: MANAGER });
 
-        // Save managerContainer address to the 00_CommonConfig.json for later use
-        Strings.toHexString(uint160(address(managerContainer)), 20).write(
-            "./deployment-config/00_CommonConfig.json", ".MANAGER_CONTAINER"
-        );
-
         // Save addresses of all the deployed contracts to the deployments.json
         Strings.toHexString(uint160(address(managerContainer)), 20).write("./deployments.json", ".MANAGER_CONTAINER");
     }

@@ -37,10 +37,11 @@ contract DeployRegistries is Script, Base {
     // Read config files
     string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
     string internal registryConfig = vm.readFile("./deployment-config/04_RegistryConfig.json");
+    string internal deployments = vm.readFile("./deployments.json");
 
     // Get values from configs
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
-    address internal MANAGER_CONTAINER = commonConfig.readAddress(".MANAGER_CONTAINER");
+    address internal MANAGER_CONTAINER = deployments.readAddress(".MANAGER_CONTAINER");
     address internal STABLES_MANAGER = registryConfig.readAddress(".STABLES_MANAGER");
 
     // Store configuration for each SharesRegistry
