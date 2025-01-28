@@ -9,13 +9,13 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { IPyth } from "@pyth/IPyth.sol";
 import { PythStructs } from "@pyth/PythStructs.sol";
 
-import { IOracle } from "../../interfaces/oracle/IOracle.sol";
+import { IPythOracle } from "./interfaces/IPythOracle.sol";
 
 /**
  * @title PythOracle Contract
  *
  * @notice Oracle contract that fetches and normalizes price data from Pyth Network.
- * @dev Implements IOracle interface and uses Pyth Network as price feed source.
+ * @dev Implements IPythOracle interface and uses Pyth Network as price feed source.
  *
  * @dev This contract inherits functionalities from `Initializable` and `Ownable2StepUpgradeable`.
  *
@@ -24,71 +24,7 @@ import { IOracle } from "../../interfaces/oracle/IOracle.sol";
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract PythOracle is IOracle, Initializable, Ownable2StepUpgradeable {
-    // -- Custom types --
-
-    /**
-     * @notice Struct for the initializer params.
-     */
-    struct InitializerParams {
-        address initialOwner; // Address of the initial owner of the contract.
-        address underlying; // Address of the token the oracle is for.
-        address pyth; // Pyth Oracle address.
-        bytes32 priceId; //  Pyth's priceId used to determine the price of the `underlying`.
-        uint256 age; // Age in seconds after which the price is considered invalid.
-    }
-
-    // -- Events --
-
-    /**
-     * @notice Emitted when a new Pyth Oracle is created.
-     *
-     * @dev Tracks the underlying asset, its associated price ID, and the oracle's age.
-     * @dev Please consult  See https://www.pyth.network/developers/price-feed-ids#pyth-evm-stable to get the priceId.
-     *
-     * @param underlying The address of the underlying asset for which the oracle is created.
-     * @param priceId The unique price ID associated with the underlying.
-     * @param age Age in seconds after which the price is considered invalid.
-     */
-    event PythOracleCreated(address indexed underlying, bytes32 indexed priceId, uint256 age);
-
-    /**
-     * @notice Emitted when the age for the price is updated.
-     *
-     * @dev Provides details about the previous and updated age values.
-     *
-     * @param oldValue The previous age value of the oracle.
-     * @param newValue The updated age value of the oracle.
-     */
-    event AgeUpdated(uint256 oldValue, uint256 newValue);
-
-    // -- Errors --
-
-    /**
-     * @notice Thrown when Pyth oracle returns a negative price.
-     * @dev Negative prices are not valid for the standard token price feeds.
-     */
-    error NegativeOraclePrice();
-
-    /**
-     * @notice Thrown when Pyth price exponent is positive
-     * @dev Positive exponents would make the price too large after normalization
-     */
-    error ExpoTooBig();
-
-    /**
-     * @notice Thrown when Pyth price exponent is too small (absolute value too large)
-     * @dev The exponent's absolute value must not exceed ALLOWED_DECIMALS to prevent underflow
-     * @dev Example: If ALLOWED_DECIMALS = 18 and expo = -19, this error will be thrown
-     */
-    error ExpoTooSmall();
-
-    /**
-     * @notice Thrown when an invalid age value is provided.
-     * @dev This error is used to signal that the age value does not meet the required constraints (must be > 0).
-     */
-    error InvalidAge();
-
+contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
     // -- State variables --
 
     /**
@@ -99,17 +35,17 @@ contract PythOracle is IOracle, Initializable, Ownable2StepUpgradeable {
     /**
      * @notice Pyth Oracle address.
      */
-    address public pyth;
+    address public override pyth;
 
     /**
      * @notice  Pyth's priceId used to determine the price of the `underlying`.
      */
-    bytes32 public priceId;
+    bytes32 public override priceId;
 
     /**
      * @notice Allowed age of the returned price in seconds.
      */
-    uint256 public age;
+    uint256 public override age;
 
     /**
      * @notice The standard decimal precision (18) used for price normalization across the protocol
