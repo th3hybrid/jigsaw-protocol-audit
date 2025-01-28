@@ -7,6 +7,7 @@ contract SampleOracle is IOracle {
     uint256 public someNo;
     uint256 public price;
     bool public updated = true;
+    address public underlying;
 
     constructor() {
         price = 1e18;
