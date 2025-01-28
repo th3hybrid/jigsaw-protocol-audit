@@ -88,7 +88,7 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
      */
     function updateAge(
         uint256 _newAge
-    ) external onlyOwner {
+    ) external override onlyOwner {
         if (_newAge == 0) revert InvalidAge();
 
         // Emit the event before modifying the state to provide a reliable record of the oracle's age update operation.

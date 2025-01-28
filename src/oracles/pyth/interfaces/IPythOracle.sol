@@ -87,4 +87,15 @@ interface IPythOracle is IOracle {
      * @return The allowed age in seconds as a uint256 value.
      */
     function age() external view returns (uint256);
+
+    // -- Administration --
+
+    /**
+     * @notice Updates the age to a new value.
+     * @dev Only the contract owner can call this function.
+     * @param _newAge The new age to be set.
+     */
+    function updateAge(
+        uint256 _newAge
+    ) external;
 }
