@@ -75,6 +75,25 @@ interface IPythOracle is IOracle {
      */
     function age() external view returns (uint256);
 
+    // -- Initialization --
+
+    /**
+     * @notice Initializes the Oracle contract with necessary parameters.
+     *
+     * @param _initialOwner The address of the initial owner of the contract.
+     * @param _underlying The address of the token the oracle is for.
+     * @param _pyth The Address of the Pyth Oracle.
+     * @param _priceId The Pyth's priceId used to determine the price of the `underlying`.
+     * @param _age The Age in seconds after which the price is considered invalid.
+     */
+    function initialize(
+        address _initialOwner,
+        address _underlying,
+        address _pyth,
+        bytes32 _priceId,
+        uint256 _age
+    ) external;
+
     // -- Administration --
 
     /**
