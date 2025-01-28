@@ -128,14 +128,17 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
             // Disallow excessively large prices by rejecting positive exponents
             if (price.expo > 0) revert ExpoTooBig();
 
+            // Safely converts negative exponent to an unsigned integer.
+            uint256 invertedExpo = uint256(-int256(price.expo));
+
             // Prevent underflow when normalizing the price to ALLOWED_DECIMALS
-            if (uint256(int256(price.expo)) > ALLOWED_DECIMALS) revert ExpoTooSmall();
+            if (invertedExpo > ALLOWED_DECIMALS) revert ExpoTooSmall();
 
             // Normalize the price to ALLOWED_DECIMALS (e.g., 18 decimals)
             // Formula: price * 10^(ALLOWED_DECIMALS - expo)
             // Example: If price = 1234, expo = -8, ALLOWED_DECIMALS = 18
             // Result: 1234 * 10^(18 - uint256(-8)) = 1234 * 10^10
-            rate = uint256(int256(price.price)) * 10 ** (ALLOWED_DECIMALS - uint256(int256(price.expo)));
+            rate = uint256(int256(price.price)) * 10 ** (ALLOWED_DECIMALS - invertedExpo);
             success = true;
         } catch {
             // Handle any failure in fetching the price by returning false and a zero rate
