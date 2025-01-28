@@ -4,19 +4,6 @@ pragma solidity ^0.8.20;
 import { IOracle } from "../../../interfaces/oracle/IOracle.sol";
 
 interface IPythOracle is IOracle {
-    // -- Custom types --
-
-    /**
-     * @notice Struct for the initializer params.
-     */
-    struct InitializerParams {
-        address initialOwner; // Address of the initial owner of the contract.
-        address underlying; // Address of the token the oracle is for.
-        address pyth; // Pyth Oracle address.
-        bytes32 priceId; //  Pyth's priceId used to determine the price of the `underlying`.
-        uint256 age; // Age in seconds after which the price is considered invalid.
-    }
-
     // -- Events --
 
     /**

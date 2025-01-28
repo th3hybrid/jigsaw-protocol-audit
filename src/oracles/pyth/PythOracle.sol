@@ -62,21 +62,31 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
 
     /**
      * @notice Initializes the Oracle contract with necessary parameters.
+     *
+     * @param _initialOwner The address of the initial owner of the contract.
+     * @param _underlying The address of the token the oracle is for.
+     * @param _pyth The Address of the Pyth Oracle.
+     * @param _priceId The Pyth's priceId used to determine the price of the `underlying`.
+     * @param _age The Age in seconds after which the price is considered invalid.
      */
     function initialize(
-        InitializerParams memory _params
+        address _initialOwner,
+        address _underlying,
+        address _pyth,
+        bytes32 _priceId,
+        uint256 _age
     ) public initializer {
-        __Ownable_init(_params.initialOwner);
+        __Ownable_init(_initialOwner);
         __Ownable2Step_init();
 
         // Emit the event before state changes to track oracle deployments and configurations
-        emit PythOracleCreated({ underlying: _params.underlying, priceId: _params.priceId, age: _params.age });
+        emit PythOracleCreated({ underlying: _underlying, priceId: _priceId, age: _age });
 
         // Initialize oracle configuration parameters
-        underlying = _params.underlying;
-        pyth = _params.pyth;
-        priceId = _params.priceId;
-        age = _params.age;
+        underlying = _underlying;
+        pyth = _pyth;
+        priceId = _priceId;
+        age = _age;
     }
 
     // -- Administration --
