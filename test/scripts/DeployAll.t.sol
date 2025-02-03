@@ -88,7 +88,7 @@ contract DeployAll is Test, ScriptTestsFixture {
         assertEq(manager.swapManager(), address(swapManager), "SwapManager in Manager is wrong");
     }
 
-    function test_deploy_registries() public view {
+    function test_deploy_registries() public {
         for (uint256 i = 0; i < registries.length; i += 1) {
             SharesRegistry registry = SharesRegistry(registries[i]);
 
@@ -99,6 +99,16 @@ contract DeployAll is Test, ScriptTestsFixture {
                 address(managerContainer),
                 "ManagerContainer in ShareRegistry is wrong"
             );
+
+            // Imitate multisig calls
+            vm.startPrank(INITIAL_OWNER, INITIAL_OWNER);
+            stablesManager.registerOrUpdateShareRegistry({
+                _registry: address(registry),
+                _token: registry.token(),
+                _active: true
+            });
+            manager.whitelistToken(registry.token());
+            vm.stopPrank();
 
             // Perform checks on the StablesManager Contract
             (bool active, address _registry) = stablesManager.shareRegistryInfo(registry.token());
