@@ -14,7 +14,7 @@ import { DeployJUSD } from "../../script/deployment/03_DeployJUSD.s.sol";
 import { DeployManagers } from "../../script/deployment/04_DeployManagers.s.sol";
 
 import { DeployReceiptToken } from "../../script/deployment/05_DeployReceiptToken.s.sol";
-import { DeployRegistries } from "../../script/deployment/06_DeployRegistries.s.sol";
+import { DeployRegistries } from "../../script/deployment/07_DeployRegistries.s.sol";
 
 import { HoldingManager } from "../../src/HoldingManager.sol";
 import { JigsawUSD } from "../../src/JigsawUSD.sol";

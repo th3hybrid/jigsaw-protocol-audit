@@ -30,8 +30,11 @@ contract PythOracleIntegrationTest is BasicContractsFixture {
         init();
 
         pythOracleImplementation = address(new PythOracle());
-        pythOracleFactory =
-            new PythOracleFactory({ _initialOwner: OWNER, _referenceImplementation: pythOracleImplementation });
+        pythOracleFactory = new PythOracleFactory({
+            _initialOwner: OWNER,
+            _pyth: PYTH,
+            _referenceImplementation: pythOracleImplementation
+        });
     }
 
     function test_borrow_when_pythOracle(address _user, uint256 _mintAmount) public {
@@ -47,7 +50,6 @@ contract PythOracleIntegrationTest is BasicContractsFixture {
                     pythOracleFactory.createPythOracle({
                         _initialOwner: OWNER,
                         _underlying: address(usdc),
-                        _pyth: PYTH,
                         _priceId: 0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a,
                         _age: AGE
                     })

@@ -30,13 +30,7 @@ contract PythOracleUnitTest is Test {
 
     modifier withRegularOracle() {
         pythOracle = PythOracle(
-            pythOracleFactory.createPythOracle({
-                _initialOwner: OWNER,
-                _underlying: WETH,
-                _pyth: PYTH,
-                _priceId: PRICE_ID,
-                _age: AGE
-            })
+            pythOracleFactory.createPythOracle({ _initialOwner: OWNER, _underlying: WETH, _priceId: PRICE_ID, _age: AGE })
         );
         _;
     }
@@ -47,8 +41,11 @@ contract PythOracleUnitTest is Test {
         mockPyth = new MockPyth({ _validTimePeriod: 1 seconds, _singleUpdateFeeInWei: 0 });
 
         pythOracleImplementation = address(new PythOracle());
-        pythOracleFactory =
-            new PythOracleFactory({ _initialOwner: OWNER, _referenceImplementation: pythOracleImplementation });
+        pythOracleFactory = new PythOracleFactory({
+            _initialOwner: OWNER,
+            _pyth: PYTH,
+            _referenceImplementation: pythOracleImplementation
+        });
     }
 
     // Tests whether the initialization went right
@@ -73,7 +70,6 @@ contract PythOracleUnitTest is Test {
             pythOracleFactory.createPythOracle({
                 _initialOwner: OWNER,
                 _underlying: WETH,
-                _pyth: PYTH,
                 _priceId: PRICE_ID,
                 _age: 1 seconds
             })
@@ -98,7 +94,6 @@ contract PythOracleUnitTest is Test {
             pythOracleFactory.createPythOracle({
                 _initialOwner: OWNER,
                 _underlying: WETH,
-                _pyth: address(mockPyth),
                 _priceId: PRICE_ID,
                 _age: 1 seconds
             })
@@ -117,7 +112,6 @@ contract PythOracleUnitTest is Test {
             pythOracleFactory.createPythOracle({
                 _initialOwner: OWNER,
                 _underlying: WETH,
-                _pyth: address(mockPyth),
                 _priceId: PRICE_ID,
                 _age: 1 seconds
             })
@@ -136,7 +130,6 @@ contract PythOracleUnitTest is Test {
             pythOracleFactory.createPythOracle({
                 _initialOwner: OWNER,
                 _underlying: WETH,
-                _pyth: address(mockPyth),
                 _priceId: PRICE_ID,
                 _age: 1 seconds
             })
