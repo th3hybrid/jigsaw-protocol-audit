@@ -104,8 +104,8 @@ contract DeployRegistries is Script, Base {
             RegistryConfig({
                 token: USDC,
                 collateralizationRate: USDC_CR,
-                oracleData: COMMON_ORACLE_DATA,
                 pythId: USDC_PYTH_ID,
+                oracleData: COMMON_ORACLE_DATA,
                 age: COMMON_ORACLE_AGE
             })
         );
