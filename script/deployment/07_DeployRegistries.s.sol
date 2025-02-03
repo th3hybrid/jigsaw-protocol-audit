@@ -47,7 +47,7 @@ contract DeployRegistries is Script, Base {
     address internal PYTH_ORACLE_FACTORY = deployments.readAddress(".PYTH_ORACLE_FACTORY");
 
     // Store configuration for each SharesRegistry
-    address internal USDC = 0x616b359d40Cc645D76F084d048Bf2709f8B3A290;
+    address internal USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     uint256 internal USDC_CR = 50_000;
     bytes32 internal USDC_PYTH_ID = 0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a;
 
