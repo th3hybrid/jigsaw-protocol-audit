@@ -9,12 +9,24 @@ interface IPythOracleFactory {
     // -- Events --
 
     /**
+     * @notice Emitted when the pyth address is updated.
+     * @param pyth Address of the pyth oracle.
+     */
+    event PythAddressUpdated(address indexed pyth);
+
+    /**
      * @notice Emitted when the reference implementation is updated.
      * @param newImplementation Address of the new reference implementation.
      */
     event PythOracleImplementationUpdated(address indexed newImplementation);
 
     // -- State variables --
+
+    /**
+     * @notice Gets the address of the underlying Pyth oracle used for cloning.
+     * @return Address of the underlying Pyth oracle.
+     */
+    function pyth() external view returns (address);
 
     /**
      * @notice Gets the address of the reference implementation.
@@ -35,7 +47,6 @@ interface IPythOracleFactory {
      *
      * @param _initialOwner The address of the initial owner of the contract.
      * @param _underlying The address of the token the oracle is for.
-     * @param _pyth The Address of the Pyth Oracle.
      * @param _priceId The Pyth's priceId used to determine the price of the `underlying`.
      * @param _age The Age in seconds after which the price is considered invalid.
      *
@@ -44,7 +55,6 @@ interface IPythOracleFactory {
     function createPythOracle(
         address _initialOwner,
         address _underlying,
-        address _pyth,
         bytes32 _priceId,
         uint256 _age
     ) external returns (address newPythOracleAddress);
