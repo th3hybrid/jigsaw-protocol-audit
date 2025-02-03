@@ -101,6 +101,12 @@ deploy-receipt:  && _timer
 	echo "Deploying Receipt Token to $CHAIN..."
 	eval "forge script DeployReceiptToken --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
 	
+# Deploy PythOracleFactory & PythOracleImpl
+deploy-pythOracle:  && _timer
+	#!/usr/bin/env bash
+	echo "Deploying PythOracleFactory to $CHAIN..."
+	eval "forge script DeployPythOracleFactory --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
+
 # Deploy SharesRegistry Contracts for each configured token (a.k.a. collateral)
 deploy-registries:  && _timer
 	#!/usr/bin/env bash
