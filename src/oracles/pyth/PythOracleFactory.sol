@@ -14,7 +14,12 @@ import { IPythOracleFactory } from "./interfaces/IPythOracleFactory.sol";
  */
 contract PythOracleFactory is IPythOracleFactory, Ownable2Step {
     /**
-     * @notice Address of the reference implementation
+     * @notice Address of the underlying pyth oracle.
+     */
+    address public override pyth;
+
+    /**
+     * @notice Address of the reference implementation.
      */
     address public override referenceImplementation;
 
@@ -23,10 +28,16 @@ contract PythOracleFactory is IPythOracleFactory, Ownable2Step {
      * @param _initialOwner The initial owner of the contract.
      * @notice Sets the reference implementation address.
      */
-    constructor(address _initialOwner, address _referenceImplementation) Ownable(_initialOwner) {
-        // Assert that referenceImplementation has code in it to protect the system from cloning invalid implementation.
+    constructor(address _initialOwner, address _pyth, address _referenceImplementation) Ownable(_initialOwner) {
+        // Assert that `_pyth` and `referenceImplementation` have code to protect the system.
+        require(_pyth.code.length > 0, "3096");
         require(_referenceImplementation.code.length > 0, "3096");
 
+        // Save pyth oracle address for later use.
+        emit PythAddressUpdated(_pyth);
+        pyth = _pyth;
+
+        // Save the referenceImplementation for cloning.
         emit PythOracleImplementationUpdated(_referenceImplementation);
         referenceImplementation = _referenceImplementation;
     }
@@ -55,7 +66,6 @@ contract PythOracleFactory is IPythOracleFactory, Ownable2Step {
      *
      * @param _initialOwner The address of the initial owner of the contract.
      * @param _underlying The address of the token the oracle is for.
-     * @param _pyth The Address of the Pyth Oracle.
      * @param _priceId The Pyth's priceId used to determine the price of the `underlying`.
      * @param _age The Age in seconds after which the price is considered invalid.
      *
@@ -64,7 +74,6 @@ contract PythOracleFactory is IPythOracleFactory, Ownable2Step {
     function createPythOracle(
         address _initialOwner,
         address _underlying,
-        address _pyth,
         bytes32 _priceId,
         uint256 _age
     ) external override returns (address newPythOracleAddress) {
@@ -75,7 +84,7 @@ contract PythOracleFactory is IPythOracleFactory, Ownable2Step {
         IPythOracle(newPythOracleAddress).initialize({
             _initialOwner: _initialOwner,
             _underlying: _underlying,
-            _pyth: _pyth,
+            _pyth: pyth,
             _priceId: _priceId,
             _age: _age
         });
