@@ -1,17 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.13;
 
 import { Test } from "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
+
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
+import { MockPyth } from "@pyth/MockPyth.sol";
+import { PythStructs } from "@pyth/PythStructs.sol";
 
 import { PythOracle } from "src/oracles/pyth/PythOracle.sol";
 
 import { PythOracleFactory } from "src/oracles/pyth/PythOracleFactory.sol";
 import { IPythOracle } from "src/oracles/pyth/interfaces/IPythOracle.sol";
 
-contract PythOracleTest is Test {
+contract PythOracleUnitTest is Test {
     error OwnableUnauthorizedAccount(address account);
 
+    MockPyth internal mockPyth;
     PythOracle internal pythOracle;
     PythOracleFactory internal pythOracleFactory;
     address internal pythOracleImplementation;
@@ -22,8 +28,23 @@ contract PythOracleTest is Test {
     bytes32 internal constant PRICE_ID = 0x9d4294bbcd1174d6f2003ec365831e64cc31d9f6f15a2b85399db8d5000960f6;
     uint256 internal constant AGE = type(uint256).max;
 
+    modifier withRegularOracle() {
+        pythOracle = PythOracle(
+            pythOracleFactory.createPythOracle({
+                _initialOwner: OWNER,
+                _underlying: WETH,
+                _pyth: PYTH,
+                _priceId: PRICE_ID,
+                _age: AGE
+            })
+        );
+        _;
+    }
+
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"), 21_722_108);
+
+        mockPyth = new MockPyth({ _validTimePeriod: 1 seconds, _singleUpdateFeeInWei: 0 });
 
         pythOracleImplementation = address(new PythOracle());
         pythOracleFactory =
@@ -32,16 +53,18 @@ contract PythOracleTest is Test {
 
     // Tests whether the initialization went right
     function test_pyth_initialization() public withRegularOracle {
-        vm.assertEq(
-            pythOracleFactory.referenceImplementation(), pythOracleImplementation, "Reference implementation wrong"
-        );
+        // Check pythOracleFactory initialization
+        vm.assertEq(pythOracleFactory.referenceImplementation(), pythOracleImplementation, "Impl wrong");
         vm.assertEq(pythOracleFactory.owner(), OWNER, "Owner in factory set wrong");
 
+        // Check pythOracle initialization
         vm.assertEq(pythOracle.owner(), OWNER, "Owner in oracle set wrong");
         vm.assertEq(pythOracle.underlying(), WETH, "underlying in oracle set wrong");
         vm.assertEq(pythOracle.pyth(), PYTH, "PYTH in oracle set wrong");
         vm.assertEq(pythOracle.priceId(), PRICE_ID, "PRICE_ID in oracle set wrong");
         vm.assertEq(pythOracle.age(), AGE, "AGE in oracle set wrong");
+        vm.assertEq(pythOracle.name(), IERC20Metadata(WETH).name(), "Name in oracle set wrong");
+        vm.assertEq(pythOracle.symbol(), IERC20Metadata(WETH).symbol(), "Symbol in oracle set wrong");
     }
 
     // Tests whether the oracle returns success false when price is too old
@@ -70,6 +93,63 @@ contract PythOracleTest is Test {
         vm.assertEq(rate, 3_295_633_182_430_000_000_000, "Rate is wrong");
     }
 
+    function test_pyth_peek_when_NegativeOraclePrice() public {
+        pythOracle = PythOracle(
+            pythOracleFactory.createPythOracle({
+                _initialOwner: OWNER,
+                _underlying: WETH,
+                _pyth: address(mockPyth),
+                _priceId: PRICE_ID,
+                _age: 1 seconds
+            })
+        );
+
+        // Set pyth price to a negative value
+        _updateMockPythPrice(int64(-1), int32(-8));
+
+        // Expect the next call to revert with the correct error
+        vm.expectRevert(IPythOracle.NegativeOraclePrice.selector);
+        pythOracle.peek("");
+    }
+
+    function test_pyth_peek_when_ExpoTooBig() public {
+        pythOracle = PythOracle(
+            pythOracleFactory.createPythOracle({
+                _initialOwner: OWNER,
+                _underlying: WETH,
+                _pyth: address(mockPyth),
+                _priceId: PRICE_ID,
+                _age: 1 seconds
+            })
+        );
+
+        // Set pyth price with a big expo
+        _updateMockPythPrice(int64(10), int32(1));
+
+        // Expect the next call to revert with the correct error
+        vm.expectRevert(IPythOracle.ExpoTooBig.selector);
+        pythOracle.peek("");
+    }
+
+    function test_pyth_peek_when_ExpoTooSmall() public {
+        pythOracle = PythOracle(
+            pythOracleFactory.createPythOracle({
+                _initialOwner: OWNER,
+                _underlying: WETH,
+                _pyth: address(mockPyth),
+                _priceId: PRICE_ID,
+                _age: 1 seconds
+            })
+        );
+
+        // Set pyth price with a small expo
+        _updateMockPythPrice(int64(10), int32(-19));
+
+        // Expect the next call to revert with the correct error
+        vm.expectRevert(IPythOracle.ExpoTooSmall.selector);
+        pythOracle.peek("");
+    }
+
     function test_pyth_updateAge(
         uint256 _newAge
     ) public withRegularOracle {
@@ -94,16 +174,17 @@ contract PythOracleTest is Test {
         vm.stopPrank();
     }
 
-    modifier withRegularOracle() {
-        pythOracle = PythOracle(
-            pythOracleFactory.createPythOracle({
-                _initialOwner: OWNER,
-                _underlying: WETH,
-                _pyth: PYTH,
-                _priceId: PRICE_ID,
-                _age: AGE
-            })
+    function _updateMockPythPrice(int64 _price, int32 _expo) private {
+        bytes[] memory priceUpdateData = new bytes[](1);
+        priceUpdateData[0] = abi.encode(
+            PythStructs.PriceFeed(
+                PRICE_ID,
+                PythStructs.Price(_price, uint64(1), _expo, vm.getBlockTimestamp()),
+                PythStructs.Price(_price, uint64(1), _expo, vm.getBlockTimestamp())
+            ),
+            0
         );
-        _;
+
+        mockPyth.updatePriceFeeds(priceUpdateData);
     }
 }
