@@ -13,7 +13,7 @@ import { PythOracleFactory } from "../../src/oracles/pyth/PythOracleFactory.sol"
 /**
  * @notice Deploys PythOracleFactory & PythOracle Contracts
  */
-contract DeployReceiptToken is Script, Base {
+contract DeployPythOracleFactory is Script, Base {
     using StdJson for string;
 
     // Read config file
