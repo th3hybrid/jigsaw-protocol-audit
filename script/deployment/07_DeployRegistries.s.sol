@@ -10,10 +10,11 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { IOracle } from "../../src/interfaces/oracle/IOracle.sol";
 
-import { Manager } from "../../src/Manager.sol";
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
+
 import { SharesRegistry } from "../../src/SharesRegistry.sol";
 import { StablesManager } from "../../src/StablesManager.sol";
+import { PythOracleFactory } from "../../src/oracles/pyth/PythOracleFactory.sol";
 
 /**
  * @notice Deploys SharesRegistry Contracts for each configured token (a.k.a. collateral)
@@ -23,9 +24,10 @@ contract DeployRegistries is Script, Base {
 
     struct RegistryConfig {
         address token;
-        address oracle;
-        bytes oracleData;
         uint256 collateralizationRate;
+        bytes oracleData;
+        bytes32 pythId;
+        uint256 age;
     }
 
     // Array to store registry configurations
@@ -42,41 +44,41 @@ contract DeployRegistries is Script, Base {
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
     address internal MANAGER_CONTAINER = deployments.readAddress(".MANAGER_CONTAINER");
     address internal STABLES_MANAGER = deployments.readAddress(".STABLES_MANAGER");
+    address internal PYTH_ORACLE_FACTORY = deployments.readAddress(".PYTH_ORACLE_FACTORY");
 
     // Store configuration for each SharesRegistry
     address internal USDC = 0x616b359d40Cc645D76F084d048Bf2709f8B3A290;
-    address internal USDC_Oracle = 0xEB8B6f572Fd08851D9ca4C46bfeE80bB2Fc5B5f0;
-    bytes internal USDC_OracleData = bytes("");
     uint256 internal USDC_CR = 50_000;
+    bytes32 internal USDC_PYTH_ID = 0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a;
 
-    constructor() {
-        // Add configs for USDC registry
-        registryConfigs.push(
-            RegistryConfig({
-                token: USDC,
-                oracle: USDC_Oracle,
-                oracleData: USDC_OracleData,
-                collateralizationRate: USDC_CR
-            })
-        );
-    }
+    // Common configs for oracle
+    bytes internal COMMON_ORACLE_DATA = bytes("");
+    uint256 internal COMMON_ORACLE_AGE = 1 hours;
 
     function run() external broadcast returns (address[] memory deployedRegistries) {
         // Validate interfaces
         _validateInterface(ManagerContainer(MANAGER_CONTAINER));
         _validateInterface(StablesManager(STABLES_MANAGER));
 
+        _populateRegistriesArray();
+
         for (uint256 i = 0; i < registryConfigs.length; i += 1) {
             // Validate interfaces
             _validateInterface(IERC20(registryConfigs[i].token));
-            _validateInterface(IOracle(registryConfigs[i].oracle));
+
+            address oracle = PythOracleFactory(PYTH_ORACLE_FACTORY).createPythOracle({
+                _initialOwner: INITIAL_OWNER,
+                _underlying: registryConfigs[i].token,
+                _priceId: registryConfigs[i].pythId,
+                _age: registryConfigs[i].age
+            });
 
             // Deploy SharesRegistry contract
             SharesRegistry registry = new SharesRegistry({
                 _initialOwner: INITIAL_OWNER,
                 _managerContainer: MANAGER_CONTAINER,
                 _token: registryConfigs[i].token,
-                _oracle: registryConfigs[i].oracle,
+                _oracle: oracle,
                 _oracleData: registryConfigs[i].oracleData,
                 _collateralizationRate: registryConfigs[i].collateralizationRate
             });
@@ -94,5 +96,18 @@ contract DeployRegistries is Script, Base {
         }
 
         return registries;
+    }
+
+    function _populateRegistriesArray() internal {
+        // Add configs for desired collaterals' registries
+        registryConfigs.push(
+            RegistryConfig({
+                token: USDC,
+                collateralizationRate: USDC_CR,
+                oracleData: COMMON_ORACLE_DATA,
+                pythId: USDC_PYTH_ID,
+                age: COMMON_ORACLE_AGE
+            })
+        );
     }
 }
