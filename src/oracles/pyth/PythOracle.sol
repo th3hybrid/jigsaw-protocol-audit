@@ -137,8 +137,6 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
 
             // Normalize the price to ALLOWED_DECIMALS (e.g., 18 decimals)
             // Formula: price * 10^(ALLOWED_DECIMALS - expo)
-            // Example: If price = 1234, expo = -8, ALLOWED_DECIMALS = 18
-            // Result: 1234 * 10^(18 - uint256(-8)) = 1234 * 10^10
             rate = uint256(int256(price.price)) * 10 ** (ALLOWED_DECIMALS - invertedExpo);
             success = true;
         } catch {
