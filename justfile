@@ -53,7 +53,7 @@ format: && _timer
 	forge fmt
 
 test-all: && _timer
-	forge test -vvvvv
+	forge test -v
 
 test-gas: && _timer
     forge test --gas-report
