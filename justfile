@@ -32,13 +32,6 @@ remove-modules: && _timer
 	git add .
 	git commit -m "modules"
 
-# Install the Vyper venv
-install-vyper: && _timer
-    pip install virtualenv
-    virtualenv -p python3 venv
-    source venv/bin/activate
-    pip install vyper==0.2.16
-    vyper --version
 
 # Install the Modules
 install: && _timer
@@ -60,13 +53,13 @@ format: && _timer
 	forge fmt
 
 test-all: && _timer
-	forge test -vvvvv
+	forge test -v
 
 test-gas: && _timer
     forge test --gas-report
 
 coverage-all: && _timer
-	forge coverage --report lcov
+	forge coverage --report lcov --allow-failure
 	genhtml -o coverage --branch-coverage lcov.info --ignore-errors category
 
 docs: && _timer
@@ -108,6 +101,12 @@ deploy-receipt:  && _timer
 	echo "Deploying Receipt Token to $CHAIN..."
 	eval "forge script DeployReceiptToken --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
 	
+# Deploy PythOracleFactory & PythOracleImpl
+deploy-pythOracle:  && _timer
+	#!/usr/bin/env bash
+	echo "Deploying PythOracleFactory to $CHAIN..."
+	eval "forge script DeployPythOracleFactory --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
+
 # Deploy SharesRegistry Contracts for each configured token (a.k.a. collateral)
 deploy-registries:  && _timer
 	#!/usr/bin/env bash

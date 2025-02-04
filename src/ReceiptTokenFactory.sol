@@ -21,7 +21,7 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
     // -- Constructor --
 
     /**
-     * @notice Creates a new StablesManager contract.
+     * @notice Creates a new ReceiptTokenFactory contract.
      * @param _initialOwner The initial owner of the contract.
      * @notice Sets the reference implementation address for the receipt token.
      */

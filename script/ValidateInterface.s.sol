@@ -57,8 +57,7 @@ abstract contract ValidateInterface {
     ) internal view {
         require(address(oracle).code.length > 0, "Oracle must have code");
         oracle.peek(abi.encode(""));
-        oracle.peekSpot(abi.encode(""));
-        oracle.symbol(abi.encode(""));
+        oracle.symbol();
     }
 
     function _validateInterface(

@@ -14,12 +14,12 @@ contract SampleOracleUniswap is IOracle {
     IUniswapV3Pool public pool;
 
     //address of the token this oracle is for
-    address baseToken;
+    address public underlying;
     bool public updated = true;
 
-    constructor(address _pool, address _baseToken) {
+    constructor(address _pool, address _underlying) {
         pool = IUniswapV3Pool(_pool);
-        baseToken = _baseToken;
+        underlying = _underlying;
     }
 
     event Log(string name, uint256 value);
@@ -48,7 +48,7 @@ contract SampleOracleUniswap is IOracle {
         // @notice Uniswap returns price with decimals 6, that's why we use decimals 12 (18-6)
         ratio = ratio * (10 ** 12);
 
-        ratio = pool.token0() == baseToken ? ratio : 1e18 * 1e18 / ratio;
+        ratio = pool.token0() == underlying ? ratio : 1e18 * 1e18 / ratio;
         return (updated, ratio);
     }
 
@@ -74,27 +74,11 @@ contract SampleOracleUniswap is IOracle {
         }
     }
 
-    function peekSpot(
-        bytes calldata data
-    ) external view override returns (uint256 rate) 
+    function symbol() external view override returns (string memory) 
     // solhint-disable-next-line no-empty-blocks
     { }
 
-    function symbol(
-        bytes calldata data
-    ) external view override returns (string memory) 
-    // solhint-disable-next-line no-empty-blocks
-    { }
-
-    function name(
-        bytes calldata data
-    ) external view override returns (string memory) 
-    // solhint-disable-next-line no-empty-blocks
-    { }
-
-    function get(
-        bytes calldata
-    ) external override returns (bool success, uint256 rate) 
+    function name() external view override returns (string memory) 
     // solhint-disable-next-line no-empty-blocks
     { }
 }
