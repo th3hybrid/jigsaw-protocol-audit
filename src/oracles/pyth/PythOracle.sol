@@ -15,10 +15,9 @@ import { IPythOracle } from "./interfaces/IPythOracle.sol";
  * @title PythOracle Contract
  *
  * @notice Oracle contract that fetches and normalizes price data from Pyth Network.
+ *
  * @dev Implements IPythOracle interface and uses Pyth Network as price feed source.
- *
  * @dev This contract inherits functionalities from `Initializable` and `Ownable2StepUpgradeable`.
- *
  *
  * @author Hovooo (@hovooo)
  *
@@ -158,5 +157,12 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
      */
     function symbol() external view override returns (string memory) {
         return IERC20Metadata(underlying).symbol();
+    }
+
+    /**
+     * @dev Renounce ownership override to avoid losing contract's ownership.
+     */
+    function renounceOwnership() public pure override {
+        revert("1000");
     }
 }
