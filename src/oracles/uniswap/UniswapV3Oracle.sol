@@ -36,6 +36,16 @@ contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
     address public override quoteToken;
 
     /**
+     * @notice Decimals of the ERC20 token used as the quote currency.
+     */
+    uint256 public override quoteTokenDecimals;
+
+    /**
+     * @notice The standard decimal precision (18) used for price normalization across the protocol
+     */
+    uint256 private constant ALLOWED_DECIMALS = 18;
+
+    /**
      * @notice List of UniswapV3 pool addresses used for price calculations.
      */
     address[] private pools;
@@ -63,6 +73,7 @@ contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
         baseAmount = uint128(10 ** IERC20Metadata(_jUSD).decimals());
         underlying = _jUSD;
         quoteToken = _quoteToken;
+        quoteTokenDecimals = IERC20Metadata(_quoteToken).decimals();
         pools.push(_uniswapV3Pool);
     }
 
@@ -78,11 +89,18 @@ contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
     ) external view returns (bool success, uint256 rate) {
         // Query three different TWAPs (Time-Weighted Average Prices) from different time periods and take the median of
         // these prices to reduce the impact of sudden price fluctuations or manipulation.
-        rate = median(
+        uint256 median = getMedian(
             _quote({ _period: 1800, _offset: 3600 }), // Query the TWAP from the last 90-60 minutes (oldest time period)
             _quote({ _period: 1800, _offset: 1800 }), // Query the TWAP from the last 60-30 minutes (middle time period)
             _quote({ _period: 1800, _offset: 0 }) // Query the TWAP from the last 30-0 minutes (most recent time period)
         );
+
+        // Normalize the price to ALLOWED_DECIMALS (e.g., 18 decimals)
+        rate = quoteTokenDecimals == ALLOWED_DECIMALS
+            ? median
+            : quoteTokenDecimals < ALLOWED_DECIMALS
+                ? median * 10 ** (ALLOWED_DECIMALS - quoteTokenDecimals)
+                : median / 10 ** (quoteTokenDecimals - ALLOWED_DECIMALS);
 
         // If a valid price has been retrieved from the queries, return success as true
         success = true;
@@ -120,14 +138,27 @@ contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
     function updatePools(
         address[] memory _newPools
     ) public onlyOwner {
-        if (_newPools.length == 0) revert InvalidPoolsLength();
+        uint256 length = _newPools.length;
 
+        // Ensure that the provided pool list is not empty
+        if (length == 0) revert InvalidPoolsLength();
+
+        // Compute hashes of the old and new pools to compare if they are identical
         bytes32 oldPoolsHash = keccak256(abi.encode(pools));
         bytes32 newPoolsHash = keccak256(abi.encode(_newPools));
 
+        // Revert if the new pool list is the same as the existing one
         if (oldPoolsHash == newPoolsHash) revert InvalidPools();
 
+        // Iterate through the new pool list to check for invalid addresses
+        for (uint256 i = 0; i < length; i++) {
+            if (_newPools[i] == address(0)) revert InvalidPools(); // Ensure no zero-address pools
+        }
+
+        // Emit an event to log the update of pools
         emit PoolsUpdated(oldPoolsHash, newPoolsHash);
+
+        // Update the pools storage variable with the new pool list
         pools = _newPools;
     }
 
@@ -204,7 +235,7 @@ contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
     /**
      * @notice Computes a median value from three numbers.
      */
-    function median(uint256 _a, uint256 _b, uint256 _c) internal pure returns (uint256) {
+    function getMedian(uint256 _a, uint256 _b, uint256 _c) internal pure returns (uint256) {
         if ((_a >= _b && _a <= _c) || (_a >= _c && _a <= _b)) return _a;
         if ((_b >= _a && _b <= _c) || (_b >= _c && _b <= _a)) return _b;
         return _c;

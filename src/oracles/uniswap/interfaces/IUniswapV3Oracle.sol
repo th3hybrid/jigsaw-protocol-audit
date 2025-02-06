@@ -59,6 +59,12 @@ interface IUniswapV3Oracle is IOracle {
     function quoteToken() external view returns (address);
 
     /**
+     * @notice Decimals of the ERC20 token used as the quote currency.
+     * @return The decimals of the quote token.
+     */
+    function quoteTokenDecimals() external view returns (uint256);
+
+    /**
      * @notice Returns the list of UniswapV3 pool addresses used for price calculations.
      * @return An array of UniswapV3 pool addresses stored in the contract.
      */
