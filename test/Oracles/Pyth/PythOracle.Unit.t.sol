@@ -180,4 +180,9 @@ contract PythOracleUnitTest is Test {
 
         mockPyth.updatePriceFeeds(priceUpdateData);
     }
+
+    function test_renounceOwnership() public {
+        vm.expectRevert(bytes("1000"));
+        pythOracle.renounceOwnership();
+    }
 }

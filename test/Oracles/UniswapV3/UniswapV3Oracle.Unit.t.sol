@@ -23,14 +23,45 @@ contract UniswapV3OracleUnitTest is Test {
             new UniswapV3Oracle({ _initialOwner: OWNER, _jUSD: jUSD, _quoteToken: USDC, _uniswapV3Pool: USDC_POOL });
     }
 
-    function test_uniswap_peek_when_smallQuoteTokenDecimals() public {
+    function test_uniswapV3Oracle_initialization() public {
+        vm.assertEq(uniswapOracle.underlying(), jUSD, "underlying set wrong");
+        vm.assertEq(uniswapOracle.baseAmount(), 1e6, "baseAmount set wrong");
+        vm.assertEq(uniswapOracle.quoteToken(), USDC, "quoteToken set wrong");
+        vm.assertEq(uniswapOracle.quoteTokenDecimals(), 6, "quoteTokenDecimals set wrong");
+        vm.assertEq(uniswapOracle.name(), "Tether USD", "name set wrong");
+        vm.assertEq(uniswapOracle.symbol(), "USDT", "symbol set wrong");
+    }
+
+    function test_uniswapV3Oracle_invalidInitialization() public {
+        vm.expectRevert(IUniswapV3Oracle.InvalidAddress.selector);
+        uniswapOracle = new UniswapV3Oracle({
+            _initialOwner: OWNER,
+            _jUSD: address(0),
+            _quoteToken: USDC,
+            _uniswapV3Pool: USDC_POOL
+        });
+
+        vm.expectRevert(IUniswapV3Oracle.InvalidAddress.selector);
+        uniswapOracle = new UniswapV3Oracle({
+            _initialOwner: OWNER,
+            _jUSD: jUSD,
+            _quoteToken: address(0),
+            _uniswapV3Pool: USDC_POOL
+        });
+
+        vm.expectRevert(IUniswapV3Oracle.InvalidAddress.selector);
+        uniswapOracle =
+            new UniswapV3Oracle({ _initialOwner: OWNER, _jUSD: jUSD, _quoteToken: USDC, _uniswapV3Pool: address(0) });
+    }
+
+    function test_uniswapV3Oracle_peek_when_smallQuoteTokenDecimals() public {
         (bool success, uint256 rate) = uniswapOracle.peek("");
 
         vm.assertEq(success, true, "Peek failed");
         vm.assertEq(rate, 1_000_000_000_000_000_000, "Rate is wrong");
     }
 
-    function test_uniswap_peek_when_sameQuoteTokenDecimals() public {
+    function test_uniswapV3Oracle_peek_when_sameQuoteTokenDecimals() public {
         uniswapOracle =
             new UniswapV3Oracle({ _initialOwner: OWNER, _jUSD: WETH, _quoteToken: jUSD, _uniswapV3Pool: WETH_POOL });
 
@@ -40,7 +71,7 @@ contract UniswapV3OracleUnitTest is Test {
         vm.assertEq(rate, 3_194_542_585_000_000_000_000, "Rate is wrong");
     }
 
-    function test_uniswap_peek_when_multiplePools() public {
+    function test_uniswapV3Oracle_peek_when_multiplePools() public {
         address[] memory pools;
         vm.expectRevert(IUniswapV3Oracle.InvalidPoolsLength.selector);
         vm.prank(OWNER, OWNER);
@@ -75,5 +106,10 @@ contract UniswapV3OracleUnitTest is Test {
 
         vm.assertEq(success, true, "Peek failed");
         vm.assertEq(rate, 1_000_000_000_000_000_000, "Rate is wrong");
+    }
+
+    function test_renounceOwnership() public {
+        vm.expectRevert(bytes("1000"));
+        uniswapOracle.renounceOwnership();
     }
 }
