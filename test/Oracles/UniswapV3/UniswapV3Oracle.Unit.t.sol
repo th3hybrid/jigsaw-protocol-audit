@@ -9,7 +9,6 @@ import { IUniswapV3Oracle } from "src/oracles/uniswap/interfaces/IUniswapV3Oracl
 
 contract UniswapV3OracleUnitTest is Test {
     address internal constant OWNER = address(uint160(uint256(keccak256("owner"))));
-
     address internal constant jUSD = 0xdAC17F958D2ee523a2206206994597C13D831ec7; // pretend that USDT is jUSD
     address internal constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -42,7 +41,12 @@ contract UniswapV3OracleUnitTest is Test {
     }
 
     function test_uniswap_peek_when_multiplePools() public {
-        address[] memory pools = new address[](1);
+        address[] memory pools;
+        vm.expectRevert(IUniswapV3Oracle.InvalidPoolsLength.selector);
+        vm.prank(OWNER, OWNER);
+        uniswapOracle.updatePools({ _newPools: pools });
+
+        pools = new address[](1);
         pools[0] = 0x3416cF6C708Da44DB2624D63ea0AAef7113527C6;
         vm.expectRevert(IUniswapV3Oracle.InvalidPools.selector);
         vm.prank(OWNER, OWNER);
