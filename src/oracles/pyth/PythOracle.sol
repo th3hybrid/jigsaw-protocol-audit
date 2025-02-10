@@ -15,10 +15,9 @@ import { IPythOracle } from "./interfaces/IPythOracle.sol";
  * @title PythOracle Contract
  *
  * @notice Oracle contract that fetches and normalizes price data from Pyth Network.
+ *
  * @dev Implements IPythOracle interface and uses Pyth Network as price feed source.
- *
  * @dev This contract inherits functionalities from `Initializable` and `Ownable2StepUpgradeable`.
- *
  *
  * @author Hovooo (@hovooo)
  *
@@ -48,7 +47,7 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
     uint256 public override age;
 
     /**
-     * @notice The standard decimal precision (18) used for price normalization across the protocol
+     * @notice The standard decimal precision (18) used for price normalization across the protocol.
      */
     uint256 private constant ALLOWED_DECIMALS = 18;
 
