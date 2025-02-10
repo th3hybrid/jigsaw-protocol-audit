@@ -12,23 +12,31 @@ import { IUniswapV3Oracle } from "./interfaces/IUniswapV3Oracle.sol";
 
 /**
  * @title UniswapV3Oracle
+ *
  * @notice Fetches and processes Uniswap V3 TWAP (Time-Weighted Average Price) data for a given token.
- * @dev This contract provides jUSD price data quoted in USDC from Uniswap V3 pools.
+ * @notice This contract is designed to provide jUSD price data quoted in USDC from Uniswap V3 pools.
+ *
+ * @dev Implements IUniswapV3Oracle interface and uses UniswapV3 pools as price feed source.
+ * @dev This contract inherits functionalities from `Ownable2Step`.
+ *
+ * @author Hovooo (@hovooo)
+ *
+ * @custom:security-contact support@jigsaw.finance
  */
 contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
     // -- State variables --
-
-    /**
-     * @notice Amount of tokens used to determine jUSD's price.
-     * @dev Should be equal to 1 * 10^(jUSD decimals) to always get the price for one jUSD token.
-     */
-    uint128 public override baseAmount;
 
     /**
      * @notice Returns the address of the token the oracle is for.
      * @dev Is used as a `baseToken` for UnsiwapV3 TWAP.
      */
     address public override underlying;
+
+    /**
+     * @notice Amount of tokens used to determine jUSD's price.
+     * @dev Should be equal to 1 * 10^(jUSD decimals) to always get the price for one jUSD token.
+     */
+    uint128 public override baseAmount;
 
     /**
      * @notice Address of the ERC20 token used as the quote currency.
@@ -41,7 +49,7 @@ contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
     uint256 public override quoteTokenDecimals;
 
     /**
-     * @notice The standard decimal precision (18) used for price normalization across the protocol
+     * @notice The standard decimal precision (18) used for price normalization across the protocol.
      */
     uint256 private constant ALLOWED_DECIMALS = 18;
 
@@ -177,12 +185,14 @@ contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
      * @param _offset The offset (delay) for the TWAP calculation.
      */
     function _quote(uint32 _period, uint32 _offset) internal view returns (uint256) {
-        if (pools.length == 0) revert NoDefinedPools();
+        uint256 length = pools.length;
+
+        if (length == 0) revert NoDefinedPools();
         if (_offset > 0 && _period == 0) revert OffsettedSpotQuote();
 
-        OracleLibrary.WeightedTickData[] memory _tickData = new OracleLibrary.WeightedTickData[](pools.length);
+        OracleLibrary.WeightedTickData[] memory _tickData = new OracleLibrary.WeightedTickData[](length);
 
-        for (uint256 i; i < pools.length; i++) {
+        for (uint256 i; i < length; i++) {
             (_tickData[i].tick, _tickData[i].weight) = _period > 0
                 ? consultOffsetted(pools[i], _period, _offset)
                 : OracleLibrary.getBlockStartingTickAndLiquidity(pools[i]);
