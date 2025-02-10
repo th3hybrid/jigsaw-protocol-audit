@@ -126,4 +126,12 @@ contract DeployAll is Test, ScriptTestsFixture {
             "ReferenceImplementation in ReceiptTokenFactory is wrong"
         );
     }
+
+    function test_deploy_uniswapV3Oracle() public view {
+        assertEq(jUsdUniswapV3Oracle.owner(), INITIAL_OWNER, "INITIAL_OWNER in jUsdUniswapV3Oracle is wrong");
+        assertEq(jUsdUniswapV3Oracle.quoteToken(), USDC, "quoteToken in jUsdUniswapV3Oracle is wrong");
+        address[] memory pools = jUsdUniswapV3Oracle.getPools();
+        assertEq(pools.length, 1, "pools length in jUsdUniswapV3Oracle is wrong");
+        assertEq(pools[0], USDT_USDC_POOL, "pools in jUsdUniswapV3Oracle is wrong");
+    }
 }

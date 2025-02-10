@@ -47,7 +47,7 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
     uint256 public override age;
 
     /**
-     * @notice The standard decimal precision (18) used for price normalization across the protocol
+     * @notice The standard decimal precision (18) used for price normalization across the protocol.
      */
     uint256 private constant ALLOWED_DECIMALS = 18;
 

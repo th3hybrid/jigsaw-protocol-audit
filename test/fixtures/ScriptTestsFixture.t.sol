@@ -12,10 +12,10 @@ import { DeployManager } from "../../script/deployment/01_DeployManager.s.sol";
 import { DeployManagerContainer } from "../../script/deployment/02_DeployManagerContainer.s.sol";
 import { DeployJUSD } from "../../script/deployment/03_DeployJUSD.s.sol";
 import { DeployManagers } from "../../script/deployment/04_DeployManagers.s.sol";
-
 import { DeployReceiptToken } from "../../script/deployment/05_DeployReceiptToken.s.sol";
 import { DeployPythOracleFactory } from "../../script/deployment/06_DeployPythOracleFactory.s.sol";
 import { DeployRegistries } from "../../script/deployment/07_DeployRegistries.s.sol";
+import { DeployUniswapV3Oracle } from "../../script/deployment/08_DeployUniswapV3Oracle.s.sol";
 
 import { HoldingManager } from "../../src/HoldingManager.sol";
 import { JigsawUSD } from "../../src/JigsawUSD.sol";
@@ -32,6 +32,8 @@ import { SwapManager } from "../../src/SwapManager.sol";
 import { PythOracle } from "../../src/oracles/pyth/PythOracle.sol";
 import { PythOracleFactory } from "../../src/oracles/pyth/PythOracleFactory.sol";
 
+import { UniswapV3Oracle } from "src/oracles/uniswap/UniswapV3Oracle.sol";
+
 import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
 import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 import { wETHMock } from "../utils/mocks/wETHMock.sol";
@@ -43,6 +45,7 @@ contract ScriptTestsFixture is Test {
     string internal managerConfigPath = "./deployment-config/01_ManagerConfig.json";
     string internal managersConfigPath = "./deployment-config/03_ManagersConfig.json";
     string internal pythConfigPath = "./deployment-config/04_PythConfig.json";
+    string internal uniswapV3OracleConfigPath = "./deployment-config/05_UniswapV3OracleConfig.json";
 
     address internal INITIAL_OWNER = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
     address internal USDC;
@@ -53,6 +56,8 @@ contract ScriptTestsFixture is Test {
     address internal UNISWAP_SWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
 
     address internal PYTH = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
+
+    address internal USDT_USDC_POOL = 0x3416cF6C708Da44DB2624D63ea0AAef7113527C6; // pretend that this is jUSD/USDC pool
 
     Manager internal manager;
     ManagerContainer internal managerContainer;
@@ -67,6 +72,7 @@ contract ScriptTestsFixture is Test {
     ReceiptTokenFactory internal receiptTokenFactory;
     PythOracle internal pythOracleImpl;
     PythOracleFactory internal pythOracleFactory;
+    UniswapV3Oracle internal jUsdUniswapV3Oracle;
 
     address[] internal registries;
 
@@ -88,6 +94,7 @@ contract ScriptTestsFixture is Test {
         Strings.toHexString(uint160(UNISWAP_FACTORY), 20).write(managersConfigPath, ".UNISWAP_FACTORY");
         Strings.toHexString(uint160(UNISWAP_SWAP_ROUTER), 20).write(managersConfigPath, ".UNISWAP_SWAP_ROUTER");
         Strings.toHexString(uint160(PYTH), 20).write(pythConfigPath, ".PYTH");
+        Strings.toHexString(uint160(USDT_USDC_POOL), 20).write(uniswapV3OracleConfigPath, ".JUSD_USDC_UNISWAP_POOL");
 
         //Run Manager deployment script
         DeployManager deployManagerScript = new DeployManager();
@@ -115,5 +122,9 @@ contract ScriptTestsFixture is Test {
         //Run Registries deployment script
         DeployRegistries deployRegistriesScript = new DeployRegistries();
         registries = deployRegistriesScript.run();
+
+        //Run UniswapV3 deployment script
+        DeployUniswapV3Oracle deployUniswapV3OracleScript = new DeployUniswapV3Oracle();
+        jUsdUniswapV3Oracle = deployUniswapV3OracleScript.run();
     }
 }
