@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IOracle } from "../../../interfaces/oracle/IOracle.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
+import { IOracle } from "../../interfaces/oracle/IOracle.sol";
 
 /**
  * @title GenesisOracle
@@ -42,7 +43,7 @@ contract GenesisOracle is IOracle {
      */
     constructor(
         address _jUSD
-    ) Ownable(_initialOwner) {
+    ) {
         if (_jUSD == address(0)) revert InvalidAddress();
         underlying = _jUSD;
     }
@@ -57,7 +58,7 @@ contract GenesisOracle is IOracle {
      */
     function peek(
         bytes calldata
-    ) external view returns (bool success, uint256 rate) {
+    ) external pure returns (bool success, uint256 rate) {
         rate = 1e18; // Fixed rate of 1 jUSD = 1 USD
         success = true;
     }
