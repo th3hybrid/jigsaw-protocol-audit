@@ -20,6 +20,7 @@ contract PythOracleUnitTest is Test {
     MockPyth internal mockPyth;
     PythOracle internal pythOracle;
     PythOracleFactory internal pythOracleFactory;
+    PythOracleFactory internal mockPythOracleFactory;
     address internal pythOracleImplementation;
 
     address internal constant OWNER = address(uint160(uint256(keccak256("owner"))));
@@ -44,6 +45,11 @@ contract PythOracleUnitTest is Test {
         pythOracleFactory = new PythOracleFactory({
             _initialOwner: OWNER,
             _pyth: PYTH,
+            _referenceImplementation: pythOracleImplementation
+        });
+        mockPythOracleFactory = new PythOracleFactory({
+            _initialOwner: OWNER,
+            _pyth: address(mockPyth),
             _referenceImplementation: pythOracleImplementation
         });
     }
@@ -91,11 +97,11 @@ contract PythOracleUnitTest is Test {
 
     function test_pyth_peek_when_NegativeOraclePrice() public {
         pythOracle = PythOracle(
-            pythOracleFactory.createPythOracle({
+            mockPythOracleFactory.createPythOracle({
                 _initialOwner: OWNER,
                 _underlying: WETH,
                 _priceId: PRICE_ID,
-                _age: 1 seconds
+                _age: AGE
             })
         );
 
@@ -109,11 +115,11 @@ contract PythOracleUnitTest is Test {
 
     function test_pyth_peek_when_ExpoTooBig() public {
         pythOracle = PythOracle(
-            pythOracleFactory.createPythOracle({
+            mockPythOracleFactory.createPythOracle({
                 _initialOwner: OWNER,
                 _underlying: WETH,
                 _priceId: PRICE_ID,
-                _age: 1 seconds
+                _age: AGE
             })
         );
 
@@ -127,11 +133,11 @@ contract PythOracleUnitTest is Test {
 
     function test_pyth_peek_when_ExpoTooSmall() public {
         pythOracle = PythOracle(
-            pythOracleFactory.createPythOracle({
+            mockPythOracleFactory.createPythOracle({
                 _initialOwner: OWNER,
                 _underlying: WETH,
                 _priceId: PRICE_ID,
-                _age: 1 seconds
+                _age: AGE
             })
         );
 
@@ -167,6 +173,11 @@ contract PythOracleUnitTest is Test {
         vm.stopPrank();
     }
 
+    function test_pyth_renounceOwnership() public withRegularOracle {
+        vm.expectRevert(bytes("1000"));
+        pythOracle.renounceOwnership();
+    }
+
     function _updateMockPythPrice(int64 _price, int32 _expo) private {
         bytes[] memory priceUpdateData = new bytes[](1);
         priceUpdateData[0] = abi.encode(
@@ -179,10 +190,5 @@ contract PythOracleUnitTest is Test {
         );
 
         mockPyth.updatePriceFeeds(priceUpdateData);
-    }
-
-    function test_renounceOwnership() public {
-        vm.expectRevert(bytes("1000"));
-        pythOracle.renounceOwnership();
     }
 }

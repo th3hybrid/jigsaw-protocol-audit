@@ -23,12 +23,13 @@ contract DeployManager is Script, Base {
     // Read config files
     string internal commonConfig = vm.readFile("./deployment-config/00_CommonConfig.json");
     string internal managerConfig = vm.readFile("./deployment-config/01_ManagerConfig.json");
+    string internal deployments = vm.readFile("./deployments.json");
 
     // Get values from configs
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
     address internal USDC = managerConfig.readAddress(".USDC");
     address internal WETH = managerConfig.readAddress(".WETH");
-    address internal JUSD_Oracle = managerConfig.readAddress(".JUSD_Oracle");
+    address internal JUSD_Oracle = deployments.readAddress(".JUSD_GENESIS_ORACLE");
     bytes internal JUSD_OracleData = managerConfig.readBytes(".JUSD_OracleData");
 
     // Salt for deterministic deployment using Create2
