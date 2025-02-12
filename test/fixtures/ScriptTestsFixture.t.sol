@@ -7,7 +7,7 @@ import { console } from "forge-std/console.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { DeployMocks } from "../../script/deployment/00_DeployMocks.s.sol";
+import { DeployGenesisOracle } from "../../script/deployment/00_DeployGenesisOracle.s.sol";
 import { DeployManager } from "../../script/deployment/01_DeployManager.s.sol";
 import { DeployManagerContainer } from "../../script/deployment/02_DeployManagerContainer.s.sol";
 import { DeployJUSD } from "../../script/deployment/03_DeployJUSD.s.sol";
@@ -16,6 +16,7 @@ import { DeployReceiptToken } from "../../script/deployment/05_DeployReceiptToke
 import { DeployPythOracleFactory } from "../../script/deployment/06_DeployPythOracleFactory.s.sol";
 import { DeployRegistries } from "../../script/deployment/07_DeployRegistries.s.sol";
 import { DeployUniswapV3Oracle } from "../../script/deployment/08_DeployUniswapV3Oracle.s.sol";
+import { DeployMocks } from "../../script/mocks/00_DeployMocks.s.sol";
 
 import { HoldingManager } from "../../src/HoldingManager.sol";
 import { JigsawUSD } from "../../src/JigsawUSD.sol";
@@ -79,17 +80,18 @@ contract ScriptTestsFixture is Test {
     function init() internal {
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
         DeployMocks mockScript = new DeployMocks();
-        (SampleTokenERC20 USDC_MOCK, wETHMock WETH_MOCK,,, SampleOracle JUSD_OracleMock) = mockScript.run();
+        (SampleTokenERC20 USDC_MOCK, wETHMock WETH_MOCK,,,) = mockScript.run();
 
         USDC = address(USDC_MOCK);
         WETH = address(WETH_MOCK);
-        JUSD_Oracle = address(JUSD_OracleMock);
+
+        DeployGenesisOracle deployGenesisOracle = new DeployGenesisOracle();
+        JUSD_Oracle = address(deployGenesisOracle.run());
 
         // Update config files with needed values
         Strings.toHexString(uint160(INITIAL_OWNER), 20).write(commonConfigPath, ".INITIAL_OWNER");
         Strings.toHexString(uint160(USDC), 20).write(managerConfigPath, ".USDC");
         Strings.toHexString(uint160(WETH), 20).write(managerConfigPath, ".WETH");
-        Strings.toHexString(uint160(JUSD_Oracle), 20).write(managerConfigPath, ".JUSD_Oracle");
         Strings.toHexString(uint256(bytes32("")), 32).write(managerConfigPath, ".JUSD_OracleData");
         Strings.toHexString(uint160(UNISWAP_FACTORY), 20).write(managersConfigPath, ".UNISWAP_FACTORY");
         Strings.toHexString(uint160(UNISWAP_SWAP_ROUTER), 20).write(managersConfigPath, ".UNISWAP_SWAP_ROUTER");
