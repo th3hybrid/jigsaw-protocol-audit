@@ -14,7 +14,7 @@ contract GenesisOracleIntegrationTest is Test, BasicContractsFixture {
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"), 21_722_108);
         init();
-        genesisJUsdOracle = new GenesisOracle({ _jUSD: address(jUsd) });
+        genesisJUsdOracle = new GenesisOracle();
     }
 
     function test_genesisOracle_initialization() public view {
