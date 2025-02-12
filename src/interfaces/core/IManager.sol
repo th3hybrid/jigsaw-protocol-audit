@@ -311,7 +311,6 @@ interface IManager {
 
     /**
      * @notice Timelock amount in seconds for changing the oracle data.
-     * @dev The default timelock amount is 2 days.
      */
     function timelockAmount() external view returns (uint256);
 
