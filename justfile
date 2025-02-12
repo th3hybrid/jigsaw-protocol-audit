@@ -71,6 +71,12 @@ mt test: && _timer
 mp verbosity path: && _timer
 	forge test -{{verbosity}} --match-path test/{{path}}
 
+# Deploy jUSD Genesis oracle
+deploy-genesisOracle:  && _timer
+	#!/usr/bin/env bash
+	echo "Deploying jUSD Genesis Oracle to $CHAIN..."
+	eval "forge script DeployGenesisOracle --rpc-url \"\${${CHAIN}_RPC_URL}\" --slow -vvvv --etherscan-api-key \"\${${CHAIN}_ETHERSCAN_API_KEY}\" --verify --broadcast"
+
 # Deploy Manager Contract
 deploy-manager:  && _timer
 	#!/usr/bin/env bash
