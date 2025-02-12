@@ -154,9 +154,8 @@ contract Manager is IManager, Ownable2Step {
 
     /**
      * @notice Timelock amount in seconds for changing the oracle data.
-     * @dev The default timelock amount is 2 days.
      */
-    uint256 public override timelockAmount = 2 days;
+    uint256 public override timelockAmount = 1 hours;
 
     /**
      * @notice Variables required for delayed timelock update.

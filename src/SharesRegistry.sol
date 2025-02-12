@@ -63,7 +63,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     /**
      * @notice Timelock amount in seconds for changing the oracle data.
      */
-    uint256 public override timelockAmount = 2 days; // 2 days by default
+    uint256 public override timelockAmount = 1 hours;
     uint256 private _oldTimelock;
     uint256 private _newTimelock;
     uint256 private _newTimelockTimestamp;
