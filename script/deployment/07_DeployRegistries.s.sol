@@ -133,7 +133,7 @@ contract DeployRegistries is Script, Base {
             RegistryConfig({
                 symbol: "sUSDe",
                 token: 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497,
-                collateralizationRate: 90_000,
+                collateralizationRate: 80_000,
                 pythId: 0xca3ba9a619a4b3755c10ac7d5e760275aa95e9823d38a84fedd416856cdba37c,
                 oracleData: COMMON_ORACLE_DATA,
                 age: COMMON_ORACLE_AGE
@@ -144,7 +144,7 @@ contract DeployRegistries is Script, Base {
             RegistryConfig({
                 symbol: "USD0++",
                 token: 0x35D8949372D46B7a3D5A56006AE77B215fc69bC0,
-                collateralizationRate: 90_000,
+                collateralizationRate: 80_000,
                 pythId: 0xf9c96a45784d0ce4390825a43a313149da787e6a6c66076f3a3f83e92501baeb,
                 oracleData: COMMON_ORACLE_DATA,
                 age: COMMON_ORACLE_AGE
