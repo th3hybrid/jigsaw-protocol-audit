@@ -131,6 +131,17 @@ contract DeployRegistries is Script, Base {
 
         registryConfigs.push(
             RegistryConfig({
+                symbol: "rUSD",
+                token: 0x09D4214C03D01F49544C0448DBE3A27f768F2b34,
+                collateralizationRate: 90_000,
+                pythId: 0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a,
+                oracleData: COMMON_ORACLE_DATA,
+                age: COMMON_ORACLE_AGE
+            })
+        );
+
+        registryConfigs.push(
+            RegistryConfig({
                 symbol: "sUSDe",
                 token: 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497,
                 collateralizationRate: 80_000,
