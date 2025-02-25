@@ -70,17 +70,17 @@ Specific tests can be run using `forge test` conventions, specified in more deta
 
 ### Deploy Commands
 
-| Command                 | Description                                           |
-| ----------------------- | ----------------------------------------------------- |
-| deploy-genesisOracle    | Deploy jUSD Genesis Oracle                            |
-| deploy-manager          | Deploy Manager Contract                               |
-| deploy-managerContainer | Deploy ManagerContainer Contract                      |
-| deploy-jUSD             | Deploy jUSD Contract                                  |
-| deploy-managers         | Deploy various Manager Contracts                      |
-| deploy-receipt          | Deploy ReceiptTokenFactory & ReceiptToken             |
-| deploy-pythOracle       | Deploy PythOracle Factory & PythOracle Implementation |
-| deploy-registries       | Deploy SharesRegistry Contracts for each collateral   |
-| deploy-uniswapV3Oracle  | Deploy UniswapV3Oracle custom TWAP Oracle             |
+| Command                   | Description                                           |
+| ------------------------- | ----------------------------------------------------- |
+| `deploy-genesisOracle`    | Deploy jUSD Genesis Oracle                            |
+| `deploy-manager`          | Deploy Manager Contract                               |
+| `deploy-managerContainer` | Deploy ManagerContainer Contract                      |
+| `deploy-jUSD`             | Deploy jUSD Contract                                  |
+| `deploy-managers`         | Deploy various Manager Contracts                      |
+| `deploy-receipt`          | Deploy ReceiptTokenFactory & ReceiptToken             |
+| `deploy-pythOracle`       | Deploy PythOracle Factory & PythOracle Implementation |
+| `deploy-registries`       | Deploy SharesRegistry Contracts for each collateral   |
+| `deploy-uniswapV3Oracle`  | Deploy UniswapV3Oracle custom TWAP Oracle             |
 
 ## Audit Reports
 
