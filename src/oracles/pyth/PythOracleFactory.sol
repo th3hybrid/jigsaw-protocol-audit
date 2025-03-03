@@ -77,6 +77,8 @@ contract PythOracleFactory is IPythOracleFactory, Ownable2Step {
         bytes32 _priceId,
         uint256 _age
     ) external override returns (address newPythOracleAddress) {
+        require(_age > 0, "Zero age");
+
         // Clone the Pyth oracle implementation.
         newPythOracleAddress = Clones.cloneDeterministic({
             implementation: referenceImplementation,
