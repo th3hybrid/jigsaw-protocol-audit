@@ -55,7 +55,7 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
      * @notice The minimum confidence percentage.
      * @dev Uses 2 decimal precision, where 1% is represented as 100.
      */
-    uint256 public override MIN_CONFIDENCE_PERCENTAGE = 300;
+    uint256 public override minConfidencePercentage = 300;
 
     /**
      * @notice The precision to be used for the confidence percentage to avoid precision loss.
@@ -126,13 +126,13 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
         uint256 _newConfidence
     ) external override onlyOwner {
         if (_newConfidence == 0) revert InvalidConfidencePercentage();
-        if (_newConfidence == MIN_CONFIDENCE_PERCENTAGE) revert InvalidConfidencePercentage();
+        if (_newConfidence == minConfidencePercentage) revert InvalidConfidencePercentage();
         if (_newConfidence > CONFIDENCE_PRECISION) revert InvalidConfidencePercentage();
 
         // Emit the event before modifying the state to provide a reliable record of the oracle's confidence percentage
         // update operation.
-        emit ConfidencePercentageUpdated({ oldValue: MIN_CONFIDENCE_PERCENTAGE, newValue: _newConfidence });
-        MIN_CONFIDENCE_PERCENTAGE = _newConfidence;
+        emit ConfidencePercentageUpdated({ oldValue: minConfidencePercentage, newValue: _newConfidence });
+        minConfidencePercentage = _newConfidence;
     }
 
     // -- Getters --
@@ -169,7 +169,7 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
             // Consider whether the price spread is too high
             uint256 confDecimals = 10 ** invertedExpo;
             bool isConfident =
-                price.conf * confDecimals / uPrice <= MIN_CONFIDENCE_PERCENTAGE * confDecimals / CONFIDENCE_PRECISION;
+                price.conf * confDecimals / uPrice <= minConfidencePercentage * confDecimals / CONFIDENCE_PRECISION;
 
             // Calculate the actual price based on the confidence
             uint256 priceWithConfidence = isConfident ? uPrice : uPrice - price.conf;

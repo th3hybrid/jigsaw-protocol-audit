@@ -205,7 +205,7 @@ contract PythOracleUnitTest is Test {
         vm.expectRevert(IPythOracle.InvalidConfidencePercentage.selector);
         pythOracle.updateConfidencePercentage(0);
 
-        uint256 oldConfidence = pythOracle.MIN_CONFIDENCE_PERCENTAGE();
+        uint256 oldConfidence = pythOracle.minConfidencePercentage();
         vm.expectRevert(IPythOracle.InvalidConfidencePercentage.selector);
         pythOracle.updateConfidencePercentage(oldConfidence);
 
@@ -219,7 +219,7 @@ contract PythOracleUnitTest is Test {
         emit IPythOracle.ConfidencePercentageUpdated({ oldValue: oldConfidence, newValue: _newConfidence });
         pythOracle.updateConfidencePercentage(_newConfidence);
 
-        vm.assertEq(pythOracle.MIN_CONFIDENCE_PERCENTAGE(), _newConfidence, "Confidence percentage wrong after update");
+        vm.assertEq(pythOracle.minConfidencePercentage(), _newConfidence, "Confidence percentage wrong after update");
         vm.stopPrank();
     }
 

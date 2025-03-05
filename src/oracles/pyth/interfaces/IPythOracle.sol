@@ -101,7 +101,7 @@ interface IPythOracle is IOracle {
      * @notice The minimum confidence percentage.
      * @dev Uses 2 decimal precision, where 1% is represented as 100.
      */
-    function MIN_CONFIDENCE_PERCENTAGE() external view returns (uint256);
+    function minConfidencePercentage() external view returns (uint256);
 
     /**
      * @notice The precision to be used for the confidence percentage to avoid precision loss.
