@@ -166,6 +166,9 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
             // Prevent underflow when normalizing the price to ALLOWED_DECIMALS
             if (invertedExpo > ALLOWED_DECIMALS) revert ExpoTooSmall();
 
+            // Disallow excessively large confidence percentages to ensure underflow does not occur
+            if (price.conf > uPrice) revert InvaidConfidence();
+
             // Consider whether the price spread is too high
             uint256 confDecimals = 10 ** invertedExpo;
             bool isConfident =
