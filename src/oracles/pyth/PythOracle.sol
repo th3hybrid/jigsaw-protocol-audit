@@ -154,6 +154,9 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
             // Ensure the fetched price is not negative
             if (price.price <= 0) revert InvalidOraclePrice();
 
+            // Save the price as unsigned integer to save gas on multiple type conversions
+            uint64 uPrice = uint64(price.price);
+
             // Disallow excessively large prices by rejecting positive exponents
             if (price.expo > 0) revert ExpoTooBig();
 
@@ -165,12 +168,11 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
 
             // Consider whether the price spread is too high
             uint256 confDecimals = 10 ** invertedExpo;
-            bool isConfident = price.conf * confDecimals / uint64(price.price)
-                <= MIN_CONFIDENCE_PERCENTAGE * confDecimals / CONFIDENCE_PRECISION;
+            bool isConfident =
+                price.conf * confDecimals / uPrice <= MIN_CONFIDENCE_PERCENTAGE * confDecimals / CONFIDENCE_PRECISION;
 
             // Calculate the actual price based on the confidence
-            uint256 priceWithConfidence =
-                isConfident ? uint256(uint64(price.price)) : uint256((uint64(price.price)) - price.conf);
+            uint256 priceWithConfidence = isConfident ? uPrice : uPrice - price.conf;
 
             // Normalize the price to ALLOWED_DECIMALS (e.g., 18 decimals)
             rate = priceWithConfidence * 10 ** (ALLOWED_DECIMALS - invertedExpo);
