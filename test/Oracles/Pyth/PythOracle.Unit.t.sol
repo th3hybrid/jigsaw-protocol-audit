@@ -169,6 +169,24 @@ contract PythOracleUnitTest is Test {
         vm.assertEq(rate, (100_000_000 - 1_000_000) * 10 ** (18 - 8), "Rate is wrong");
     }
 
+    function test_pyth_peek_when_confidenceTooHigh() public {
+        pythOracle = PythOracle(
+            mockPythOracleFactory.createPythOracle({
+                _initialOwner: OWNER,
+                _underlying: WETH,
+                _priceId: PRICE_ID,
+                _age: AGE
+            })
+        );
+
+        // Set pyth price with a small expo
+        _updateMockPythPrice(int64(100_000_000), uint64(1_000_000_000_000_000_000), int32(-8));
+
+        // Expect the next call to revert with the correct error
+        vm.expectRevert(IPythOracle.InvaidConfidence.selector);
+        pythOracle.peek("");
+    }
+
     function test_pyth_updateAge(
         uint256 _newAge
     ) public withRegularOracle {
@@ -205,7 +223,7 @@ contract PythOracleUnitTest is Test {
         vm.expectRevert(IPythOracle.InvalidConfidencePercentage.selector);
         pythOracle.updateConfidencePercentage(0);
 
-        uint256 oldConfidence = pythOracle.MIN_CONFIDENCE_PERCENTAGE();
+        uint256 oldConfidence = pythOracle.minConfidencePercentage();
         vm.expectRevert(IPythOracle.InvalidConfidencePercentage.selector);
         pythOracle.updateConfidencePercentage(oldConfidence);
 
@@ -219,7 +237,7 @@ contract PythOracleUnitTest is Test {
         emit IPythOracle.ConfidencePercentageUpdated({ oldValue: oldConfidence, newValue: _newConfidence });
         pythOracle.updateConfidencePercentage(_newConfidence);
 
-        vm.assertEq(pythOracle.MIN_CONFIDENCE_PERCENTAGE(), _newConfidence, "Confidence percentage wrong after update");
+        vm.assertEq(pythOracle.minConfidencePercentage(), _newConfidence, "Confidence percentage wrong after update");
         vm.stopPrank();
     }
 
