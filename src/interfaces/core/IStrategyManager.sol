@@ -327,6 +327,15 @@ interface IStrategyManager is IStrategyManagerMin {
     ) external view returns (address[] memory);
 
     /**
+     * @notice Returns the number of strategies the holding has invested in.
+     * @param _holding address for which the strategy count is requested.
+     * @return uint256 The number of strategies the holding has invested in.
+     */
+    function getHoldingToStrategyLength(
+        address _holding
+    ) external view returns (uint256);
+
+    /**
      * @notice Contains details about a specific strategy, such as its performance fee, active status, and whitelisted
      * status.
      */
