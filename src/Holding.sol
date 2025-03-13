@@ -34,11 +34,6 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
      */
     IManagerContainer public override managerContainer;
 
-    /**
-     * @notice Indicates if the contract has been initialized.
-     */
-    bool private _initialized;
-
     // --- Constructor ---
 
     /**
@@ -66,10 +61,8 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
      */
     function init(
         address _managerContainer
-    ) public {
-        require(!_initialized, "3072");
+    ) public initializer {
         require(_managerContainer != address(0), "3065");
-        _initialized = true;
         managerContainer = IManagerContainer(_managerContainer);
     }
 
