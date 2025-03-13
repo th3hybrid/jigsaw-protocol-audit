@@ -8,6 +8,25 @@ import { IManagerContainer } from "./IManagerContainer.sol";
  * @notice Interface for the Holding Manager.
  */
 interface IHoldingManager {
+    // -- Custom types --
+
+    /**
+     * @notice Data used for multiple borrow.
+     */
+    struct BorrowData {
+        address token;
+        uint256 amount;
+        uint256 minJUsdAmountOut;
+    }
+
+    /**
+     * @notice Data used for multiple repay.
+     */
+    struct RepayData {
+        address token;
+        uint256 amount;
+    }
+
     // -- Events --
 
     /**
@@ -29,10 +48,10 @@ interface IHoldingManager {
      * @notice Emitted when a borrow action is performed.
      * @param holding The address of the holding.
      * @param token The address of the token.
-     * @param amount The amount borrowed.
+     * @param jUsdMinted The amount of jUSD minted.
      * @param mintToUser Indicates if the amount is minted directly to the user.
      */
-    event Borrowed(address indexed holding, address indexed token, uint256 amount, bool mintToUser);
+    event Borrowed(address indexed holding, address indexed token, uint256 jUsdMinted, bool mintToUser);
 
     /**
      * @notice Emitted when a borrow event happens using multiple collateral types.
@@ -226,8 +245,16 @@ interface IHoldingManager {
      * @param _token Collateral token.
      * @param _amount The collateral amount used for borrowing.
      * @param _mintDirectlyToUser If true, mints to user instead of holding.
+     * @param _minJUsdAmountOut The minimum amount of jUSD that is expected to be received.
+     *
+     * @return jUsdMinted The amount of jUSD minted.
      */
-    function borrow(address _token, uint256 _amount, bool _mintDirectlyToUser) external;
+    function borrow(
+        address _token,
+        uint256 _amount,
+        uint256 _minJUsdAmountOut,
+        bool _mintDirectlyToUser
+    ) external returns (uint256 jUsdMinted);
 
     /**
      * @notice Borrows jUSD stablecoin to the user or to the holding contract using multiple collaterals.
@@ -250,8 +277,13 @@ interface IHoldingManager {
      *
      * @param _data Struct containing data for each collateral type.
      * @param _mintDirectlyToUser If true, mints to user instead of holding.
+     *
+     * @return  The amount of jUSD minted for each collateral type.
      */
-    function borrowMultiple(BorrowOrRepayData[] calldata _data, bool _mintDirectlyToUser) external;
+    function borrowMultiple(
+        BorrowData[] calldata _data,
+        bool _mintDirectlyToUser
+    ) external returns (uint256[] memory);
 
     /**
      * @notice Repays jUSD stablecoin debt from the user's or to the holding's address and frees up the locked
@@ -290,7 +322,7 @@ interface IHoldingManager {
      * @param _data Struct containing data for each collateral type.
      * @param _repayFromUser If true, it will burn from user's wallet, otherwise from user's holding.
      */
-    function repayMultiple(BorrowOrRepayData[] calldata _data, bool _repayFromUser) external;
+    function repayMultiple(RepayData[] calldata _data, bool _repayFromUser) external;
 
     // -- Administration --
 
@@ -303,14 +335,4 @@ interface IHoldingManager {
      * @notice Returns to normal state.
      */
     function unpause() external;
-
-    // -- Structs --
-
-    /**
-     * @notice Data used for multiple borrow.
-     */
-    struct BorrowOrRepayData {
-        address token;
-        uint256 amount;
-    }
 }
