@@ -399,7 +399,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
      */
     function _getSolvencyRatio(address _holding, ISharesRegistry registry) private view returns (uint256) {
         // Get collateralization rate for specified collateral.
-        uint256 colRate = registry.collateralizationRate();
+        uint256 colRate = registry.getConfig().collateralizationRate;
         // Get collateral's exchange rate.
         uint256 exchangeRate = registry.getExchangeRate();
         // Get holding's available collateral amount.
