@@ -271,13 +271,6 @@ interface IManager {
     function withdrawalFee() external view returns (uint256);
 
     /**
-     * @notice The % amount a liquidator gets.
-     * @dev Uses 3 decimal precision, where 1% is represented as 1000.
-     * @dev 10% is the default liquidator's bonus.
-     */
-    function liquidatorBonus() external view returns (uint256);
-
-    /**
      * @notice The max % amount the protocol gets when a self-liquidation operation happens.
      * @dev Uses 3 decimal precision, where 1% is represented as 1000.
      * @dev 8% is the default self-liquidation fee.
@@ -566,27 +559,6 @@ interface IManager {
      * @param _val The new withdrawal fee value.
      */
     function setWithdrawalFee(
-        uint256 _val
-    ) external;
-
-    /**
-     * @notice Sets the liquidator bonus.
-     *
-     * @notice Requirements:
-     * - `_val` must be smaller than `PRECISION` to avoid wrong computations.
-     *
-     * @notice Effects:
-     * - Updates the `liquidatorBonus` state variable.
-     * - Updates the `liquidatorBonus` state variable in the LiquidationManager Contract.
-     *
-     * @notice Emits:
-     * - `SwapRouteLiquidatorBonusUpdated` event indicating successful liquidator bonus update operation.
-     *
-     * @dev `_val` uses 3 decimals precision, where 1000 == 1%.
-     *
-     * @param _val The new value.
-     */
-    function setLiquidatorBonus(
         uint256 _val
     ) external;
 
