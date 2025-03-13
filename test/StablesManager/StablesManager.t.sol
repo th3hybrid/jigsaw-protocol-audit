@@ -185,7 +185,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(_user, _user);
-        holdingManager.borrow(collateral, _mintAmount, true);
+        holdingManager.borrow(collateral, _mintAmount, 0, true);
 
         jUsdOracle.setPrice(2e18);
 
@@ -203,7 +203,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(_user, _user);
-        holdingManager.borrow(collateral, _mintAmount, true);
+        holdingManager.borrow(collateral, _mintAmount, 0, true);
 
         jUsdOracle.setPrice(1e7);
 
@@ -221,7 +221,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(_user, _user);
-        holdingManager.borrow(collateral, _mintAmount, true);
+        holdingManager.borrow(collateral, _mintAmount, 0, true);
 
         usdcOracle.setPrice(1e7);
 
@@ -241,7 +241,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(_user, _user);
-        holdingManager.borrow(collateral, _mintAmount, true);
+        holdingManager.borrow(collateral, _mintAmount, 0, true);
 
         uint256 expectedSolvencyRatio = _getSolvencyRatio(holding, ISharesRegistry(registries[collateral]));
 
@@ -350,7 +350,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(_user, _user);
-        holdingManager.borrow(collateral, _mintAmount, true);
+        holdingManager.borrow(collateral, _mintAmount, 0, true);
 
         vm.prank(caller, caller);
         vm.expectRevert(bytes("3009"));
@@ -465,7 +465,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public onlyNotAllowed(_caller) {
         vm.prank(_caller, _caller);
         vm.expectRevert(bytes("1000"));
-        stablesManager.borrow(address(1), address(2), 1, true);
+        stablesManager.borrow(address(1), address(2), 1, 0, true);
     }
 
     // Tests if borrow reverts correctly when contract is paused
@@ -479,7 +479,7 @@ contract StablesManagerTest is BasicContractsFixture {
 
         vm.prank(caller, caller);
         vm.expectRevert();
-        stablesManager.borrow(address(1), address(2), 1, true);
+        stablesManager.borrow(address(1), address(2), 1, 0, true);
     }
 
     // Tests if borrow reverts correctly when invalid amount
@@ -490,7 +490,7 @@ contract StablesManagerTest is BasicContractsFixture {
 
         vm.prank(caller, caller);
         vm.expectRevert(bytes("3010"));
-        stablesManager.borrow(address(1), address(2), 0, true);
+        stablesManager.borrow(address(1), address(2), 0, 0, true);
     }
 
     // Tests if borrow reverts correctly when  registry is inactive
@@ -504,7 +504,7 @@ contract StablesManagerTest is BasicContractsFixture {
 
         vm.prank(caller, caller);
         vm.expectRevert(bytes("1201"));
-        stablesManager.borrow(address(1), address(2), 1, true);
+        stablesManager.borrow(address(1), address(2), 1, 0, true);
     }
 
     // Tests if borrow reverts correctly when insolvent
@@ -518,7 +518,7 @@ contract StablesManagerTest is BasicContractsFixture {
 
         vm.prank(caller, caller);
         vm.expectRevert(bytes("3009"));
-        stablesManager.borrow(holding, collateral, _mintAmount * 2, true);
+        stablesManager.borrow(holding, collateral, _mintAmount * 2, 0, true);
     }
 
     // Tests if borrow works correctly when authorized
@@ -538,7 +538,7 @@ contract StablesManagerTest is BasicContractsFixture {
         vm.prank(caller, caller);
         vm.expectEmit();
         emit Borrowed(holding, _mintAmount, _mintToUser);
-        stablesManager.borrow(holding, collateral, _mintAmount, _mintToUser);
+        stablesManager.borrow(holding, collateral, _mintAmount, 0, _mintToUser);
 
         assertEq(jUsd.balanceOf(_mintToUser ? _user : holding), _mintAmount, "Borrow failed when authorized");
         assertEq(stablesManager.totalBorrowed(collateral), _mintAmount, "Total borrowed wasn't updated after borrow");
@@ -606,7 +606,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(caller, caller);
-        stablesManager.borrow(holding, collateral, _mintAmount, _mintToUser);
+        stablesManager.borrow(holding, collateral, _mintAmount, 0, _mintToUser);
 
         vm.prank(caller, caller);
         vm.expectRevert(bytes("2100"));
@@ -627,7 +627,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(caller, caller);
-        stablesManager.borrow(holding, collateral, _mintAmount, _mintToUser);
+        stablesManager.borrow(holding, collateral, _mintAmount, 0, _mintToUser);
 
         vm.prank(caller, caller);
         vm.expectRevert(bytes("3012"));
@@ -648,7 +648,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(caller, caller);
-        stablesManager.borrow(holding, collateral, _mintAmount, _mintToUser);
+        stablesManager.borrow(holding, collateral, _mintAmount, 0, _mintToUser);
 
         vm.prank(caller, caller);
         vm.expectRevert(bytes("3000"));
@@ -672,7 +672,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address burnFrom = _mintToUser ? _user : holding;
 
         vm.prank(caller, caller);
-        stablesManager.borrow(holding, collateral, _mintAmount, _mintToUser);
+        stablesManager.borrow(holding, collateral, _mintAmount, 0, _mintToUser);
 
         uint256 balanceBeforeRepay = jUsd.balanceOf(burnFrom);
         uint256 totalBorrowedBeforeRepay = stablesManager.totalBorrowed(collateral);

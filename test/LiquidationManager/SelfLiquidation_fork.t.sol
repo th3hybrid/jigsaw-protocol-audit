@@ -1009,7 +1009,7 @@ contract SelfLiquidationTest is Test {
         if (!isUserSolvent) {
             vm.expectRevert(bytes("3009"));
         }
-        holdingManager.borrow(_collateral, _collateralAmount / 4, true);
+        holdingManager.borrow(_collateral, _collateralAmount / 4, 0, true);
 
         vm.stopPrank();
     }

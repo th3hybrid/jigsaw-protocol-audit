@@ -36,7 +36,7 @@ contract UniswapV3OracleIntegrationTest is Test, BasicContractsFixture {
 
         address holding = initiateUser(_user, collateral, _mintAmount);
         vm.prank(address(holdingManager), address(holdingManager));
-        stablesManager.borrow(holding, collateral, _mintAmount, true);
+        stablesManager.borrow(holding, collateral, _mintAmount, 0, true);
 
         vm.assertEq(jUsd.balanceOf(_user), _mintAmount, "Borrow failed when authorized");
         vm.assertEq(stablesManager.totalBorrowed(collateral), _mintAmount, "Total borrowed wasn't updated after borrow");

@@ -64,7 +64,7 @@ contract PythOracleIntegrationTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(address(holdingManager), address(holdingManager));
-        stablesManager.borrow(holding, collateral, _mintAmount, true);
+        stablesManager.borrow(holding, collateral, _mintAmount, 0, true);
 
         // allow 1% approximation
         vm.assertApproxEqRel(jUsd.balanceOf(_user), _mintAmount, 0.01e18, "Borrow failed when authorized");

@@ -226,7 +226,7 @@ contract LiquidationTest is Test {
         collateralContract.approve(address(holdingManager), testData.userCollateralAmount);
         holdingManager.deposit(address(collateralContract), testData.userCollateralAmount);
         //borrow
-        holdingManager.borrow(address(collateralContract), mintAmount, true);
+        holdingManager.borrow(address(collateralContract), mintAmount, 0, true);
         vm.stopPrank();
 
         testData.userJUsd = jUsd.balanceOf(testData.user);
@@ -245,7 +245,7 @@ contract LiquidationTest is Test {
         collateralContract.approve(address(holdingManager), testData.userCollateralAmount);
         holdingManager.deposit(address(collateralContract), testData.userCollateralAmount);
         //borrow
-        holdingManager.borrow(address(collateralContract), mintAmount, true);
+        holdingManager.borrow(address(collateralContract), mintAmount, 0, true);
         vm.stopPrank();
 
         testData.liquidatorJUsd = jUsd.balanceOf(testData.liquidator);
@@ -351,7 +351,7 @@ contract LiquidationTest is Test {
         collateralContract.approve(address(holdingManager), testData.userCollateralAmount);
         holdingManager.deposit(address(collateralContract), testData.userCollateralAmount);
         //borrow
-        holdingManager.borrow(address(collateralContract), mintAmount, true);
+        holdingManager.borrow(address(collateralContract), mintAmount, 0, true);
         vm.stopPrank();
 
         testData.userJUsd = jUsd.balanceOf(testData.user);
@@ -370,7 +370,7 @@ contract LiquidationTest is Test {
         collateralContract.approve(address(holdingManager), testData.userCollateralAmount);
         holdingManager.deposit(address(collateralContract), testData.userCollateralAmount);
         //borrow
-        holdingManager.borrow(address(collateralContract), mintAmount, true);
+        holdingManager.borrow(address(collateralContract), mintAmount, 0, true);
         vm.stopPrank();
 
         testData.liquidatorJUsd = jUsd.balanceOf(testData.liquidator);
@@ -649,7 +649,7 @@ contract LiquidationTest is Test {
             vm.expectRevert(bytes("3009"));
         }
 
-        holdingManager.borrow(address(usdc), mintAmount, true);
+        holdingManager.borrow(address(usdc), mintAmount, 0, true);
 
         vm.stopPrank();
     }
