@@ -163,8 +163,6 @@ contract SwapManager is ISwapManager, Ownable2Step {
 
         // If the swap did not require the full amountInMaximum to achieve the exact amountOut make a refund.
         if (amountIn < tempData.amountInMaximum) {
-            // Decrease allowance of the Swap Manager.
-            IHolding(tempData.userHolding).approve(tempData.tokenIn, address(this), 0);
             // Decrease allowance of the router.
             TransferHelper.safeApprove(tempData.tokenIn, address(tempData.router), 0);
             // Make the refund.
