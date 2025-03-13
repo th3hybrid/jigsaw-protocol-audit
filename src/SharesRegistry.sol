@@ -22,6 +22,11 @@ import { IOracle } from "./interfaces/oracle/IOracle.sol";
  */
 contract SharesRegistry is ISharesRegistry, Ownable2Step {
     /**
+     * @notice Returns the token address for which this registry was created.
+     */
+    address public immutable override token;
+
+    /**
      * @notice Returns holding's borrowed amount.
      */
     mapping(address holding => uint256 amount) public override borrowed;
@@ -32,19 +37,27 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     mapping(address holding => uint256 amount) public override collateral;
 
     /**
-     * @notice Returns the token address for which this registry was created.
-     */
-    address public immutable override token;
-
-    /**
-     * @notice Collateralization rate for token.
-     */
-    uint256 public override collateralizationRate;
-
-    /**
      * @notice Returns the address of the manager container contract.
      */
     IManagerContainer public immutable override managerContainer;
+
+    /**
+     * @notice Configuration parameters for the registry.
+     * @dev Stores collateralization rate, liquidation threshold, and liquidator bonus.
+     */
+    RegistryConfig private config;
+
+    /**
+     * @notice Minimal collateralization rate acceptable for registry to avoid computational errors.
+     * @dev 20e3 means 20% LTV.
+     */
+    uint16 private immutable minCR = 20e3;
+
+    /**
+     * @notice Maximum liquidation buffer acceptable for registry to avoid computational errors.
+     * @dev 20e3 means 20% buffer.
+     */
+    uint16 private immutable maxLiquidationBuffer = 20e3;
 
     /**
      * @notice Oracle contract associated with this share registry.
@@ -73,12 +86,6 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     bool private _isTimelockActiveChange = false;
 
     /**
-     * @notice Minimal collateralization rate acceptable for registry to avoid computational errors.
-     * @dev 20e3 means 20% LTV.
-     */
-    uint256 private immutable minCR = 20e3;
-
-    /**
      * @notice Creates a SharesRegistry for a specific token.
      *
      * @param _initialOwner The initial owner of the contract.
@@ -86,7 +93,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @param _token The address of the token contract, used as a collateral within this contract.
      * @param _oracle The oracle used to retrieve price data for the `_token`.
      * @param _oracleData Extra data for the oracle.
-     * @param _collateralizationRate Collateralization value.
+     * @param _config Configuration parameters for the registry.
      */
     constructor(
         address _initialOwner,
@@ -94,19 +101,18 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
         address _token,
         address _oracle,
         bytes memory _oracleData,
-        uint256 _collateralizationRate
+        RegistryConfig memory _config
     ) Ownable(_initialOwner) {
         require(_managerContainer != address(0), "3065");
         require(_token != address(0), "3001");
         require(_oracle != address(0), "3034");
-        require(_collateralizationRate >= minCR, "2001");
-        require(_collateralizationRate <= IManager(IManagerContainer(_managerContainer).manager()).PRECISION(), "3066");
 
         token = _token;
         oracle = IOracle(_oracle);
         oracleData = _oracleData;
         managerContainer = IManagerContainer(_managerContainer);
-        collateralizationRate = _collateralizationRate;
+
+        _updateConfig(_config);
     }
 
     // -- User specific methods --
@@ -177,27 +183,20 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     // -- Administration --
 
     /**
-     * @notice Updates the collateralization rate.
-     *
-     * @notice Requirements:
-     * - `_newVal` must be greater than or equal to minimal collateralization rate - `minCR`.
-     * - `_newVal` must be less than or equal to the precision defined by the manager.
+     * @notice Updates the registry configuration parameters.
      *
      * @notice Effects:
-     * - Updates `collateralizationRate` state variable.
+     * - Updates `config` state variable.
      *
      * @notice Emits:
-     * - `CollateralizationRateUpdated` event indicating collateralization rate update operation.
+     * - `ConfigUpdated` event indicating config update operation.
      *
-     * @param _newVal The new value.
+     * @param _newConfig The new configuration parameters.
      */
-    function setCollateralizationRate(
-        uint256 _newVal
+    function updateConfig(
+        RegistryConfig memory _newConfig
     ) external override onlyOwner {
-        require(_newVal >= minCR, "2001");
-        require(_newVal <= IManager(managerContainer.manager()).PRECISION(), "3066");
-        emit CollateralizationRateUpdated(collateralizationRate, _newVal);
-        collateralizationRate = _newVal;
+        _updateConfig(_newConfig);
     }
 
     /**
@@ -371,6 +370,8 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
         _oldTimelock = 0;
         _newTimelock = 0;
         _newTimelockTimestamp = 0;
+
+        _isTimelockActiveChange = false;
     }
 
     // -- Getters --
@@ -389,6 +390,36 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
         require(rate > 0, "2100");
 
         return rate;
+    }
+
+    /**
+     * @notice Returns the configuration parameters for the registry.
+     * @return The RegistryConfig struct containing the parameters.
+     */
+    function getConfig() external view override returns (RegistryConfig memory) {
+        return config;
+    }
+
+    // -- Private methods --
+
+    /**
+     * @notice Updates the configuration parameters for the registry.
+     * @param _config The new configuration parameters.
+     */
+    function _updateConfig(
+        RegistryConfig memory _config
+    ) private {
+        uint256 precision = IManager(managerContainer.manager()).PRECISION();
+        uint256 maxLiquidatorBonus = precision - _config.collateralizationRate - _config.liquidationBuffer;
+
+        require(_config.collateralizationRate >= minCR, "2001");
+        require(_config.collateralizationRate <= precision, "3066");
+        require(_config.liquidationBuffer <= maxLiquidationBuffer, "3100");
+        require(_config.liquidationBuffer <= maxLiquidationBuffer, "3100");
+        require(_config.liquidatorBonus <= maxLiquidatorBonus, "3101");
+
+        emit ConfigUpdated(token, config, _config);
+        config = _config;
     }
 
     // -- Modifiers --
