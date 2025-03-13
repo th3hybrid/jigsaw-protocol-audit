@@ -395,6 +395,17 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         return holdingToStrategy[_holding].values();
     }
 
+    /**
+     * @notice Returns the number of strategies the holding has invested in.
+     * @param _holding address for which the strategy count is requested.
+     * @return uint256 The number of strategies the holding has invested in.
+     */
+    function getHoldingToStrategyLength(
+        address _holding
+    ) external view returns (uint256) {
+        return holdingToStrategy[_holding].length();
+    }
+
     // -- Private methods --
 
     /**
@@ -483,7 +494,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         require(assetResult > 0, "3016");
 
         // If after the claim holding no longer has shares in the strategy remove that strategy from the set
-        (, uint256 remainingShares) = IStrategy(_strategy).recipients(_holding);
+        (, uint256 remainingShares) = strategyContract.recipients(_holding);
         if (0 == remainingShares) holdingToStrategy[_holding].remove(_strategy);
 
         return (assetResult, tokenInResult);
