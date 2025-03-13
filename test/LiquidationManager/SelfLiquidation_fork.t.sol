@@ -24,6 +24,7 @@ import { SwapManager } from "../../src/SwapManager.sol";
 
 import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
 import { IReceiptToken } from "../../src/interfaces/core/IReceiptToken.sol";
+import { ISharesRegistry } from "../../src/interfaces/core/ISharesRegistry.sol";
 import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
 
 import { INonfungiblePositionManager } from "../utils/INonfungiblePositionManager.sol";
@@ -143,7 +144,11 @@ contract SelfLiquidationTest is Test {
             USDC,
             address(usdcOracle),
             bytes(""),
-            50_000 // _collateralizationRate
+            ISharesRegistry.RegistryConfig({
+                collateralizationRate: 50_000,
+                liquidationBuffer: 5e3,
+                liquidatorBonus: 8e3
+            })
         );
         stablesManager.registerOrUpdateShareRegistry(address(registries[USDC]), USDC, true);
 
@@ -154,7 +159,11 @@ contract SelfLiquidationTest is Test {
             USDT,
             address(usdtOracle),
             bytes(""),
-            50_000 //_collateralizationRate
+            ISharesRegistry.RegistryConfig({
+                collateralizationRate: 50_000,
+                liquidationBuffer: 5e3,
+                liquidatorBonus: 8e3
+            })
         );
         stablesManager.registerOrUpdateShareRegistry(address(registries[USDT]), USDT, true);
 
@@ -1029,7 +1038,7 @@ contract SelfLiquidationTest is Test {
             _amount.mulDiv(registries[_collateral].getExchangeRate(), manager.EXCHANGE_RATE_PRECISION());
         borrowedAmount += amountValue;
 
-        uint256 _colRate = registries[_collateral].collateralizationRate();
+        uint256 _colRate = registries[_collateral].getConfig().collateralizationRate;
         uint256 _exchangeRate = registries[_collateral].getExchangeRate();
 
         uint256 _result = (

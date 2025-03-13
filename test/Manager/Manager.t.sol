@@ -41,27 +41,6 @@ contract ManagerTest is BasicContractsFixture {
         init();
     }
 
-    function test_should_set_liquidator_bonus(address _user, uint256 _amount) public {
-        assumeNotOwnerNotZero(_user);
-
-        uint256 validAmount = bound(_amount, 0, manager.PRECISION() - 1);
-
-        vm.prank(_user);
-        vm.expectRevert();
-        manager.setLiquidatorBonus(validAmount);
-
-        vm.startPrank(OWNER, OWNER);
-        uint256 oldLiquidatorBonus = manager.liquidatorBonus();
-        vm.expectEmit(true, true, false, false);
-        emit LiquidatorBonusUpdated(oldLiquidatorBonus, validAmount);
-        manager.setLiquidatorBonus(validAmount);
-        assertEq(manager.liquidatorBonus(), validAmount);
-
-        uint256 PRECISION = manager.PRECISION();
-        vm.expectRevert(bytes("3066"));
-        manager.setLiquidatorBonus(PRECISION + 1000);
-    }
-
     function test_should_set_self_liquidation_fee(
         uint256 _amount
     ) public {

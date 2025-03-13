@@ -46,59 +46,8 @@ contract LiquidationManagerTest is Test {
 
     // Checks if initial state of the contract is correct
     function test_liquidationManager_initialState() public {
-        assertEq(liquidationManager.liquidatorBonus(), manager.liquidatorBonus());
         assertEq(liquidationManager.selfLiquidationFee(), manager.selfLiquidationFee());
         assertEq(liquidationManager.paused(), false);
-    }
-
-    // Tests setting liquidator bonus from non-Manager's address
-    function test_setLiquidatorBonus_when_unauthorized(
-        address _caller
-    ) public {
-        uint256 prevBonus = liquidationManager.liquidatorBonus();
-        vm.assume(_caller != address(manager));
-        vm.startPrank(_caller, _caller);
-        vm.expectRevert(bytes("1000"));
-
-        liquidationManager.setLiquidatorBonus(1);
-
-        assertEq(prevBonus, liquidationManager.liquidatorBonus());
-    }
-
-    // Tests setting liquidator bonus from Manager's address
-    function test_setLiquidatorBonus_when_authorized(
-        uint256 _amount
-    ) public {
-        uint256 liqP = liquidationManager.LIQUIDATION_PRECISION();
-
-        vm.startPrank(address(manager), address(manager));
-
-        //Tests setting liquidator's bonus, when LiquidatorBonus < LIQUIDATION_PRECISION
-        if (_amount < liqP) {
-            liquidationManager.setLiquidatorBonus(_amount);
-            assertEq(_amount, liquidationManager.liquidatorBonus());
-        }
-        //Tests setting liquidator's bonus, when LiquidatorBonus > LIQUIDATION_PRECISION
-        else {
-            //Tests if reverts with error code 2001
-            vm.expectRevert(bytes("2001"));
-            liquidationManager.setLiquidatorBonus(_amount);
-        }
-    }
-
-    // Tests the liquidator bonus setting in a real-world scenario via the Manager Contract
-    function test_setLiquidatorBonus_when_fromManager(
-        uint256 _amount
-    ) public {
-        vm.assume(_amount < liquidationManager.LIQUIDATION_PRECISION());
-
-        vm.expectEmit();
-        emit LiquidatorBonusUpdated(manager.liquidatorBonus(), _amount);
-
-        manager.setLiquidatorBonus(_amount);
-
-        assertEq(_amount, manager.liquidatorBonus());
-        assertEq(manager.liquidatorBonus(), liquidationManager.liquidatorBonus());
     }
 
     // Tests setting SL fee from non-Manager's address

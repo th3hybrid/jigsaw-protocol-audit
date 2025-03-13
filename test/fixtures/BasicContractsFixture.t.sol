@@ -20,6 +20,7 @@ import { StrategyManager } from "../../src/StrategyManager.sol";
 
 import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
 import { IReceiptToken } from "../../src/interfaces/core/IReceiptToken.sol";
+import { ISharesRegistry } from "../../src/interfaces/core/ISharesRegistry.sol";
 import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
 import { IStrategyManager } from "../../src/interfaces/core/IStrategyManager.sol";
 
@@ -76,13 +77,33 @@ abstract contract BasicContractsFixture is Test {
         stablesManager = new StablesManager(OWNER, address(managerContainer), address(jUsd));
         strategyManager = new StrategyManager(OWNER, address(managerContainer));
 
-        sharesRegistry =
-            new SharesRegistry(OWNER, address(managerContainer), address(usdc), address(usdcOracle), bytes(""), 50_000);
+        sharesRegistry = new SharesRegistry(
+            OWNER,
+            address(managerContainer),
+            address(usdc),
+            address(usdcOracle),
+            bytes(""),
+            ISharesRegistry.RegistryConfig({
+                collateralizationRate: 50_000,
+                liquidationBuffer: 5e3,
+                liquidatorBonus: 8e3
+            })
+        );
         stablesManager.registerOrUpdateShareRegistry(address(sharesRegistry), address(usdc), true);
         registries[address(usdc)] = address(sharesRegistry);
 
-        wethSharesRegistry =
-            new SharesRegistry(OWNER, address(managerContainer), address(weth), address(wethOracle), bytes(""), 50_000);
+        wethSharesRegistry = new SharesRegistry(
+            OWNER,
+            address(managerContainer),
+            address(weth),
+            address(wethOracle),
+            bytes(""),
+            ISharesRegistry.RegistryConfig({
+                collateralizationRate: 50_000,
+                liquidationBuffer: 5e3,
+                liquidatorBonus: 8e3
+            })
+        );
         stablesManager.registerOrUpdateShareRegistry(address(wethSharesRegistry), address(weth), true);
         registries[address(weth)] = address(wethSharesRegistry);
 

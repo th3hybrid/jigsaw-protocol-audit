@@ -586,7 +586,16 @@ contract StrategyManagerTest is BasicContractsFixture {
         vm.startPrank(OWNER, OWNER);
         manager.whitelistToken(address(asset));
         SharesRegistry bdtSharesRegistry = new SharesRegistry(
-            msg.sender, address(managerContainer), address(asset), address(usdcOracle), bytes(""), 50_000
+            msg.sender,
+            address(managerContainer),
+            address(asset),
+            address(usdcOracle),
+            bytes(""),
+            ISharesRegistry.RegistryConfig({
+                collateralizationRate: 50_000,
+                liquidationBuffer: 5e3,
+                liquidatorBonus: 8e3
+            })
         );
         stablesManager.registerOrUpdateShareRegistry(address(bdtSharesRegistry), address(asset), true);
         vm.stopPrank();

@@ -92,8 +92,20 @@ contract StablesManagerTest is BasicContractsFixture {
     // Tests if registerOrUpdateShareRegistry works correctly when adding new registry
     function test_registerOrUpdateShareRegistry_when_addNew(address _token, bool _active) public {
         vm.assume(_token != address(0));
-        address testRegistry =
-            address(new SharesRegistry(msg.sender, address(managerContainer), _token, address(1), bytes(""), 50_000));
+        address testRegistry = address(
+            new SharesRegistry(
+                msg.sender,
+                address(managerContainer),
+                _token,
+                address(1),
+                bytes(""),
+                ISharesRegistry.RegistryConfig({
+                    collateralizationRate: 50_000,
+                    liquidationBuffer: 5e3,
+                    liquidatorBonus: 8e3
+                })
+            )
+        );
 
         (, address d) = stablesManager.shareRegistryInfo(_token);
         if (d != address(0)) return;
@@ -112,8 +124,20 @@ contract StablesManagerTest is BasicContractsFixture {
     // Tests if registerOrUpdateShareRegistry works correctly when updating an existing registry
     function test_registerOrUpdateShareRegistry_when_updateExisting(address _token, bool _active) public {
         vm.assume(_token != address(0));
-        address testRegistry =
-            address(new SharesRegistry(msg.sender, address(managerContainer), _token, address(1), bytes(""), 50_000));
+        address testRegistry = address(
+            new SharesRegistry(
+                msg.sender,
+                address(managerContainer),
+                _token,
+                address(1),
+                bytes(""),
+                ISharesRegistry.RegistryConfig({
+                    collateralizationRate: 50_000,
+                    liquidationBuffer: 5e3,
+                    liquidatorBonus: 8e3
+                })
+            )
+        );
 
         (, address d) = stablesManager.shareRegistryInfo(_token);
         if (d != address(0)) return;
@@ -686,7 +710,7 @@ contract StablesManagerTest is BasicContractsFixture {
     // Utility functions
 
     function _getSolvencyRatio(address _holding, ISharesRegistry registry) private view returns (uint256) {
-        uint256 _colRate = registry.collateralizationRate();
+        uint256 _colRate = registry.getConfig().collateralizationRate;
         uint256 _exchangeRate = registry.getExchangeRate();
 
         uint256 _result = (

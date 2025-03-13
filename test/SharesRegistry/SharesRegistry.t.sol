@@ -7,7 +7,7 @@ import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { SharesRegistry } from "../../src/SharesRegistry.sol";
-import { BasicContractsFixture } from "../fixtures/BasicContractsFixture.t.sol";
+import "../fixtures/BasicContractsFixture.t.sol";
 
 contract SharesRegistryTest is BasicContractsFixture {
     /// @notice event emitted when contract new ownership is accepted
@@ -49,9 +49,10 @@ contract SharesRegistryTest is BasicContractsFixture {
         address token = address(0);
         address oracle = address(0);
         bytes memory data = "0x0";
-        uint256 colRate = 0;
+        ISharesRegistry.RegistryConfig memory config =
+            ISharesRegistry.RegistryConfig({ collateralizationRate: 0, liquidationBuffer: 0, liquidatorBonus: 0 });
         vm.expectRevert(bytes("3065"));
-        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, colRate);
+        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, config);
         failedSharesRegistry;
     }
 
@@ -62,9 +63,10 @@ contract SharesRegistryTest is BasicContractsFixture {
         address token = address(0);
         address oracle = address(0);
         bytes memory data = "0x0";
-        uint256 colRate = 0;
+        ISharesRegistry.RegistryConfig memory config =
+            ISharesRegistry.RegistryConfig({ collateralizationRate: 0, liquidationBuffer: 0, liquidatorBonus: 0 });
         vm.expectRevert(bytes("3001"));
-        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, colRate);
+        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, config);
         failedSharesRegistry;
     }
 
@@ -75,9 +77,11 @@ contract SharesRegistryTest is BasicContractsFixture {
         address token = address(1);
         address oracle = address(0);
         bytes memory data = "0x0";
-        uint256 colRate = 0;
+        ISharesRegistry.RegistryConfig memory config =
+            ISharesRegistry.RegistryConfig({ collateralizationRate: 0, liquidationBuffer: 0, liquidatorBonus: 0 });
+
         vm.expectRevert(bytes("3034"));
-        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, colRate);
+        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, config);
         failedSharesRegistry;
     }
 
@@ -99,7 +103,13 @@ contract SharesRegistryTest is BasicContractsFixture {
             return;
         }
 
-        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, _colRate);
+        ISharesRegistry.RegistryConfig memory config = ISharesRegistry.RegistryConfig({
+            collateralizationRate: _colRate,
+            liquidationBuffer: 0,
+            liquidatorBonus: 0
+        });
+
+        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, config);
         failedSharesRegistry;
     }
 
@@ -328,7 +338,9 @@ contract SharesRegistryTest is BasicContractsFixture {
     ) public onlyNotOwner(_caller) {
         vm.prank(_caller, _caller);
         vm.expectRevert();
-        registry.setCollateralizationRate(1);
+        registry.updateConfig(
+            ISharesRegistry.RegistryConfig({ collateralizationRate: 1, liquidationBuffer: 0, liquidatorBonus: 0 })
+        );
     }
 
     // Tests if setCollateralizationRate reverts correctly when invalid amount
@@ -346,7 +358,9 @@ contract SharesRegistryTest is BasicContractsFixture {
             return;
         }
 
-        registry.setCollateralizationRate(_newVal);
+        registry.updateConfig(
+            ISharesRegistry.RegistryConfig({ collateralizationRate: _newVal, liquidationBuffer: 0, liquidatorBonus: 0 })
+        );
     }
 
     // Tests if setCollateralizationRate works correctly when authorized
@@ -355,12 +369,14 @@ contract SharesRegistryTest is BasicContractsFixture {
     ) public {
         _newVal = bound(_newVal, 20e3, 1e5);
         vm.expectEmit();
-        emit CollateralizationRateUpdated(registry.collateralizationRate(), _newVal);
+        emit CollateralizationRateUpdated(registry.getConfig().collateralizationRate, _newVal);
         vm.prank(registry.owner(), registry.owner());
-        registry.setCollateralizationRate(_newVal);
+        registry.updateConfig(
+            ISharesRegistry.RegistryConfig({ collateralizationRate: _newVal, liquidationBuffer: 0, liquidatorBonus: 0 })
+        );
 
         assertEq(
-            registry.collateralizationRate(),
+            registry.getConfig().collateralizationRate,
             _newVal,
             "Collateralization rate incorrect after  setCollateralizationRate"
         );

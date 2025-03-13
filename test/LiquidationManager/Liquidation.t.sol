@@ -20,6 +20,7 @@ import { StrategyManager } from "../../src/StrategyManager.sol";
 
 import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
 import { IReceiptToken } from "../../src/interfaces/core/IReceiptToken.sol";
+import { ISharesRegistry } from "../../src/interfaces/core/ISharesRegistry.sol";
 import { IStrategy } from "../../src/interfaces/core/IStrategy.sol";
 import { StrategyWithoutRewardsMock } from "../utils/mocks/StrategyWithoutRewardsMock.sol";
 
@@ -84,7 +85,16 @@ contract LiquidationTest is Test {
 
         usdcOracle = new SampleOracle();
         sharesRegistry = new SharesRegistry(
-            msg.sender, address(managerContainer), address(usdc), address(usdcOracle), bytes(""), 50_000
+            msg.sender,
+            address(managerContainer),
+            address(usdc),
+            address(usdcOracle),
+            bytes(""),
+            ISharesRegistry.RegistryConfig({
+                collateralizationRate: 50_000,
+                liquidationBuffer: 5e3,
+                liquidatorBonus: 8e3
+            })
         );
         registries[address(usdc)] = address(sharesRegistry);
         stablesManager.registerOrUpdateShareRegistry(address(sharesRegistry), address(usdc), true);
@@ -107,7 +117,7 @@ contract LiquidationTest is Test {
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
 
         vm.expectRevert(bytes("3002"));
-        liquidationManager.liquidate(_fakeUser, address(usdc), 10 ether, liquidateCalldata);
+        liquidationManager.liquidate(_fakeUser, address(usdc), 10 ether, 0, liquidateCalldata);
     }
 
     // Tests liquidation with an invalid liquidation amount (0)
@@ -118,7 +128,7 @@ contract LiquidationTest is Test {
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
 
         vm.expectRevert(bytes("2001"));
-        liquidationManager.liquidate(address(0), address(usdc), invalidLiquidationAmount, liquidateCalldata);
+        liquidationManager.liquidate(address(0), address(usdc), invalidLiquidationAmount, 0, liquidateCalldata);
     }
 
     // Tests liquidation when the share registry is not active
@@ -132,7 +142,7 @@ contract LiquidationTest is Test {
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
 
         vm.expectRevert();
-        liquidationManager.liquidate(user, address(usdc), 5, liquidateCalldata);
+        liquidationManager.liquidate(user, address(usdc), 5, 0, liquidateCalldata);
     }
 
     // Tests liquidation when the user is solvent
@@ -145,7 +155,7 @@ contract LiquidationTest is Test {
 
         //make liquidation call
         vm.expectRevert(bytes("3073"));
-        liquidationManager.liquidate(user, address(usdc), 5, liquidateCalldata);
+        liquidationManager.liquidate(user, address(usdc), 5, 0, liquidateCalldata);
     }
 
     // Tests liquidation when the liquidation amount is greater than the borrowed amount
@@ -170,7 +180,7 @@ contract LiquidationTest is Test {
 
         // make liquidation call
         vm.expectRevert(bytes("2003"));
-        liquidationManager.liquidate(user, address(usdc), _liquidatorCollateral / 2, liquidateCalldata);
+        liquidationManager.liquidate(user, address(usdc), _liquidatorCollateral / 2, 0, liquidateCalldata);
 
         vm.stopPrank();
     }
@@ -194,7 +204,11 @@ contract LiquidationTest is Test {
             address(collateralContract),
             address(collateralOracle),
             bytes(""),
-            50_000
+            ISharesRegistry.RegistryConfig({
+                collateralizationRate: 50_000,
+                liquidationBuffer: 5e3,
+                liquidatorBonus: 8e3
+            })
         );
         registries[address(collateralContract)] = address(collateralRegistry);
         stablesManager.registerOrUpdateShareRegistry(address(collateralRegistry), address(collateralContract), true);
@@ -256,7 +270,7 @@ contract LiquidationTest is Test {
 
         //make liquidation call
         liquidationManager.liquidate(
-            address(testData.user), address(collateralContract), testData.userJUsd, liquidateCalldata
+            address(testData.user), address(collateralContract), testData.userJUsd, 0, liquidateCalldata
         );
 
         vm.stopPrank();
@@ -315,7 +329,11 @@ contract LiquidationTest is Test {
             address(collateralContract),
             address(collateralOracle),
             bytes(""),
-            50_000
+            ISharesRegistry.RegistryConfig({
+                collateralizationRate: 50_000,
+                liquidationBuffer: 5e3,
+                liquidatorBonus: 8e3
+            })
         );
         registries[address(collateralContract)] = address(collateralRegistry);
         stablesManager.registerOrUpdateShareRegistry(address(collateralRegistry), address(collateralContract), true);
@@ -377,7 +395,7 @@ contract LiquidationTest is Test {
 
         //make liquidation call
         liquidationManager.liquidate(
-            address(testData.user), address(collateralContract), testData.userJUsd, liquidateCalldata
+            address(testData.user), address(collateralContract), testData.userJUsd, 0, liquidateCalldata
         );
 
         vm.stopPrank();
@@ -472,7 +490,7 @@ contract LiquidationTest is Test {
         // handle possible errors when making liquidation call
         if (jUsd.balanceOf(testData.liquidator) < testData.userJUsd) {
             vm.expectRevert("ERC20: burn amount exceeds balance");
-            liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, liquidateCalldata);
+            liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, 0, liquidateCalldata);
             return;
         }
 
@@ -480,7 +498,7 @@ contract LiquidationTest is Test {
             vm.expectRevert(bytes("2001"));
         }
         //make liquidation call
-        liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, liquidateCalldata);
+        liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, 0, liquidateCalldata);
 
         vm.stopPrank();
 
@@ -574,7 +592,7 @@ contract LiquidationTest is Test {
             vm.expectRevert(bytes("3026"));
         }
         //make liquidation call
-        liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, liquidateCalldata);
+        liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, 0, liquidateCalldata);
 
         vm.stopPrank();
     }
@@ -646,7 +664,7 @@ contract LiquidationTest is Test {
         uint256 amountValue = _amount.mulDiv(sharesRegistry.getExchangeRate(), manager.EXCHANGE_RATE_PRECISION());
         borrowedAmount += amountValue;
 
-        uint256 _colRate = sharesRegistry.collateralizationRate();
+        uint256 _colRate = sharesRegistry.getConfig().collateralizationRate;
         uint256 _exchangeRate = sharesRegistry.getExchangeRate();
 
         uint256 _result = (
@@ -677,8 +695,9 @@ contract LiquidationTest is Test {
         totalRequiredCollateral =
             totalRequiredCollateral > totalAvailableCollateral ? totalAvailableCollateral : totalRequiredCollateral;
 
-        totalLiquidatorCollateral = (totalRequiredCollateral * liquidationManager.liquidatorBonus())
-            / liquidationManager.LIQUIDATION_PRECISION();
+        totalLiquidatorCollateral = (
+            totalRequiredCollateral * SharesRegistry(registries[_collateral]).getConfig().liquidatorBonus
+        ) / liquidationManager.LIQUIDATION_PRECISION();
 
         totalRequiredCollateral += totalLiquidatorCollateral;
 
@@ -693,7 +712,12 @@ contract LiquidationTest is Test {
             totalLiquidatorCollateral = _user != msg.sender
                 ? (
                     totalRequiredCollateral
-                        / (10 + liquidationManager.liquidatorBonus().mulDiv(10, liquidationManager.LIQUIDATION_PRECISION()))
+                        / (
+                            10
+                                + SharesRegistry(registries[_collateral]).getConfig().liquidatorBonus.mulDiv(
+                                    10, liquidationManager.LIQUIDATION_PRECISION()
+                                )
+                        )
                 ) / 10
                 : 0;
         }
