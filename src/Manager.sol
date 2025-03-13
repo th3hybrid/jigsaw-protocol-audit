@@ -699,6 +699,7 @@ contract Manager is IManager, Ownable2Step {
         _oldTimelock = 0;
         _newTimelock = 0;
         _newTimelockTimestamp = 0;
+        _isActiveChange = false;
     }
 
     /**
