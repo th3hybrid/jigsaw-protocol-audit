@@ -11,6 +11,21 @@ import { IOracle } from "../oracle/IOracle.sol";
  */
 interface ISharesRegistry {
     /**
+     * @notice Configuration struct for registry parameters.
+     * @dev Used to store key parameters that control collateral and liquidation behavior.
+     *
+     * @param collateralizationRate The minimum collateral ratio required, expressed as a percentage with precision.
+     * @param liquidationBuffer Is a value, that represents the buffer between the collateralization rate and the
+     * liquidation threshold, upon which the liquidation is allowed.
+     * @param liquidatorBonus The bonus percentage given to liquidators as incentive, expressed with precision.
+     */
+    struct RegistryConfig {
+        uint256 collateralizationRate;
+        uint256 liquidationBuffer;
+        uint256 liquidatorBonus;
+    }
+
+    /**
      * @notice Event emitted when borrowed amount is set.
      * @param _holding The address of the holding.
      * @param oldVal The old value.
@@ -76,6 +91,14 @@ interface ISharesRegistry {
     event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
 
     /**
+     * @notice Event emitted when the config is updated.
+     * @param token The token address.
+     * @param oldVal The old config.
+     * @param newVal The new config.
+     */
+    event ConfigUpdated(address indexed token, RegistryConfig oldVal, RegistryConfig newVal);
+
+    /**
      * @notice Returns holding's borrowed amount.
      * @param _holding The address of the holding.
      * @return The borrowed amount.
@@ -98,12 +121,6 @@ interface ISharesRegistry {
      * @return The token address.
      */
     function token() external view returns (address);
-
-    /**
-     * @notice Collateralization rate for token.
-     * @return The collateralization rate.
-     */
-    function collateralizationRate() external view returns (uint256);
 
     /**
      * @notice Interface of the manager container contract.
@@ -185,22 +202,18 @@ interface ISharesRegistry {
     // -- Administration --
 
     /**
-     * @notice Updates the collateralization rate.
-     *
-     * @notice Requirements:
-     * - `_newVal` must be greater than or equal to minimal collateralization rate - `minCR`.
-     * - `_newVal` must be less than or equal to the precision defined by the manager.
+     * @notice Updates the registry configuration parameters.
      *
      * @notice Effects:
-     * - Updates `collateralizationRate` state variable.
+     * - Updates `config` state variable.
      *
      * @notice Emits:
-     * - `CollateralizationRateUpdated` event indicating collateralization rate update operation.
+     * - `ConfigUpdated` event indicating config update operation.
      *
-     * @param _newVal The new value.
+     * @param _newConfig The new configuration parameters.
      */
-    function setCollateralizationRate(
-        uint256 _newVal
+    function updateConfig(
+        RegistryConfig memory _newConfig
     ) external;
 
     /**
@@ -332,4 +345,10 @@ interface ISharesRegistry {
      * @return The updated exchange rate.
      */
     function getExchangeRate() external view returns (uint256);
+
+    /**
+     * @notice Returns the configuration parameters for the registry.
+     * @return The RegistryConfig struct containing the parameters.
+     */
+    function getConfig() external view returns (RegistryConfig memory);
 }
