@@ -267,7 +267,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         require(shareRegistryInfo[_token].active, "1201");
         ISharesRegistry registry = ISharesRegistry(shareRegistryInfo[_token].deployedAt);
         require(registry.borrowed(_holding) > 0, "3011");
-        require(registry.borrowed(_holding) >= _amount, "2100");
+        require(registry.borrowed(_holding) >= _amount, "2003");
         require(_amount > 0, "3012");
         require(_burnFrom != address(0), "3000");
 
@@ -427,7 +427,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         uint256 precision = _getManager().EXCHANGE_RATE_PRECISION() * _getManager().PRECISION();
 
         // Calculate the solvency ratio.
-        uint256 result = (colAmount * colRate * exchangeRate * 1e18 / precision) / 1e18;
+        uint256 result = colAmount * colRate * exchangeRate / precision;
         // Transform to 18 decimals if needed.
         return _transformTo18Decimals({ _amount: result, _decimals: IERC20Metadata(registry.token()).decimals() });
     }
