@@ -8,6 +8,7 @@ import { Base } from "../Base.s.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
+import { ISharesRegistry } from "../../src/interfaces/core/ISharesRegistry.sol";
 import { IOracle } from "../../src/interfaces/oracle/IOracle.sol";
 
 import { ManagerContainer } from "../../src/ManagerContainer.sol";
@@ -25,6 +26,8 @@ contract DeployRegistries is Script, Base {
     struct RegistryConfig {
         address token;
         uint256 collateralizationRate;
+        uint256 liquidationBuffer;
+        uint256 liquidatorBonus;
         bytes oracleData;
         bytes32 pythId;
         uint256 age;
@@ -49,6 +52,8 @@ contract DeployRegistries is Script, Base {
     // Store configuration for each SharesRegistry
     address internal USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     uint256 internal USDC_CR = 50_000;
+    uint256 internal USDC_LiquidationBuffer = 5e3;
+    uint256 internal USDC_LiquidationBonus = 8e3;
     bytes32 internal USDC_PYTH_ID = 0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a;
 
     // Common configs for oracle
@@ -80,7 +85,11 @@ contract DeployRegistries is Script, Base {
                 _token: registryConfigs[i].token,
                 _oracle: oracle,
                 _oracleData: registryConfigs[i].oracleData,
-                _collateralizationRate: registryConfigs[i].collateralizationRate
+                _config: ISharesRegistry.RegistryConfig({
+                    collateralizationRate: registryConfigs[i].collateralizationRate,
+                    liquidationBuffer: registryConfigs[i].liquidationBuffer,
+                    liquidatorBonus: registryConfigs[i].liquidatorBonus
+                })
             });
 
             // @note save the deployed SharesRegistry contract to the StablesManager contract
@@ -104,6 +113,8 @@ contract DeployRegistries is Script, Base {
             RegistryConfig({
                 token: USDC,
                 collateralizationRate: USDC_CR,
+                liquidationBuffer: USDC_LiquidationBuffer,
+                liquidatorBonus: USDC_LiquidationBonus,
                 pythId: USDC_PYTH_ID,
                 oracleData: COMMON_ORACLE_DATA,
                 age: COMMON_ORACLE_AGE
