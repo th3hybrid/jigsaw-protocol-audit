@@ -193,7 +193,10 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         (uint256 userAmount, uint256 feeAmount) = _withdraw({ _token: _token, _amount: _amount });
 
         // Transfer the fee amount to the fee address.
-        holding.transfer({ _token: _token, _to: _getManager().feeAddress(), _amount: feeAmount });
+        if (feeAmount > 0) {
+            holding.transfer({ _token: _token, _to: _getManager().feeAddress(), _amount: feeAmount });
+        }
+
         // Transfer the remaining amount to the user.
         holding.transfer({ _token: _token, _to: msg.sender, _amount: userAmount });
     }
@@ -251,21 +254,27 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
      * @param _token Collateral token.
      * @param _amount The collateral amount used for borrowing.
      * @param _mintDirectlyToUser If true, mints to user instead of holding.
+     * @param _minJUsdAmountOut The minimum amount of jUSD that is expected to be received.
+     *
+     * @return jUsdMinted The amount of jUSD minted.
      */
     function borrow(
         address _token,
         uint256 _amount,
+        uint256 _minJUsdAmountOut,
         bool _mintDirectlyToUser
-    ) external override nonReentrant whenNotPaused validHolding(userHolding[msg.sender]) {
+    ) external override nonReentrant whenNotPaused validHolding(userHolding[msg.sender]) returns (uint256 jUsdMinted) {
         address holding = userHolding[msg.sender];
 
-        emit Borrowed({ holding: holding, token: _token, amount: _amount, mintToUser: _mintDirectlyToUser });
-        _getStablesManager().borrow({
+        jUsdMinted = _getStablesManager().borrow({
             _holding: holding,
             _token: _token,
             _amount: _amount,
+            _minJUsdAmountOut: _minJUsdAmountOut,
             _mintDirectlyToUser: _mintDirectlyToUser
         });
+
+        emit Borrowed({ holding: holding, token: _token, jUsdMinted: jUsdMinted, mintToUser: _mintDirectlyToUser });
     }
 
     /**
@@ -289,30 +298,39 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
      *
      * @param _data Struct containing data for each collateral type.
      * @param _mintDirectlyToUser If true, mints to user instead of holding.
+     *
+     * @return  The amount of jUSD minted for each collateral type.
      */
     function borrowMultiple(
-        BorrowOrRepayData[] calldata _data,
+        BorrowData[] calldata _data,
         bool _mintDirectlyToUser
-    ) external override validHolding(userHolding[msg.sender]) nonReentrant whenNotPaused {
+    ) external override validHolding(userHolding[msg.sender]) nonReentrant whenNotPaused returns (uint256[] memory) {
         require(_data.length > 0, "3006");
 
         address holding = userHolding[msg.sender];
+
+        uint256[] memory jUsdMintedAmounts = new uint256[](_data.length);
         for (uint256 i = 0; i < _data.length; i++) {
-            _getStablesManager().borrow({
+            uint256 jUsdMinted = _getStablesManager().borrow({
                 _holding: holding,
                 _token: _data[i].token,
                 _amount: _data[i].amount,
+                _minJUsdAmountOut: _data[i].minJUsdAmountOut,
                 _mintDirectlyToUser: _mintDirectlyToUser
             });
+
             emit Borrowed({
                 holding: holding,
                 token: _data[i].token,
-                amount: _data[i].amount,
+                jUsdMinted: jUsdMinted,
                 mintToUser: _mintDirectlyToUser
             });
+
+            jUsdMintedAmounts[i] = jUsdMinted;
         }
 
         emit BorrowedMultiple({ holding: holding, length: _data.length, mintedToUser: _mintDirectlyToUser });
+        return jUsdMintedAmounts;
     }
 
     /**
@@ -367,7 +385,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
      * @param _repayFromUser If true, it will burn from user's wallet, otherwise from user's holding.
      */
     function repayMultiple(
-        BorrowOrRepayData[] calldata _data,
+        RepayData[] calldata _data,
         bool _repayFromUser
     ) external override validHolding(userHolding[msg.sender]) nonReentrant whenNotPaused {
         require(_data.length > 0, "3006");
