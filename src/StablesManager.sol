@@ -176,40 +176,59 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
      * @param _holding The holding for which collateral is added.
      * @param _token Collateral token.
      * @param _amount The collateral amount used for borrowing.
+     * @param _minJUsdAmountOut The minimum amount of jUSD that is expected to be received.
      * @param _mintDirectlyToUser If true, mints to user instead of holding.
+     *
+     * @return jUsdMintAmount The amount of jUSD minted.
+     *
      */
     function borrow(
         address _holding,
         address _token,
         uint256 _amount,
+        uint256 _minJUsdAmountOut,
         bool _mintDirectlyToUser
-    ) external override onlyAllowed whenNotPaused {
+    ) external override onlyAllowed whenNotPaused returns (uint256 jUsdMintAmount) {
         require(_amount > 0, "3010");
         require(shareRegistryInfo[_token].active, "1201");
 
-        // Update exchange rate and get USD value of the collateral.
-        ISharesRegistry registry = ISharesRegistry(shareRegistryInfo[_token].deployedAt);
-
-        uint256 EXCHANGE_RATE_PRECISION = _getManager().EXCHANGE_RATE_PRECISION();
+        BorrowTempData memory tempData = BorrowTempData({
+            registry: ISharesRegistry(shareRegistryInfo[_token].deployedAt),
+            exchangeRatePrecision: _getManager().EXCHANGE_RATE_PRECISION(),
+            amount: 0,
+            amountValue: 0
+        });
 
         // Ensure amount uses 18 decimals.
-        uint256 amount = _transformTo18Decimals({ _amount: _amount, _decimals: IERC20Metadata(_token).decimals() });
+        tempData.amount = _transformTo18Decimals({ _amount: _amount, _decimals: IERC20Metadata(_token).decimals() });
+
         // Get the USD value for the provided collateral amount.
-        uint256 amountValue = amount.mulDiv(registry.getExchangeRate(), EXCHANGE_RATE_PRECISION);
+        tempData.amountValue =
+            tempData.amount.mulDiv(tempData.registry.getExchangeRate(), tempData.exchangeRatePrecision);
+
         // Get the jUSD amount based on the provided collateral's USD value.
-        uint256 jUsdMintAmount = amountValue.mulDiv(EXCHANGE_RATE_PRECISION, _getManager().getJUsdExchangeRate());
+        jUsdMintAmount =
+            tempData.amountValue.mulDiv(tempData.exchangeRatePrecision, _getManager().getJUsdExchangeRate());
+
+        // Ensure the amount of jUSD minted is greater than the minimum amount specified by the user.
+        require(jUsdMintAmount >= _minJUsdAmountOut, "2100");
+
+        emit Borrowed({ holding: _holding, jUsdMinted: jUsdMintAmount, mintToUser: _mintDirectlyToUser });
 
         // Update internal values.
         totalBorrowed[_token] += jUsdMintAmount;
 
-        emit Borrowed({ holding: _holding, amount: jUsdMintAmount, mintToUser: _mintDirectlyToUser });
         // Update holding's borrowed amount.
-        registry.setBorrowed({ _holding: _holding, _newVal: registry.borrowed(_holding) + jUsdMintAmount });
+        tempData.registry.setBorrowed({
+            _holding: _holding,
+            _newVal: tempData.registry.borrowed(_holding) + jUsdMintAmount
+        });
 
-        // Based on user's choice, jUSD is minted directly to him or the `_holding`.
-        _mintDirectlyToUser
-            ? jUSD.mint({ _to: _getHoldingManager().holdingUser(_holding), _amount: jUsdMintAmount })
-            : jUSD.mint({ _to: _holding, _amount: jUsdMintAmount });
+        // Based on user's choice, jUSD is minted directly to them or the `_holding`.
+        jUSD.mint({
+            _to: _mintDirectlyToUser ? _getHoldingManager().holdingUser(_holding) : _holding,
+            _amount: jUsdMintAmount
+        });
 
         // Make sure user is solvent after borrowing operation.
         require(isSolvent({ _token: _token, _holding: _holding }), "3009");
