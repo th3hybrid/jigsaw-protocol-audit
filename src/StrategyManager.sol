@@ -345,7 +345,6 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         strategyInfo[_strategy] = info;
 
         emit StrategyAdded(_strategy);
-        _getManager().addNonWithdrawableToken(IStrategy(_strategy).getReceiptTokenAddress());
     }
 
     /**
