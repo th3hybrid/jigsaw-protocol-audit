@@ -170,9 +170,7 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
             if (price.conf > uPrice) revert InvaidConfidence();
 
             // Consider whether the price spread is too high
-            uint256 confDecimals = 10 ** invertedExpo;
-            bool isConfident =
-                price.conf * confDecimals / uPrice <= minConfidencePercentage * confDecimals / CONFIDENCE_PRECISION;
+            bool isConfident = price.conf * CONFIDENCE_PRECISION <= minConfidencePercentage * uPrice;
 
             // Calculate the actual price based on the confidence
             uint256 priceWithConfidence = isConfident ? uPrice : uPrice - price.conf;
