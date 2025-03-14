@@ -110,13 +110,6 @@ interface IManager {
     event LiquidatorBonusUpdated(uint256 oldAmount, uint256 newAmount);
 
     /**
-     * @notice Emitted when the self-liquidation fee is updated.
-     * @param oldAmount The previous amount of the self-liquidation fee.
-     * @param newAmount The new amount of the self-liquidation fee.
-     */
-    event SelfLiquidationFeeUpdated(uint256 oldAmount, uint256 newAmount);
-
-    /**
      * @notice Emitted when the fee address is changed.
      * @param oldAddress The previous fee address.
      * @param newAddress The new fee address.
@@ -269,13 +262,6 @@ interface IManager {
      * @dev Uses 2 decimal precision, where 1% is represented as 100.
      */
     function withdrawalFee() external view returns (uint256);
-
-    /**
-     * @notice The max % amount the protocol gets when a self-liquidation operation happens.
-     * @dev Uses 3 decimal precision, where 1% is represented as 1000.
-     * @dev 8% is the default self-liquidation fee.
-     */
-    function selfLiquidationFee() external view returns (uint256);
 
     /**
      * @notice Returns the fee address, where all the fees are collected.
@@ -564,27 +550,6 @@ interface IManager {
      * @param _val The new withdrawal fee value.
      */
     function setWithdrawalFee(
-        uint256 _val
-    ) external;
-
-    /**
-     * @notice Sets the self-liquidation fee.
-     *
-     * @notice Requirements:
-     * - `_val` must be smaller than `PRECISION` to avoid wrong computations.
-     *
-     * @notice Effects:
-     * - Updates the `selfLiquidationFee` state variable.
-     * - Updates the `selfLiquidationFee` state variable in the LiquidationManager Contract.
-     *
-     * @notice Emits:
-     * - `SelfLiquidationFeeUpdated` event indicating successful self-liquidation fee update operation.
-     *
-     * @dev `_val` uses 3 decimals precision, where 1000 == 1%.
-     *
-     * @param _val The new value.
-     */
-    function setSelfLiquidationFee(
         uint256 _val
     ) external;
 

@@ -52,14 +52,30 @@ interface ILiquidationManager {
     );
 
     /**
+     * @notice Emitted when the self-liquidation fee is updated.
+     * @param oldAmount The previous amount of the self-liquidation fee.
+     * @param newAmount The new amount of the self-liquidation fee.
+     */
+    event SelfLiquidationFeeUpdated(uint256 oldAmount, uint256 newAmount);
+
+    /**
      * @notice returns the address of the manager container contract
      */
     function managerContainer() external view returns (IManagerContainer);
 
     /**
-     * @notice returns the self-liquidation fee percentage
+     * @notice The max % amount the protocol gets when a self-liquidation operation happens.
+     * @dev Uses 3 decimal precision, where 1% is represented as 1000.
+     * @dev 8% is the default self-liquidation fee.
      */
     function selfLiquidationFee() external view returns (uint256);
+
+    /**
+     * @notice The max % amount the protocol gets when a self-liquidation operation happens.
+     * @dev Uses 3 decimal precision, where 1% is represented as 1000.
+     * @dev 10% is the max self-liquidation fee.
+     */
+    function MAX_SELF_LIQUIDATION_FEE() external view returns (uint256);
 
     /**
      * @notice returns utility variable used for preciser computations
@@ -165,9 +181,9 @@ interface ILiquidationManager {
     // -- Administration --
 
     /**
-     * @notice Sets a new value for the self-liquidation fee
-     * @dev The value must be less than LIQUIDATION_PRECISION
-     * @param _val The new value for the self-liquidation fee
+     * @notice Sets a new value for the self-liquidation fee.
+     * @dev The value must be less than MAX_SELF_LIQUIDATION_FEE.
+     * @param _val The new value for the self-liquidation fee.
      */
     function setSelfLiquidationFee(
         uint256 _val
