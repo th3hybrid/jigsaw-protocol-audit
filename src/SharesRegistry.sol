@@ -122,6 +122,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      *
      * @notice Requirements:
      * - `msg.sender` must be the Stables Manager Contract.
+     * - `_newVal` must be greater than or equal to the minimum debt amount.
      *
      * @notice Effects:
      * - Updates `borrowed` mapping.
@@ -133,7 +134,11 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @param _newVal The new borrowed amount.
      */
     function setBorrowed(address _holding, uint256 _newVal) external override onlyStableManager {
+        // Ensure the `holding` holds allowed minimum jUSD debt amount
+        require(_newVal == 0 || _newVal >= IManager(managerContainer.manager()).minDebtAmount(), "3102");
+        // Emit event indicating successful update
         emit BorrowedSet({ _holding: _holding, oldVal: borrowed[_holding], newVal: _newVal });
+        // Update the borrowed amount for the holding
         borrowed[_holding] = _newVal;
     }
 
