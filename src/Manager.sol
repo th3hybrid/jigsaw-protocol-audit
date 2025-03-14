@@ -278,7 +278,7 @@ contract Manager is IManager, Ownable2Step {
      * @notice Registers the `_token` as withdrawable.
      *
      * @notice Requirements:
-     * - `msg.sender` must be owner or `strategyManager`.
+     * - `msg.sender` must be owner or `stablesManager`.
      * - `_token` must not be withdrawable.
      *
      * @notice Effects:
@@ -292,7 +292,7 @@ contract Manager is IManager, Ownable2Step {
     function addWithdrawableToken(
         address _token
     ) external override validAddress(_token) {
-        require(owner() == msg.sender || strategyManager == msg.sender, "1000");
+        require(owner() == msg.sender || stablesManager == msg.sender, "1000");
         require(!isTokenWithdrawable[_token], "3069");
         isTokenWithdrawable[_token] = true;
         emit WithdrawableTokenAdded(_token);
