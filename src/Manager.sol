@@ -109,13 +109,6 @@ contract Manager is IManager, Ownable2Step {
     uint256 public override withdrawalFee;
 
     /**
-     * @notice The max % amount the protocol gets when a self-liquidation operation happens.
-     * @dev Uses 3 decimal precision, where 1% is represented as 1000.
-     * @dev 8% is the default self-liquidation fee.
-     */
-    uint256 public override selfLiquidationFee = 8e3;
-
-    /**
      * @notice Returns the fee address, where all the fees are collected.
      */
     address public override feeAddress;
@@ -501,32 +494,6 @@ contract Manager is IManager, Ownable2Step {
         require(_val <= OperationsLib.FEE_FACTOR, "2066");
         emit WithdrawalFeeUpdated(withdrawalFee, _val);
         withdrawalFee = _val;
-    }
-
-    /**
-     * @notice Sets the self-liquidation fee.
-     *
-     * @notice Requirements:
-     * - `_val` must be smaller than `PRECISION` to avoid wrong computations.
-     *
-     * @notice Effects:
-     * - Updates the `selfLiquidationFee` state variable.
-     * - Updates the `selfLiquidationFee` state variable in the LiquidationManager Contract.
-     *
-     * @notice Emits:
-     * - `SelfLiquidationFeeUpdated` event indicating successful self-liquidation fee update operation.
-     *
-     * @dev `_val` uses 3 decimals precision, where 1000 == 1%.
-     *
-     * @param _val The new value.
-     */
-    function setSelfLiquidationFee(
-        uint256 _val
-    ) external override onlyOwner {
-        require(_val <= PRECISION, "3066");
-        emit SelfLiquidationFeeUpdated(selfLiquidationFee, _val);
-        selfLiquidationFee = _val;
-        ILiquidationManager(liquidationManager).setSelfLiquidationFee(_val);
     }
 
     /**
