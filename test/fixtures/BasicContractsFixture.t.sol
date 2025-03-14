@@ -89,8 +89,6 @@ abstract contract BasicContractsFixture is Test {
                 liquidatorBonus: 8e3
             })
         );
-        stablesManager.registerOrUpdateShareRegistry(address(sharesRegistry), address(usdc), true);
-        registries[address(usdc)] = address(sharesRegistry);
 
         wethSharesRegistry = new SharesRegistry(
             OWNER,
@@ -104,8 +102,6 @@ abstract contract BasicContractsFixture is Test {
                 liquidatorBonus: 8e3
             })
         );
-        stablesManager.registerOrUpdateShareRegistry(address(wethSharesRegistry), address(weth), true);
-        registries[address(weth)] = address(wethSharesRegistry);
 
         receiptTokenReference = IReceiptToken(new ReceiptToken());
         receiptTokenFactory = new ReceiptTokenFactory(OWNER, address(receiptTokenReference));
@@ -131,6 +127,12 @@ abstract contract BasicContractsFixture is Test {
             _receiptTokenSymbol: "RUSDCM"
         });
         strategyManager.addStrategy(address(strategyWithoutRewardsMock));
+
+        stablesManager.registerOrUpdateShareRegistry(address(wethSharesRegistry), address(weth), true);
+        registries[address(weth)] = address(wethSharesRegistry);
+
+        stablesManager.registerOrUpdateShareRegistry(address(sharesRegistry), address(usdc), true);
+        registries[address(usdc)] = address(sharesRegistry);
         vm.stopPrank();
     }
 
