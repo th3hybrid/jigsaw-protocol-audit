@@ -275,9 +275,6 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.deposit(address(usdc), _depositAmount);
         vm.stopPrank();
 
-        vm.prank(manager.owner(), manager.owner());
-        manager.addNonWithdrawableToken(address(usdc));
-
         vm.prank(_user, _user);
         vm.expectRevert(bytes("3071"));
         holdingManager.withdraw(address(usdc), withdrawAmount);

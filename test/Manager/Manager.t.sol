@@ -380,56 +380,56 @@ contract ManagerTest is BasicContractsFixture {
         manager.removeToken(_newAddress);
     }
 
-    function test_should_add_non_withdrawable_token(address _user, address _newAddress) public {
+    function test_should_add_withdrawable_token(address _user, address _newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         vm.assume(_newAddress != address(0));
         vm.assume(_user != address(strategyManager));
-        vm.assume(manager.isTokenNonWithdrawable(_newAddress) == false);
+        vm.assume(manager.isTokenWithdrawable(_newAddress) == false);
 
         vm.prank(_user);
         vm.expectRevert(bytes("1000"));
-        manager.addNonWithdrawableToken(_newAddress);
+        manager.addWithdrawableToken(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
         vm.expectRevert(bytes("3000"));
-        manager.addNonWithdrawableToken(address(0));
+        manager.addWithdrawableToken(address(0));
 
         vm.expectEmit(true, false, false, false);
         emit NonWithdrawableTokenAdded(_newAddress);
-        manager.addNonWithdrawableToken(_newAddress);
-        assertTrue(manager.isTokenNonWithdrawable(_newAddress));
+        manager.addWithdrawableToken(_newAddress);
+        assertTrue(manager.isTokenWithdrawable(_newAddress));
 
         vm.expectRevert(bytes("3069"));
-        manager.addNonWithdrawableToken(_newAddress);
+        manager.addWithdrawableToken(_newAddress);
     }
 
-    function test_should_remove_non_withdrawable_token(address _user, address _newAddress) public {
+    function test_should_remove_withdrawable_token(address _user, address _newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         vm.assume(_newAddress != address(0));
-        vm.assume(manager.isTokenNonWithdrawable(_newAddress) == false);
+        vm.assume(manager.isTokenWithdrawable(_newAddress) == false);
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.removeNonWithdrawableToken(_newAddress);
+        manager.removeWithdrawableToken(_newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
         vm.expectRevert(bytes("3000"));
-        manager.removeNonWithdrawableToken(address(0));
+        manager.removeWithdrawableToken(address(0));
 
-        manager.addNonWithdrawableToken(_newAddress);
-        assertTrue(manager.isTokenNonWithdrawable(_newAddress));
+        manager.addWithdrawableToken(_newAddress);
+        assertTrue(manager.isTokenWithdrawable(_newAddress));
 
         vm.expectEmit(true, false, false, false);
         emit NonWithdrawableTokenRemoved(_newAddress);
-        manager.removeNonWithdrawableToken(_newAddress);
-        assertFalse(manager.isTokenNonWithdrawable(_newAddress));
+        manager.removeWithdrawableToken(_newAddress);
+        assertFalse(manager.isTokenWithdrawable(_newAddress));
 
         vm.expectRevert(bytes("3070"));
-        manager.removeNonWithdrawableToken(_newAddress);
+        manager.removeWithdrawableToken(_newAddress);
     }
 
     function test_requestNewJUsdOracle_when_alreadyRequested() public {
