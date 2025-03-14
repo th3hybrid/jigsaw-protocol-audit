@@ -35,16 +35,16 @@ interface IManager {
     event TokenRemoved(address indexed token);
 
     /**
-     * @notice Emitted when a non-withdrawable token is added.
-     * @param token The address of the non-withdrawable token.
+     * @notice Emitted when a withdrawable token is added.
+     * @param token The address of the withdrawable token.
      */
-    event NonWithdrawableTokenAdded(address indexed token);
+    event WithdrawableTokenAdded(address indexed token);
 
     /**
-     * @notice Emitted when a non-withdrawable token is removed.
-     * @param token The address of the non-withdrawable token.
+     * @notice Emitted when a withdrawable token is removed.
+     * @param token The address of the withdrawable token.
      */
-    event NonWithdrawableTokenRemoved(address indexed token);
+    event WithdrawableTokenRemoved(address indexed token);
 
     /**
      * @notice Emitted when invoker is updated.
@@ -190,10 +190,10 @@ interface IManager {
     ) external view returns (bool);
 
     /**
-     * @notice Returns true if the token cannot be withdrawn from a holding.
+     * @notice Returns true if the token can be withdrawn from a holding.
      * @param _token The address of the token.
      */
-    function isTokenNonWithdrawable(
+    function isTokenWithdrawable(
         address _token
     ) external view returns (bool);
 
@@ -292,6 +292,11 @@ interface IManager {
     // -- Utility values --
 
     /**
+     * @notice Minimum allowed jUSD debt amount for a holding to ensure successful liquidation.
+     */
+    function minDebtAmount() external view returns (uint256);
+
+    /**
      * @notice Returns the collateral rate precision.
      * @dev Should be less than exchange rate precision due to optimization in math.
      */
@@ -382,39 +387,39 @@ interface IManager {
     ) external;
 
     /**
-     * @notice Registers the `_token` as non-withdrawable.
+     * @notice Registers the `_token` as withdrawable.
      *
      * @notice Requirements:
      * - `msg.sender` must be owner or `strategyManager`.
-     * - `_token` must not be non-withdrawable.
+     * - `_token` must not be withdrawable.
      *
      * @notice Effects:
-     * - Updates the `isTokenNonWithdrawable` mapping.
+     * - Updates the `isTokenWithdrawable` mapping.
      *
      * @notice Emits:
-     * - `NonWithdrawableTokenAdded` event indicating successful non-withdrawable token addition operation.
+     * - `WithdrawableTokenAdded` event indicating successful withdrawable token addition operation.
      *
-     * @param _token The address of the token to be added as non-withdrawable.
+     * @param _token The address of the token to be added as withdrawable.
      */
-    function addNonWithdrawableToken(
+    function addWithdrawableToken(
         address _token
     ) external;
 
     /**
-     * @notice Unregisters the `_token` as non-withdrawable.
+     * @notice Unregisters the `_token` as withdrawable.
      *
      * @notice Requirements:
-     * - `_token` must be non-withdrawable.
+     * - `_token` must be withdrawable.
      *
      * @notice Effects:
-     * - Updates the `isTokenNonWithdrawable` mapping.
+     * - Updates the `isTokenWithdrawable` mapping.
      *
      * @notice Emits:
-     * - `NonWithdrawableTokenRemoved` event indicating successful non-withdrawable token removal operation.
+     * - `WithdrawableTokenRemoved` event indicating successful withdrawable token removal operation.
      *
-     * @param _token The address of the token to be removed as non-withdrawable.
+     * @param _token The address of the token to be removed as withdrawable.
      */
-    function removeNonWithdrawableToken(
+    function removeWithdrawableToken(
         address _token
     ) external;
 
@@ -675,6 +680,18 @@ interface IManager {
         bytes calldata _newOracleData
     ) external;
 
+    /**
+     * @notice Sets the minimum debt amount.
+     *
+     * @notice Requirements:
+     * - `_minDebtAmount` must be greater than zero.
+     * - `_minDebtAmount` must be different from previous `minDebtAmount`.
+     *
+     * @param _minDebtAmount The new minimum debt amount.
+     */
+    function setMinDebtAmount(
+        uint256 _minDebtAmount
+    ) external;
     /**
      * @notice Registers timelock change request.
      *
