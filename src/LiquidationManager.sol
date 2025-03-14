@@ -43,19 +43,28 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
     using Math for uint256;
 
     /**
-     * @notice contract that contains the address of the Manager Container.
+     * @notice The self-liquidation fee.
+     * @dev Uses 3 decimal precision, where 1% is represented as 1000.
+     * @dev 8% is the default self-liquidation fee.
      */
-    IManagerContainer public immutable override managerContainer;
+    uint256 public override selfLiquidationFee = 8e3;
 
     /**
-     * @notice returns the self-liquidation fee.
+     * @notice The max % amount the protocol gets when a self-liquidation operation happens.
+     * @dev Uses 3 decimal precision, where 1% is represented as 1000.
+     * @dev 10% is the max self-liquidation fee.
      */
-    uint256 public selfLiquidationFee;
+    uint256 public constant override MAX_SELF_LIQUIDATION_FEE = 10e3;
 
     /**
      * @notice utility variable used for preciser computations.
      */
-    uint256 public constant LIQUIDATION_PRECISION = 1e5;
+    uint256 public constant override LIQUIDATION_PRECISION = 1e5;
+
+    /**
+     * @notice contract that contains the address of the Manager Container.
+     */
+    IManagerContainer public immutable override managerContainer;
 
     // -- Constructor --
 
@@ -67,7 +76,6 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
     constructor(address _initialOwner, address _managerContainer) Ownable(_initialOwner) {
         require(_managerContainer != address(0), "3065");
         managerContainer = IManagerContainer(_managerContainer);
-        selfLiquidationFee = _getManager().selfLiquidationFee();
     }
 
     // -- User specific methods --
@@ -456,13 +464,14 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
 
     /**
      * @notice Sets a new value for the self-liquidation fee.
-     * @dev The value must be less than LIQUIDATION_PRECISION.
+     * @dev The value must be less than MAX_SELF_LIQUIDATION_FEE.
      * @param _val The new value for the self-liquidation fee.
      */
     function setSelfLiquidationFee(
         uint256 _val
-    ) external override onlyManager {
-        require(_val < LIQUIDATION_PRECISION, "2001");
+    ) external override onlyOwner {
+        require(_val <= MAX_SELF_LIQUIDATION_FEE, "3066");
+        emit SelfLiquidationFeeUpdated(selfLiquidationFee, _val);
         selfLiquidationFee = _val;
     }
 
@@ -492,9 +501,11 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
     /**
      * @notice This function calculates the amount of collateral needed to match a given jUSD amount based on the
      * provided exchange rate.
+     *
      * @param _collateral address of the collateral token.
      * @param _jUsdAmount amount of jUSD.
      * @param _exchangeRate collateral to jUSD.
+     *
      * @return totalCollateral The total amount of collateral required.
      */
     function _getCollateralForJUsd(
@@ -601,14 +612,6 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
     }
 
     // -- Modifiers --
-
-    /**
-     * @notice Modifier to only allow access to a function by the contract manager.
-     */
-    modifier onlyManager() {
-        require(msg.sender == address(_getManager()), "1000");
-        _;
-    }
 
     /**
      * @notice Modifier to ensure that the provided address is valid (not the zero address).
