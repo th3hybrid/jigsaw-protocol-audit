@@ -153,6 +153,7 @@ interface ISharesRegistry {
      *
      * @notice Requirements:
      * - `msg.sender` must be the Stables Manager Contract.
+     * - `_newVal` must be greater than or equal to the minimum debt amount.
      *
      * @notice Effects:
      * - Updates `borrowed` mapping.
