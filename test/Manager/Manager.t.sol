@@ -41,29 +41,6 @@ contract ManagerTest is BasicContractsFixture {
         init();
     }
 
-    function test_should_set_self_liquidation_fee(
-        uint256 _amount
-    ) public {
-        vm.startPrank(OWNER, OWNER);
-        uint256 invalidAmount = bound(_amount, manager.PRECISION() + 1, 1e60);
-
-        vm.expectRevert(bytes("3066"));
-        manager.setSelfLiquidationFee(invalidAmount);
-
-        uint256 newAmount = bound(_amount, 0, manager.PRECISION() - 1);
-
-        vm.startPrank(OWNER, OWNER);
-        uint256 oldAmount = manager.selfLiquidationFee();
-
-        vm.expectEmit(true, true, false, false);
-        emit SelfLiquidationFeeUpdated(oldAmount, newAmount);
-
-        manager.setSelfLiquidationFee(newAmount);
-
-        assertEq(manager.selfLiquidationFee(), newAmount);
-        assertEq(ILiquidationManager(manager.liquidationManager()).selfLiquidationFee(), newAmount);
-    }
-
     function test_should_set_fee_address(address _user, address _newAddress) public {
         assumeNotOwnerNotZero(_user);
 

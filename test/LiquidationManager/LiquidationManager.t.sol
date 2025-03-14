@@ -46,7 +46,9 @@ contract LiquidationManagerTest is Test {
 
     // Checks if initial state of the contract is correct
     function test_liquidationManager_initialState() public {
-        assertEq(liquidationManager.selfLiquidationFee(), manager.selfLiquidationFee());
+        assertEq(liquidationManager.selfLiquidationFee(), 8e3);
+        assertEq(liquidationManager.MAX_SELF_LIQUIDATION_FEE(), 10e3);
+        assertEq(liquidationManager.LIQUIDATION_PRECISION(), 1e5);
         assertEq(liquidationManager.paused(), false);
     }
 
@@ -89,15 +91,15 @@ contract LiquidationManagerTest is Test {
     function test_setSelfLiquidationFee_when_fromManager(
         uint256 _amount
     ) public {
-        vm.assume(_amount < liquidationManager.LIQUIDATION_PRECISION());
+        vm.assume(_amount < liquidationManager.MAX_SELF_LIQUIDATION_FEE());
 
         vm.expectEmit();
-        emit SelfLiquidationFeeUpdated(manager.selfLiquidationFee(), _amount);
+        emit SelfLiquidationFeeUpdated(liquidationManager.selfLiquidationFee(), _amount);
 
-        manager.setSelfLiquidationFee(_amount);
+        liquidationManager.setSelfLiquidationFee(_amount);
 
-        assertEq(_amount, manager.selfLiquidationFee());
-        assertEq(manager.selfLiquidationFee(), liquidationManager.selfLiquidationFee());
+        assertEq(_amount, liquidationManager.selfLiquidationFee());
+        assertEq(liquidationManager.selfLiquidationFee(), liquidationManager.selfLiquidationFee());
     }
 
     // Tests setting contract paused from non-Owner's address
