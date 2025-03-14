@@ -540,7 +540,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
      * @return The available amount to be withdrawn and the withdrawal fee amount.
      */
     function _withdraw(address _token, uint256 _amount) private returns (uint256, uint256) {
-        require(!_getManager().isTokenNonWithdrawable(_token), "3071");
+        require(_getManager().isTokenWithdrawable(_token), "3071");
         address holding = userHolding[msg.sender];
 
         // Perform the check to see if this is an airdropped token or user actually has collateral for it
