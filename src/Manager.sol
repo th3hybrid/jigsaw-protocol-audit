@@ -36,7 +36,7 @@ contract Manager is IManager, Ownable2Step {
     /**
      * @notice Returns true if the token cannot be withdrawn from a holding.
      */
-    mapping(address token => bool withdrawable) public override isTokenNonWithdrawable;
+    mapping(address token => bool withdrawable) public override isTokenWithdrawable;
 
     /**
      * @notice Returns true if caller is allowed invoker.
@@ -128,6 +128,12 @@ contract Manager is IManager, Ownable2Step {
     address public override receiptTokenFactory;
 
     // -- Utility values --
+
+    /**
+     * @notice Minimum allowed jUSD debt amount for a holding to ensure successful liquidation.
+     * @dev 200 jUSD is the initial minimum allowed debt amount for a holding to ensure successful liquidation.
+     */
+    uint256 public override minDebtAmount = 200e18;
 
     /**
      * @notice Flag indicating whether the Manager Contract is in the active change state.
@@ -276,49 +282,49 @@ contract Manager is IManager, Ownable2Step {
     }
 
     /**
-     * @notice Registers the `_token` as non-withdrawable.
+     * @notice Registers the `_token` as withdrawable.
      *
      * @notice Requirements:
      * - `msg.sender` must be owner or `strategyManager`.
-     * - `_token` must not be non-withdrawable.
+     * - `_token` must not be withdrawable.
      *
      * @notice Effects:
-     * - Updates the `isTokenNonWithdrawable` mapping.
+     * - Updates the `isTokenWithdrawable` mapping.
      *
      * @notice Emits:
-     * - `NonWithdrawableTokenAdded` event indicating successful non-withdrawable token addition operation.
+     * - `WithdrawableTokenAdded` event indicating successful withdrawable token addition operation.
      *
-     * @param _token The address of the token to be added as non-withdrawable.
+     * @param _token The address of the token to be added as withdrawable.
      */
-    function addNonWithdrawableToken(
+    function addWithdrawableToken(
         address _token
     ) external override validAddress(_token) {
         require(owner() == msg.sender || strategyManager == msg.sender, "1000");
-        require(!isTokenNonWithdrawable[_token], "3069");
-        isTokenNonWithdrawable[_token] = true;
-        emit NonWithdrawableTokenAdded(_token);
+        require(!isTokenWithdrawable[_token], "3069");
+        isTokenWithdrawable[_token] = true;
+        emit WithdrawableTokenAdded(_token);
     }
 
     /**
-     * @notice Unregisters the `_token` as non-withdrawable.
+     * @notice Unregisters the `_token` as withdrawable.
      *
      * @notice Requirements:
-     * - `_token` must be non-withdrawable.
+     * - `_token` must be withdrawable.
      *
      * @notice Effects:
-     * - Updates the `isTokenNonWithdrawable` mapping.
+     * - Updates the `isTokenWithdrawable` mapping.
      *
      * @notice Emits:
-     * - `NonWithdrawableTokenRemoved` event indicating successful non-withdrawable token removal operation.
+     * - `WithdrawableTokenRemoved` event indicating successful withdrawable token removal operation.
      *
-     * @param _token The address of the token to be removed as non-withdrawable.
+     * @param _token The address of the token to be removed as withdrawable.
      */
-    function removeNonWithdrawableToken(
+    function removeWithdrawableToken(
         address _token
     ) external override onlyOwner validAddress(_token) {
-        require(isTokenNonWithdrawable[_token], "3070");
-        isTokenNonWithdrawable[_token] = false;
-        emit NonWithdrawableTokenRemoved(_token);
+        require(isTokenWithdrawable[_token], "3070");
+        isTokenWithdrawable[_token] = false;
+        emit WithdrawableTokenRemoved(_token);
     }
 
     /**
@@ -639,6 +645,23 @@ contract Manager is IManager, Ownable2Step {
         require(keccak256(oracleData) != keccak256(_newOracleData), "3017");
         emit OracleDataUpdated(oracleData, _newOracleData);
         oracleData = _newOracleData;
+    }
+
+    /**
+     * @notice Sets the minimum debt amount.
+     *
+     * @notice Requirements:
+     * - `_minDebtAmount` must be greater than zero.
+     * - `_minDebtAmount` must be different from previous `minDebtAmount`.
+     *
+     * @param _minDebtAmount The new minimum debt amount.
+     */
+    function setMinDebtAmount(
+        uint256 _minDebtAmount
+    ) external override onlyOwner {
+        require(_minDebtAmount > 0, "2100");
+        require(_minDebtAmount != minDebtAmount, "3017");
+        minDebtAmount = _minDebtAmount;
     }
 
     /**
