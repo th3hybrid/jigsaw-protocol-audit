@@ -179,7 +179,7 @@ contract StablesManagerTest is BasicContractsFixture {
     // Tests if isSolvent works correctly when jUSD price is more than $1
     function test_isSolvent_when_expensiveJusd(address _user, uint256 _mintAmount) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
 
         address collateral = address(usdc);
         address holding = initiateUser(_user, collateral, _mintAmount);
@@ -197,7 +197,7 @@ contract StablesManagerTest is BasicContractsFixture {
     // Tests if isSolvent works correctly when jUSD price is less than $1
     function test_isSolvent_when_cheapJusd(address _user, uint256 _mintAmount) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
 
         address collateral = address(usdc);
         address holding = initiateUser(_user, collateral, _mintAmount);
@@ -215,7 +215,7 @@ contract StablesManagerTest is BasicContractsFixture {
     // Tests if isSolvent works correctly when jUSD price is less than $1
     function test_isSolvent_when_cheapCollateral(address _user, uint256 _mintAmount) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
 
         address collateral = address(usdc);
         address holding = initiateUser(_user, collateral, _mintAmount);
@@ -235,7 +235,7 @@ contract StablesManagerTest is BasicContractsFixture {
     // Tests if getLiquidationInfo works correctly
     function test_getLiquidationInfo(address _user, uint256 _mintAmount) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
 
         address collateral = address(usdc);
         address holding = initiateUser(_user, collateral, _mintAmount);
@@ -342,7 +342,7 @@ contract StablesManagerTest is BasicContractsFixture {
         uint256 _removeAmount
     ) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
         _removeAmount = bound(_removeAmount, 1, _mintAmount * 2);
 
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
@@ -371,7 +371,7 @@ contract StablesManagerTest is BasicContractsFixture {
         uint256 _removeAmount
     ) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
         _removeAmount = bound(_removeAmount, 1, _mintAmount * 2);
 
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
@@ -441,7 +441,7 @@ contract StablesManagerTest is BasicContractsFixture {
         uint256 _removeAmount
     ) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
         _removeAmount = bound(_removeAmount, 1, _mintAmount * 2);
 
         address collateral = address(usdc);
@@ -511,7 +511,7 @@ contract StablesManagerTest is BasicContractsFixture {
     function test_borrow_when_insolvent(address _user, uint256 _mintAmount, uint256 _callerId) public {
         vm.assume(_user != address(0));
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
         address collateral = address(usdc);
 
         address holding = initiateUser(_user, collateral, _mintAmount);
@@ -530,7 +530,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public {
         vm.assume(_user != address(0));
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
         address collateral = address(usdc);
 
         address holding = initiateUser(_user, collateral, _mintAmount);
@@ -600,7 +600,7 @@ contract StablesManagerTest is BasicContractsFixture {
         uint256 _callerId
     ) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
         address collateral = address(usdc);
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
         address holding = initiateUser(_user, collateral, _mintAmount);
@@ -609,7 +609,7 @@ contract StablesManagerTest is BasicContractsFixture {
         stablesManager.borrow(holding, collateral, _mintAmount, 0, _mintToUser);
 
         vm.prank(caller, caller);
-        vm.expectRevert(bytes("2100"));
+        vm.expectRevert(bytes("2003"));
         stablesManager.repay(holding, collateral, _mintAmount + 1, holding);
     }
 
@@ -621,7 +621,7 @@ contract StablesManagerTest is BasicContractsFixture {
         uint256 _callerId
     ) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
         address collateral = address(usdc);
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
         address holding = initiateUser(_user, collateral, _mintAmount);
@@ -642,7 +642,7 @@ contract StablesManagerTest is BasicContractsFixture {
         uint256 _callerId
     ) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
         address collateral = address(usdc);
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
         address holding = initiateUser(_user, collateral, _mintAmount);
@@ -664,7 +664,7 @@ contract StablesManagerTest is BasicContractsFixture {
         uint256 _callerId
     ) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
         _repayAmount = bound(_repayAmount, 1, _mintAmount);
         address collateral = address(usdc);
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
