@@ -268,14 +268,16 @@ interface IStablesManager {
     function isSolvent(address _token, address _holding) external view returns (bool);
 
     /**
-     * @notice Get liquidation info for holding and token.
+     * @notice Checks if a holding can be liquidated for a specific token.
      *
-     * @param _holding Address of the holding to check for.
-     * @param _token Address of the token to check for.
+     * @notice Requirements:
+     * - `_holding` must not be the zero address.
+     * - There must be registry for `_token`.
      *
-     * @return `holding`'s borrowed amount against specified `token`.
-     * @return collateral amount in specified `token`.
-     * @return flag indicating whether `holding` is solvent.
+     * @param _token The token for which the check is done.
+     * @param _holding The user address.
+     *
+     * @return flag indicating whether `holding` is liquidatable.
      */
-    function getLiquidationInfo(address _holding, address _token) external view returns (uint256, uint256, uint256);
+    function isLiquidatable(address _token, address _holding) external view returns (bool);
 }
