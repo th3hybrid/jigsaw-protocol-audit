@@ -365,28 +365,39 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         if (registry.borrowed(_holding) == 0) return true;
 
-        return _getSolvencyRatio({ _holding: _holding, registry: registry })
+        return _getRatio({ _holding: _holding, registry: registry, rate: registry.getConfig().collateralizationRate })
             >= registry.borrowed(_holding).mulDiv(
                 _getManager().getJUsdExchangeRate(), _getManager().EXCHANGE_RATE_PRECISION()
             );
     }
 
     /**
-     * @notice Get liquidation info for holding and token.
+     * @notice Checks if a holding can be liquidated for a specific token.
      *
-     * @param _holding Address of the holding to check for.
-     * @param _token Address of the token to check for.
+     * @notice Requirements:
+     * - `_holding` must not be the zero address.
+     * - There must be registry for `_token`.
      *
-     * @return `holding`'s borrowed amount against specified `token`.
-     * @return collateral amount in specified `token`.
-     * @return flag indicating whether `holding` is solvent.
+     * @param _token The token for which the check is done.
+     * @param _holding The user address.
+     *
+     * @return flag indicating whether `holding` is liquidatable.
      */
-    function getLiquidationInfo(
-        address _holding,
-        address _token
-    ) external view override returns (uint256, uint256, uint256) {
+    function isLiquidatable(address _token, address _holding) public view override returns (bool) {
+        require(_holding != address(0), "3031");
         ISharesRegistry registry = _getRegistry(_token);
-        return (registry.borrowed(_holding), registry.collateral(_holding), _getSolvencyRatio(_holding, registry));
+        require(address(registry) != address(0), "3008");
+
+        if (registry.borrowed(_holding) == 0) return false;
+
+        // Compute threshold for specified collateral.
+        ISharesRegistry.RegistryConfig memory registryConfig = registry.getConfig();
+        uint256 threshold = registryConfig.collateralizationRate - registryConfig.liquidationBuffer;
+
+        return _getRatio({ _holding: _holding, registry: registry, rate: threshold })
+            < registry.borrowed(_holding).mulDiv(
+                _getManager().getJUsdExchangeRate(), _getManager().EXCHANGE_RATE_PRECISION()
+            );
     }
 
     // -- Private methods --
@@ -414,12 +425,12 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
      *
      * @param _holding The holding address to check for.
      * @param registry The Shares Registry Contract for the token.
+     * @param rate The rate to compute ratio for (either collateralization rate for `isSolvent` or liquidation
+     * threshold for `isLiquidatable`).
      *
      * @return The calculated solvency ratio.
      */
-    function _getSolvencyRatio(address _holding, ISharesRegistry registry) private view returns (uint256) {
-        // Get collateralization rate for specified collateral.
-        uint256 colRate = registry.getConfig().collateralizationRate;
+    function _getRatio(address _holding, ISharesRegistry registry, uint256 rate) private view returns (uint256) {
         // Get collateral's exchange rate.
         uint256 exchangeRate = registry.getExchangeRate();
         // Get holding's available collateral amount.
@@ -428,7 +439,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         uint256 precision = _getManager().EXCHANGE_RATE_PRECISION() * _getManager().PRECISION();
 
         // Calculate the solvency ratio.
-        uint256 result = colAmount * colRate * exchangeRate / precision;
+        uint256 result = colAmount * rate * exchangeRate / precision;
         // Transform to 18 decimals if needed.
         return _transformTo18Decimals({ _amount: result, _decimals: IERC20Metadata(registry.token()).decimals() });
     }
