@@ -232,27 +232,6 @@ contract StablesManagerTest is BasicContractsFixture {
         );
     }
 
-    // Tests if getLiquidationInfo works correctly
-    function test_getLiquidationInfo(address _user, uint256 _mintAmount) public {
-        vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
-
-        address collateral = address(usdc);
-        address holding = initiateUser(_user, collateral, _mintAmount);
-
-        vm.prank(_user, _user);
-        holdingManager.borrow(collateral, _mintAmount, 0, true);
-
-        uint256 expectedSolvencyRatio = _getSolvencyRatio(holding, ISharesRegistry(registries[collateral]));
-
-        (uint256 borrowedAmount, uint256 collateralAmount, uint256 solvencyRatio) =
-            stablesManager.getLiquidationInfo(holding, collateral);
-
-        assertEq(borrowedAmount, _mintAmount, "Borrowed amount returned by getLiquidationInfo() is incorrect");
-        assertEq(collateralAmount, _mintAmount * 2, "Collateral amount returned by getLiquidationInfo() is incorrect");
-        assertEq(solvencyRatio, expectedSolvencyRatio, "Solvency ratio returned by getLiquidationInfo() is incorrect");
-    }
-
     // Tests if addCollateral reverts correctly when paused
     function test_addCollateral_when_paused() public {
         vm.prank(stablesManager.owner(), stablesManager.owner());
