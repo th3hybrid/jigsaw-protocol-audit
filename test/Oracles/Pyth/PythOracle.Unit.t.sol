@@ -61,11 +61,14 @@ contract PythOracleUnitTest is Test {
         vm.assertEq(pythOracleFactory.owner(), OWNER, "Owner in factory set wrong");
 
         // Check pythOracle initialization
-        vm.assertEq(pythOracle.owner(), OWNER, "Owner in oracle set wrong");
         vm.assertEq(pythOracle.underlying(), WETH, "underlying in oracle set wrong");
         vm.assertEq(pythOracle.pyth(), PYTH, "PYTH in oracle set wrong");
         vm.assertEq(pythOracle.priceId(), PRICE_ID, "PRICE_ID in oracle set wrong");
         vm.assertEq(pythOracle.age(), AGE, "AGE in oracle set wrong");
+        vm.assertEq(pythOracle.ALLOWED_DECIMALS(), 18, "ALLOWED_DECIMALS in oracle set wrong");
+        vm.assertEq(pythOracle.minConfidencePercentage(), 300, "minConfidencePercentage in oracle set wrong");
+        vm.assertEq(pythOracle.CONFIDENCE_PRECISION(), 1e4, "CONFIDENCE_PRECISION in oracle set wrong");
+        vm.assertEq(pythOracle.owner(), OWNER, "Owner in oracle set wrong");
         vm.assertEq(pythOracle.name(), IERC20Metadata(WETH).name(), "Name in oracle set wrong");
         vm.assertEq(pythOracle.symbol(), IERC20Metadata(WETH).symbol(), "Symbol in oracle set wrong");
     }
