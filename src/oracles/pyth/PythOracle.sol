@@ -55,7 +55,7 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
      * @notice The minimum confidence percentage.
      * @dev Uses 2 decimal precision, where 1% is represented as 100.
      */
-    uint256 public override minConfidencePercentage = 300;
+    uint256 public override minConfidencePercentage;
 
     /**
      * @notice The precision to be used for the confidence percentage to avoid precision loss.
@@ -97,6 +97,7 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
         pyth = _pyth;
         priceId = _priceId;
         age = _age;
+        minConfidencePercentage = 300;
     }
 
     // -- Administration --
