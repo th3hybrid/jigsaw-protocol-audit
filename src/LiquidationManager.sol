@@ -330,7 +330,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         require(isRegistryActive, "1200");
         require(holdingManager.isHolding(holding), "3002");
         require(_jUsdAmount <= ISharesRegistry(registryAddress).borrowed(holding), "2003");
-        require(!stablesManager.isSolvent({ _token: _collateral, _holding: holding }), "3073");
+        require(stablesManager.isLiquidatable({ _token: _collateral, _holding: holding }), "3073");
 
         // Calculate collateral required for the specified `_jUsdAmount`.
         collateralUsed = _getCollateralForJUsd({
