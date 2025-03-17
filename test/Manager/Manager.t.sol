@@ -29,8 +29,8 @@ contract ManagerTest is BasicContractsFixture {
     event ContractBlacklisted(address indexed contractAddress);
     event TokenWhitelisted(address indexed token);
     event TokenRemoved(address indexed token);
-    event NonWithdrawableTokenAdded(address indexed token);
-    event NonWithdrawableTokenRemoved(address indexed token);
+    event WithdrawableTokenAdded(address indexed token);
+    event WithdrawableTokenRemoved(address indexed token);
     event InvokerUpdated(address indexed component, bool allowed);
     event OracleUpdated(address indexed oldOracle, address indexed newOracle);
     event OracleDataUpdated(bytes indexed oldData, bytes indexed newData);
@@ -374,7 +374,7 @@ contract ManagerTest is BasicContractsFixture {
         manager.addWithdrawableToken(address(0));
 
         vm.expectEmit(true, false, false, false);
-        emit NonWithdrawableTokenAdded(_newAddress);
+        emit WithdrawableTokenAdded(_newAddress);
         manager.addWithdrawableToken(_newAddress);
         assertTrue(manager.isTokenWithdrawable(_newAddress));
 
@@ -401,7 +401,7 @@ contract ManagerTest is BasicContractsFixture {
         assertTrue(manager.isTokenWithdrawable(_newAddress));
 
         vm.expectEmit(true, false, false, false);
-        emit NonWithdrawableTokenRemoved(_newAddress);
+        emit WithdrawableTokenRemoved(_newAddress);
         manager.removeWithdrawableToken(_newAddress);
         assertFalse(manager.isTokenWithdrawable(_newAddress));
 

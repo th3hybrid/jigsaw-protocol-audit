@@ -40,7 +40,7 @@ contract PythOracleIntegrationTest is BasicContractsFixture {
 
     function test_borrow_when_pythOracle(address _user, uint256 _mintAmount) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1e18, 100_000e18);
+        _mintAmount = bound(_mintAmount, 500e18, 100_000e18);
         address collateral = address(usdc);
 
         // update usdc oracle

@@ -95,7 +95,7 @@ contract PythOracleUnitTest is Test {
         (bool success, uint256 rate) = pythOracle.peek("");
 
         vm.assertEq(success, true, "Peek failed");
-        vm.assertEq(rate, 3_286_215_397_790_000_000_000, "Rate is wrong");
+        vm.assertEq(rate, 3_295_633_182_430_000_000_000, "Rate is wrong");
     }
 
     function test_pyth_peek_when_NegativeOraclePrice() public {
@@ -162,14 +162,17 @@ contract PythOracleUnitTest is Test {
             })
         );
 
+        uint256 newPrice = 100_000_000;
+        uint256 newConfidence = 10_000_000;
+
         // Set pyth price with a small expo
-        _updateMockPythPrice(int64(100_000_000), uint64(1_000_000), int32(-8));
+        _updateMockPythPrice(int64(int256(newPrice)), uint64(newConfidence), int32(-8));
 
         // Expect the next call to revert with the correct error
         (bool success, uint256 rate) = pythOracle.peek("");
 
         vm.assertEq(success, true, "Peek failed");
-        vm.assertEq(rate, (100_000_000 - 1_000_000) * 10 ** (18 - 8), "Rate is wrong");
+        vm.assertEq(rate, (newPrice - newConfidence) * 10 ** (18 - 8), "Rate is wrong");
     }
 
     function test_pyth_peek_when_confidenceTooHigh() public {

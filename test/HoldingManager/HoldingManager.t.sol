@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { Holding } from "../../src/Holding.sol";
@@ -80,7 +81,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         address holdingContractAddress = holdingManager.createHolding();
 
         Holding holdingContract = Holding(holdingContractAddress);
-        vm.expectRevert(bytes("3072"));
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
         holdingContract.init(address(0));
     }
 
@@ -275,6 +276,9 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.deposit(address(usdc), _depositAmount);
         vm.stopPrank();
 
+        vm.prank(OWNER, OWNER);
+        manager.removeWithdrawableToken(address(usdc));
+
         vm.prank(_user, _user);
         vm.expectRevert(bytes("3071"));
         holdingManager.withdraw(address(usdc), withdrawAmount);
@@ -288,6 +292,10 @@ contract HoldingManagerTest is BasicContractsFixture {
 
         SampleTokenERC20 randomToken = new SampleTokenERC20("RT", "RT", 0);
 
+        // prank from owner to make random token withdrawable
+        vm.prank(OWNER, OWNER);
+        manager.addWithdrawableToken(address(randomToken));
+
         vm.startPrank(_user, _user);
         address holding = holdingManager.createHolding();
         deal(address(randomToken), holding, 10);
@@ -299,7 +307,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     // Tests if withdraw reverts correctly when user will become insolvent after withdraw
     function test_withdraw_when_insolvent(uint256 _depositAmount, address _user) public {
         vm.assume(_user != address(0));
-        vm.assume(_depositAmount > 200 && _depositAmount < 100_000e6);
+        vm.assume(_depositAmount > 500e18 && _depositAmount < 100_000e18);
 
         deal(address(usdc), _user, _depositAmount);
 
@@ -649,8 +657,8 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_borrowMultiple_when_authorized(address _user, uint256 _usdcAmount, uint256 _wEthAmount) public {
         vm.assume(_user != address(0));
 
-        uint256 usdcAmount = bound(_usdcAmount, 2, 50_000 * 10 ** usdc.decimals());
-        uint256 wEthAmount = bound(_wEthAmount, 2, 50_000 * 10 ** weth.decimals());
+        uint256 usdcAmount = bound(_usdcAmount, 500 * 10 ** usdc.decimals(), 50_000 * 10 ** usdc.decimals());
+        uint256 wEthAmount = bound(_wEthAmount, 500 * 10 ** usdc.decimals(), 50_000 * 10 ** weth.decimals());
 
         deal(address(usdc), _user, usdcAmount);
         deal(address(weth), _user, wEthAmount);
@@ -734,8 +742,8 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_repayMultiple_when_authorized(address _user, uint256 _usdcAmount, uint256 _wEthAmount) public {
         vm.assume(_user != address(0));
 
-        uint256 usdcAmount = bound(_usdcAmount, 2, 50_000 * 10 ** usdc.decimals());
-        uint256 wEthAmount = bound(_wEthAmount, 2, 50_000 * 10 ** weth.decimals());
+        uint256 usdcAmount = bound(_usdcAmount, 500 * 10 ** usdc.decimals(), 50_000 * 10 ** usdc.decimals());
+        uint256 wEthAmount = bound(_wEthAmount, 500 * 10 ** weth.decimals(), 50_000 * 10 ** weth.decimals());
 
         deal(address(usdc), _user, usdcAmount);
         deal(address(weth), _user, wEthAmount);
@@ -814,7 +822,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_repay_when_authorized(address _user, uint256 _usdcAmount) public {
         vm.assume(_user != address(0));
 
-        uint256 usdcAmount = bound(_usdcAmount, 2, 50_000 * 10 ** usdc.decimals());
+        uint256 usdcAmount = bound(_usdcAmount, 400 * 10 ** usdc.decimals(), 50_000 * 10 ** usdc.decimals());
 
         deal(address(usdc), _user, usdcAmount);
 

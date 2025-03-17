@@ -89,6 +89,11 @@ contract DeployAll is Test, ScriptTestsFixture {
     }
 
     function test_deploy_registries() public {
+        if (manager.stablesManager() != address(stablesManager)) {
+            vm.prank(INITIAL_OWNER, INITIAL_OWNER);
+            manager.setStablecoinManager(address(stablesManager));
+        }
+
         for (uint256 i = 0; i < registries.length; i += 1) {
             SharesRegistry registry = SharesRegistry(registries[i]);
 

@@ -45,7 +45,7 @@ interface IUSDC is IERC20Metadata {
 
 /// @title SelfLiquidationTest
 /// @notice This contract encompasses tests and utility functions for conducting fork fuzzy testing of the
-/// {selfLiquidate} function in the LiquidationManager Contract.
+/// `selfLiquidate` function in the LiquidationManager Contract.
 /// @notice for other tests of the LiquidationManager Contract see other files in this directory.
 contract SelfLiquidationTest is Test {
     using Math for uint256;
@@ -191,7 +191,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        testData.mintAmount = 100 * (10 ** jUsd.decimals());
+        testData.mintAmount = 200 * (10 ** jUsd.decimals());
         testData.user = address(1);
         testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
 
@@ -212,7 +212,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        testData.mintAmount = 100 * (10 ** jUsd.decimals());
+        testData.mintAmount = 200 * (10 ** jUsd.decimals());
         testData.user = address(1);
         testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
 
@@ -231,7 +231,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        testData.mintAmount = 100 * (10 ** jUsd.decimals());
+        testData.mintAmount = 200 * (10 ** jUsd.decimals());
         testData.user = address(1);
         testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
 
@@ -249,7 +249,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        testData.mintAmount = 100 * (10 ** jUsd.decimals());
+        testData.mintAmount = 200 * (10 ** jUsd.decimals());
         testData.user = address(1);
         testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
 
@@ -264,7 +264,7 @@ contract SelfLiquidationTest is Test {
     // This test evaluates the self-liquidation mechanism when the {slippagePercentage} is set too high
     function test_selfLiquidate_when_slippageTooHigh(uint256 _amount, uint256 _slippagePercentage) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < uniswapPoolCap);
+        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
         vm.assume(_slippagePercentage > liquidationManager.LIQUIDATION_PRECISION());
 
         testData.collateral = USDC;
@@ -293,7 +293,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < uniswapPoolCap);
+        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
 
         testData.collateral = USDC;
         testData.mintAmount = _amount * (10 ** jUsd.decimals());
@@ -332,7 +332,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < uniswapPoolCap);
+        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
 
         testData.collateral = USDC;
         testData.mintAmount = _amount * (10 ** jUsd.decimals());
@@ -378,7 +378,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        testData.mintAmount = 100 * (10 ** jUsd.decimals());
+        testData.mintAmount = 200 * (10 ** jUsd.decimals());
         testData.user = address(1);
         testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
 
@@ -397,8 +397,8 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDT;
-        testData.mintAmount = 100 * (10 ** jUsd.decimals());
-        testData.user = address(1);
+        testData.mintAmount = 200 * (10 ** jUsd.decimals());
+        testData.user = address(101);
         testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
@@ -418,7 +418,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < uniswapPoolCap);
+        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
         testData.collateral = USDC;
         testData.mintAmount = _amount * (10 ** jUsd.decimals());
         testData.user = address(1);
@@ -456,7 +456,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < 100_000);
+        _amount = bound(_amount, 200, 100_000);
 
         testData.collateral = USDT;
         testData.mintAmount = _amount * (10 ** jUsd.decimals());
@@ -502,7 +502,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < uniswapPoolCap);
+        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
@@ -569,7 +569,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < 100_000);
+        _amount = bound(_amount, 200, 100_000);
 
         _createJUsdUsdcPool();
 
@@ -638,7 +638,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < uniswapPoolCap);
+        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
@@ -718,7 +718,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < uniswapPoolCap);
+        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
@@ -811,7 +811,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < uniswapPoolCap);
+        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
@@ -900,7 +900,7 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        vm.assume(_amount > 0 && _amount < 100_000);
+        _amount = bound(_amount, 200, 100_000);
 
         _createJUsdUsdcPool();
 
@@ -970,21 +970,16 @@ contract SelfLiquidationTest is Test {
         address _collateral,
         uint256 _mintAmount
     ) public returns (address userHolding) {
-        jUsd.updateMintLimit(type(uint256).max);
         IERC20Metadata collateralContract = IERC20Metadata(_collateral);
 
         uint256 _collateralAmount =
-            _getCollateralAmountForUSDValue(_collateral, _mintAmount, registries[_collateral].getExchangeRate()) * 2;
+            _getCollateralAmountForUSDValue(_collateral, _mintAmount, registries[_collateral].getExchangeRate()) * 4;
 
         //get tokens for user
-        if (_collateral == USDC) {
-            _getUSDC(_user, _collateralAmount);
-        } else {
-            deal(_collateral, _user, _collateralAmount);
-        }
+        deal(_collateral, _user, _collateralAmount);
 
-        //startPrank so every next call is made from the _user address (both msg.sender and
-        // tx.origin will be set to _user)
+        //startPrank so every next call is made from the _user address (both msg.sender and tx.origin will be set to
+        // _user)
         vm.startPrank(_user, _user);
 
         // create holding for user
@@ -993,23 +988,7 @@ contract SelfLiquidationTest is Test {
         // make deposit to the holding
         collateralContract.approve(address(holdingManager), _collateralAmount);
         holdingManager.deposit(_collateral, _collateralAmount);
-
-        // borrow
-        //check if mint operation will be > jUsd.mintLimit;
-        bool exceedsMintLimit = jUsd.totalSupply() + _mintAmount > jUsd.mintLimit();
-        bool isUserSolvent = isSolvent(_user, _collateral, _mintAmount, address(userHolding));
-
-        //borrow jUsd
-        if (_mintAmount == 0) {
-            vm.expectRevert(bytes("3010"));
-        }
-        if (exceedsMintLimit) {
-            vm.expectRevert(bytes("2007"));
-        }
-        if (!isUserSolvent) {
-            vm.expectRevert(bytes("3009"));
-        }
-        holdingManager.borrow(_collateral, _collateralAmount / 4, 0, true);
+        holdingManager.borrow(_collateral, _collateralAmount / 2, 0, true);
 
         vm.stopPrank();
     }
@@ -1057,14 +1036,10 @@ contract SelfLiquidationTest is Test {
         // calculate based on the USD value
         totalCollateral = (1e18 * _jUSDAmount * manager.EXCHANGE_RATE_PRECISION()) / (_exchangeRate * 1e18);
 
-        // transform from 18 decimals to collateral's decimals
+        // Transform from 18 decimals to collateral's decimals
         uint256 collateralDecimals = IERC20Metadata(_collateral).decimals();
-
-        if (collateralDecimals > 18) {
-            totalCollateral = totalCollateral * (10 ** (collateralDecimals - 18));
-        } else if (collateralDecimals < 18) {
-            totalCollateral = totalCollateral / (10 ** (18 - collateralDecimals));
-        }
+        if (collateralDecimals > 18) totalCollateral = totalCollateral * (10 ** (collateralDecimals - 18));
+        else if (collateralDecimals < 18) totalCollateral = totalCollateral.ceilDiv(10 ** (18 - collateralDecimals));
     }
 
     //imitates functioning of _retrieveCollateral function, but

@@ -7,32 +7,20 @@ import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { SharesRegistry } from "../../src/SharesRegistry.sol";
+import { ISharesRegistry } from "../../src/interfaces/core/ISharesRegistry.sol";
+
 import "../fixtures/BasicContractsFixture.t.sol";
 
 contract SharesRegistryTest is BasicContractsFixture {
-    /// @notice event emitted when contract new ownership is accepted
-    event OwnershipAccepted(address indexed newOwner);
-    /// @notice event emitted when contract ownership transferal was initated
-    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
-    /// @notice event emitted when collateral was registered
-    event CollateralAdded(address indexed user, uint256 share);
-    /// @notice event emitted when collateral was unregistered
-    event CollateralRemoved(address indexed user, uint256 share);
-    /// @notice event emitted when the collateralization rate is updated
-    event CollateralizationRateUpdated(uint256 oldVal, uint256 newVal);
-    /// @notice oracle data updated
+    event ConfigUpdated(
+        address indexed token, ISharesRegistry.RegistryConfig oldVal, ISharesRegistry.RegistryConfig newVal
+    );
     event OracleDataUpdated();
-    /// @notice emitted when new oracle data is requested
     event NewOracleDataRequested(bytes newData);
-    /// @notice emitted when new oracle is requested
     event NewOracleRequested(address newOracle);
-    /// @notice oracle updated
     event OracleUpdated();
-    /// @notice event emitted when borrowed amount is set
     event BorrowedSet(address indexed _holding, uint256 oldVal, uint256 newVal);
-    // @notice event emitted when timelock amount is updated
     event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
-    // @notice event emitted when a new timelock amount is requested
     event TimelockAmountUpdateRequested(uint256 oldVal, uint256 newVal);
 
     SharesRegistry internal registry;
@@ -368,12 +356,15 @@ contract SharesRegistryTest is BasicContractsFixture {
         uint256 _newVal
     ) public {
         _newVal = bound(_newVal, 20e3, 1e5);
+
+        ISharesRegistry.RegistryConfig memory updatedConfig =
+            ISharesRegistry.RegistryConfig({ collateralizationRate: _newVal, liquidationBuffer: 0, liquidatorBonus: 0 });
+
         vm.expectEmit();
-        emit CollateralizationRateUpdated(registry.getConfig().collateralizationRate, _newVal);
+        emit ConfigUpdated(address(usdc), registry.getConfig(), updatedConfig);
+
         vm.prank(registry.owner(), registry.owner());
-        registry.updateConfig(
-            ISharesRegistry.RegistryConfig({ collateralizationRate: _newVal, liquidationBuffer: 0, liquidatorBonus: 0 })
-        );
+        registry.updateConfig(updatedConfig);
 
         assertEq(
             registry.getConfig().collateralizationRate,

@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
 import { LiquidationManager } from "../../src/LiquidationManager.sol";
 
 import { Manager } from "../../src/Manager.sol";
@@ -59,7 +61,7 @@ contract LiquidationManagerTest is Test {
         uint256 prevFee = liquidationManager.selfLiquidationFee();
         vm.assume(_caller != address(manager));
         vm.startPrank(_caller, _caller);
-        vm.expectRevert(bytes("1000"));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _caller));
 
         liquidationManager.setSelfLiquidationFee(1);
 
@@ -70,19 +72,19 @@ contract LiquidationManagerTest is Test {
     function test_setSelfLiquidationFee_when_authorized(
         uint256 _amount
     ) public {
-        uint256 liqP = liquidationManager.LIQUIDATION_PRECISION();
+        uint256 MAX_SELF_LIQUIDATION_FEE = liquidationManager.MAX_SELF_LIQUIDATION_FEE();
 
-        vm.startPrank(address(manager), address(manager));
+        vm.startPrank(address(liquidationManager.owner()), address(liquidationManager.owner()));
 
-        //Tests setting SL fee , when SL fee  < LIQUIDATION_PRECISION
-        if (_amount < liqP) {
+        //Tests setting SL fee , when SL fee  < MAX_SELF_LIQUIDATION_FEE
+        if (_amount < MAX_SELF_LIQUIDATION_FEE) {
             liquidationManager.setSelfLiquidationFee(_amount);
             assertEq(_amount, liquidationManager.selfLiquidationFee());
         }
-        //Tests setting SL fee , when SL fee > LIQUIDATION_PRECISION
+        //Tests setting SL fee , when SL fee > MAX_SELF_LIQUIDATION_FEE
         else {
             //Tests if reverts with error code 2001
-            vm.expectRevert(bytes("2001"));
+            vm.expectRevert(bytes("3066"));
             liquidationManager.setSelfLiquidationFee(_amount);
         }
     }

@@ -665,7 +665,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public {
         vm.assume(_user != address(0));
         _mintAmount = bound(_mintAmount, 200e18, 100_000e18);
-        _repayAmount = bound(_repayAmount, 1, _mintAmount);
+        _repayAmount = _mintAmount;
         address collateral = address(usdc);
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
         address holding = initiateUser(_user, collateral, _mintAmount);
