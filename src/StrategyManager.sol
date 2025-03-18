@@ -7,6 +7,7 @@ import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/exte
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { SignedMath } from "@openzeppelin/contracts/utils/math/SignedMath.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import { IHolding } from "./interfaces/core/IHolding.sol";
@@ -33,6 +34,7 @@ import { IStrategyManager } from "./interfaces/core/IStrategyManager.sol";
 contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
+    using SignedMath for int256;
 
     /**
      * @notice Returns whitelisted Strategies' info.
@@ -485,18 +487,41 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         address _asset,
         bytes calldata _data
     ) private returns (uint256, uint256) {
-        IStrategy strategyContract = IStrategy(_strategy);
-        // First check if holding has enough receipt tokens to burn.
-        _checkReceiptTokenAvailability({ _strategy: strategyContract, _shares: _shares, _holding: _holding });
+        ClaimInvestmentData memory tempData = ClaimInvestmentData({
+            strategyContract: IStrategy(_strategy),
+            assetResult: 0,
+            tokenInResult: 0,
+            yieldAmount: 0,
+            remainingShares: 0
+        });
 
-        (uint256 assetResult, uint256 tokenInResult) = strategyContract.withdraw(_shares, _holding, _asset, _data);
-        require(assetResult > 0, "3016");
+        // First check if holding has enough receipt tokens to burn.
+        _checkReceiptTokenAvailability({ _strategy: tempData.strategyContract, _shares: _shares, _holding: _holding });
+
+        (tempData.assetResult, tempData.tokenInResult, tempData.yieldAmount) =
+            tempData.strategyContract.withdraw(_shares, _holding, _asset, _data);
+        require(tempData.assetResult > 0, "3016");
+
+        if (tempData.yieldAmount > 0) {
+            _getStablesManager().addCollateral({
+                _holding: _holding,
+                _token: _asset,
+                _amount: uint256(tempData.yieldAmount)
+            });
+        }
+        if (tempData.yieldAmount < 0) {
+            _getStablesManager().removeCollateral({
+                _holding: _holding,
+                _token: _asset,
+                _amount: tempData.yieldAmount.abs()
+            });
+        }
 
         // If after the claim holding no longer has shares in the strategy remove that strategy from the set
-        (, uint256 remainingShares) = strategyContract.recipients(_holding);
-        if (0 == remainingShares) holdingToStrategy[_holding].remove(_strategy);
+        (, tempData.remainingShares) = tempData.strategyContract.recipients(_holding);
+        if (0 == tempData.remainingShares) holdingToStrategy[_holding].remove(_strategy);
 
-        return (assetResult, tokenInResult);
+        return (tempData.assetResult, tempData.tokenInResult);
     }
 
     /**
