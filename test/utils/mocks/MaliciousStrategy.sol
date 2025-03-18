@@ -69,7 +69,7 @@ contract MaliciousStrategy is IStrategy, StrategyBase {
         address _recipient,
         address,
         bytes calldata
-    ) external override onlyStrategyManager onlyValidAmount(_shares) returns (uint256, uint256) {
+    ) external override onlyStrategyManager onlyValidAmount(_shares) returns (uint256, uint256, int256) {
         uint256 res = recipients[_recipient].totalShares;
 
         _burn(receiptToken, _recipient, res, recipients[_recipient].totalShares, IERC20Metadata(tokenOut).decimals());
@@ -77,7 +77,7 @@ contract MaliciousStrategy is IStrategy, StrategyBase {
         recipients[_recipient].totalShares = 0;
         recipients[_recipient].investedAmount = 0;
         totalInvestments = 0;
-        return (0, res);
+        return (0, res, 0);
     }
 
     function claimRewards(
