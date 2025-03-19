@@ -510,7 +510,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         bytes memory data = bytes("");
 
         vm.expectRevert(bytes("3029"));
-        strategyManager.claimInvestment(holding, strategy, shares, asset, data);
+        strategyManager.claimInvestment(holding, strategy, asset, shares, data);
     }
 
     // Tests if claimInvestment reverts correctly when caller is unauthorized
@@ -520,7 +520,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address holding = address(0);
         address strategy = address(strategyWithoutRewardsMock);
         uint256 shares = 0;
-        address asset = address(0);
+        address token = address(0);
         bytes memory data = bytes("");
 
         vm.assume(
@@ -530,7 +530,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.expectRevert(bytes("1000"));
         vm.prank(caller, caller);
-        strategyManager.claimInvestment(holding, strategy, shares, asset, data);
+        strategyManager.claimInvestment(holding, token, strategy, shares, data);
     }
 
     // Tests if claimInvestment reverts correctly when invalid amount of shares
@@ -538,12 +538,12 @@ contract StrategyManagerTest is BasicContractsFixture {
         address holding = address(0);
         address strategy = address(strategyWithoutRewardsMock);
         uint256 shares = 0;
-        address asset = address(0);
+        address token = address(0);
         bytes memory data = bytes("");
 
         vm.prank(manager.holdingManager(), manager.holdingManager());
         vm.expectRevert(bytes("2001"));
-        strategyManager.claimInvestment(holding, strategy, shares, asset, data);
+        strategyManager.claimInvestment(holding, token, strategy, shares, data);
     }
 
     // Tests if claimInvestment reverts correctly when paused
@@ -559,7 +559,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.prank(manager.holdingManager(), manager.holdingManager());
         vm.expectRevert();
-        strategyManager.claimInvestment(holding, strategy, shares, asset, data);
+        strategyManager.claimInvestment(holding, strategy, asset, shares, data);
     }
 
     // Tests if claimInvestment reverts correctly when invalid holding
@@ -568,12 +568,12 @@ contract StrategyManagerTest is BasicContractsFixture {
     ) public {
         address strategy = address(strategyWithoutRewardsMock);
         uint256 shares = 1;
-        address asset = address(0);
+        address token = address(0);
         bytes memory data = bytes("");
 
         vm.prank(manager.holdingManager(), manager.holdingManager());
         vm.expectRevert(bytes("3002"));
-        strategyManager.claimInvestment(holding, strategy, shares, asset, data);
+        strategyManager.claimInvestment(holding, token, strategy, shares, data);
     }
 
     // Tests if claimInvestment works  correctly when receiptToken has big decimals
@@ -581,14 +581,14 @@ contract StrategyManagerTest is BasicContractsFixture {
         vm.assume(user != address(0));
         vm.assume(amount > 1e6 && amount < 1e20);
 
-        SampleTokenBigDecimals asset = new SampleTokenBigDecimals("BDT", "BDT", 0);
+        SampleTokenBigDecimals token = new SampleTokenBigDecimals("BDT", "BDT", 0);
 
         vm.startPrank(OWNER, OWNER);
-        manager.whitelistToken(address(asset));
+        manager.whitelistToken(address(token));
         SharesRegistry bdtSharesRegistry = new SharesRegistry(
             msg.sender,
             address(managerContainer),
-            address(asset),
+            address(token),
             address(usdcOracle),
             bytes(""),
             ISharesRegistry.RegistryConfig({
@@ -597,14 +597,14 @@ contract StrategyManagerTest is BasicContractsFixture {
                 liquidatorBonus: 8e3
             })
         );
-        stablesManager.registerOrUpdateShareRegistry(address(bdtSharesRegistry), address(asset), true);
+        stablesManager.registerOrUpdateShareRegistry(address(bdtSharesRegistry), address(token), true);
         vm.stopPrank();
 
-        address holding = initiateUser(user, address(asset), amount);
+        address holding = initiateUser(user, address(token), amount);
 
         address strategy = address(
             new StrategyWithRewardsMock(
-                address(managerContainer), address(asset), address(asset), address(0), "RandomToken", "RT"
+                address(managerContainer), address(token), address(token), address(0), "RandomToken", "RT"
             )
         );
 
@@ -616,15 +616,15 @@ contract StrategyManagerTest is BasicContractsFixture {
         strategyManager.addStrategy(strategy);
         vm.stopPrank();
 
-        uint256 holdingBalanceBefore = asset.balanceOf(holding);
+        uint256 holdingBalanceBefore = token.balanceOf(holding);
 
         vm.startPrank(user, user);
-        strategyManager.invest(address(asset), strategy, holdingBalanceBefore, data);
+        strategyManager.invest(address(token), strategy, holdingBalanceBefore, data);
         uint256 holdingReceiptTokenBalanceAfterInvest = IERC20(receiptToken).balanceOf(holding);
 
         (, uint256 shares) = IStrategy(strategy).recipients(holding);
         uint256 claimAmount = shares;
-        strategyManager.claimInvestment(holding, strategy, claimAmount, address(asset), data);
+        strategyManager.claimInvestment(holding, address(token), strategy, claimAmount, data);
         vm.stopPrank();
 
         address[] memory holdingStrategies = strategyManager.getHoldingToStrategy(holding);
@@ -633,27 +633,27 @@ contract StrategyManagerTest is BasicContractsFixture {
             IERC20(receiptToken).balanceOf(holding), shares - claimAmount, "Holding's receipt tokens count incorrect"
         );
         assertEq(IERC20(receiptToken).balanceOf(holding), 0, "Gauge's receipt tokens count incorrect");
-        assertEq(asset.balanceOf(strategy), shares - claimAmount, "Funds weren't taken from strategy");
-        assertEq(asset.balanceOf(holding), claimAmount, "Holding didn't receive funds invested in strategy");
+        assertEq(token.balanceOf(strategy), shares - claimAmount, "Funds weren't taken from strategy");
+        assertEq(token.balanceOf(holding), claimAmount, "Holding didn't receive funds invested in strategy");
     }
 
     // Tests if claimInvestment works  correctly
     function test_claimInvestment_when_authorized(address user, uint256 amount, uint256 _shares) public {
         vm.assume(user != address(0));
         vm.assume(amount > 0 && amount < 1e20);
-        address asset = address(usdc);
-        address holding = initiateUser(user, asset, amount);
+        address token = address(usdc);
+        address holding = initiateUser(user, token, amount);
         address strategy = address(strategyWithoutRewardsMock);
         bytes memory data = bytes("");
         uint256 holdingBalanceBefore = usdc.balanceOf(holding);
 
         vm.prank(user, user);
-        strategyManager.invest(asset, strategy, holdingBalanceBefore, data);
+        strategyManager.invest(token, strategy, holdingBalanceBefore, data);
         (, uint256 shares) = strategyWithoutRewardsMock.recipients(holding);
         uint256 claimAmount = bound(_shares, 1, shares);
 
         vm.prank(user, user);
-        strategyManager.claimInvestment(holding, strategy, claimAmount, asset, data);
+        strategyManager.claimInvestment(holding, token, strategy, claimAmount, data);
 
         address[] memory holdingStrategies = strategyManager.getHoldingToStrategy(holding);
 
