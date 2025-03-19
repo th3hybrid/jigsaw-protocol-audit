@@ -516,7 +516,12 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         address holding = userHolding[msg.sender];
 
         emit Deposit(holding, _token, _amount);
-        IERC20(_token).safeTransferFrom({ from: _from, to: holding, value: _amount });
+        if (_from == address(this)) {
+            IERC20(_token).safeTransfer({ to: holding, value: _amount });
+        } else {
+            IERC20(_token).safeTransferFrom({ from: _from, to: holding, value: _amount });
+        }
+
         _getStablesManager().addCollateral({ _holding: holding, _token: _token, _amount: _amount });
     }
 
