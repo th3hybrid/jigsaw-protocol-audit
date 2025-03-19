@@ -110,7 +110,8 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         require(strategyInfo[_strategy].active, "1202");
         require(IStrategy(_strategy).tokenIn() == _token, "3085");
 
-        (tokenOutAmount, tokenInAmount) = _invest(_holding, _token, _strategy, _amount, _data);
+        (tokenOutAmount, tokenInAmount) =
+            _invest({ _holding: _holding, _token: _token, _strategy: _strategy, _amount: _amount, _data: _data });
 
         emit Invested(_holding, msg.sender, _token, _strategy, _amount, tokenOutAmount, tokenInAmount);
         return (tokenOutAmount, tokenInAmount);
@@ -157,7 +158,13 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         require(_data.strategyFrom != _data.strategyTo, "3086");
         require(strategyInfo[_data.strategyTo].active, "1202");
 
-        (uint256 claimResult,) = _claimInvestment(_holding, _data.strategyFrom, _data.shares, _token, _data.dataFrom);
+        (uint256 claimResult,) = _claimInvestment({
+            _holding: _holding,
+            _token: _token,
+            _strategy: _data.strategyFrom,
+            _shares: _data.shares,
+            _data: _data.dataFrom
+        });
         (tokenOutAmount, tokenInAmount) = _invest(_holding, _token, _data.strategyTo, claimResult, _data.dataTo);
 
         emit InvestmentMoved(
@@ -195,9 +202,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @dev 'AssetAmount' will be equal to 'tokenInAmount' in case the '_asset' is the same as strategy 'tokenIn()'.
      *
      * @param _holding holding's address.
+     * @param _token address to be received.
      * @param _strategy strategy to invest into.
      * @param _shares shares amount.
-     * @param _asset token address to be received.
      * @param _data extra data.
      *
      * @return assetAmount returned asset amount obtained from the operation.
@@ -205,9 +212,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      */
     function claimInvestment(
         address _holding,
+        address _token,
         address _strategy,
         uint256 _shares,
-        address _asset,
         bytes calldata _data
     )
         external
@@ -220,10 +227,15 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         returns (uint256 assetAmount, uint256 tokenInAmount)
     {
         require(_getHoldingManager().isHolding(_holding), "3002");
+        (assetAmount, tokenInAmount) = _claimInvestment({
+            _holding: _holding,
+            _token: _token,
+            _strategy: _strategy,
+            _shares: _shares,
+            _data: _data
+        });
 
-        (assetAmount, tokenInAmount) = _claimInvestment(_holding, _strategy, _shares, _asset, _data);
-
-        emit StrategyClaim(_holding, msg.sender, _asset, _strategy, _shares, assetAmount, tokenInAmount);
+        emit StrategyClaim(_holding, msg.sender, _token, _strategy, _shares, assetAmount, tokenInAmount);
     }
 
     /**
@@ -460,6 +472,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         (tokenOutAmount, tokenInAmount) = IStrategy(_strategy).deposit(_token, _amount, _holding, _data);
         require(tokenOutAmount > 0, "3030");
 
+        // Ensure holding is not liquidatable after investment
+        require(!_getStablesManager().isLiquidatable(_token, _holding), "3103");
+
         // Add strategy to the set, which stores holding's all invested strategies
         holdingToStrategy[_holding].add(_strategy);
     }
@@ -472,9 +487,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * - Removes strategy from holding's invested strategies set if `remainingShares` == 0.
      *
      * @param _holding address from which the investment is being claimed.
+     * @param _token address to be withdrawn from the strategy.
      * @param _strategy address from which the investment is being claimed.
      * @param _shares number to be withdrawn from the strategy.
-     * @param _asset address to be withdrawn from the strategy.
      * @param _data data required by the strategy's withdraw function.
      *
      * @return assetResult The amount of the asset withdrawn from the strategy.
@@ -482,9 +497,9 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      */
     function _claimInvestment(
         address _holding,
+        address _token,
         address _strategy,
         uint256 _shares,
-        address _asset,
         bytes calldata _data
     ) private returns (uint256, uint256) {
         ClaimInvestmentData memory tempData = ClaimInvestmentData({
@@ -499,23 +514,25 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         _checkReceiptTokenAvailability({ _strategy: tempData.strategyContract, _shares: _shares, _holding: _holding });
 
         (tempData.assetResult, tempData.tokenInResult, tempData.yieldAmount) =
-            tempData.strategyContract.withdraw(_shares, _holding, _asset, _data);
+            tempData.strategyContract.withdraw({ _shares: _shares, _recipient: _holding, _asset: _token, _data: _data });
         require(tempData.assetResult > 0, "3016");
 
         if (tempData.yieldAmount > 0) {
             _getStablesManager().addCollateral({
                 _holding: _holding,
-                _token: _asset,
+                _token: _token,
                 _amount: uint256(tempData.yieldAmount)
             });
         }
         if (tempData.yieldAmount < 0) {
             _getStablesManager().removeCollateral({
                 _holding: _holding,
-                _token: _asset,
+                _token: _token,
                 _amount: tempData.yieldAmount.abs()
             });
         }
+
+        require(!_getStablesManager().isLiquidatable(_token, _holding), "3103");
 
         // If after the claim holding no longer has shares in the strategy remove that strategy from the set
         (, tempData.remainingShares) = tempData.strategyContract.recipients(_holding);
