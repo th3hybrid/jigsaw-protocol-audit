@@ -71,12 +71,12 @@ contract SelfLiquidationTest is Test {
     SwapManager public swapManager;
 
     //addresses of tokens used in tests on Arbitrum chain
-    address USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
-    address WETH = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-    address USDT = 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9;
+    address public USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
+    address public WETH = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+    address public USDT = 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9;
 
     //address of UniswapSwapRouter used in tests on Arbitrum chain
-    address UniswapSwapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    address public UniswapSwapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     mapping(address => SharesRegistry) public registries;
     uint256 internal uniswapPoolCap = 1_000_000_000;
@@ -84,14 +84,14 @@ contract SelfLiquidationTest is Test {
     address public jUsdPool;
     uint256 public jUsdPoolMintTokenId;
 
+    address public DEFAULT_USER = address(42);
+
     struct SelfLiquidationTestTempData {
         address collateral;
-        address user;
         address userHolding;
         uint256 userCollateralAmount;
         uint256 userJUsd;
         uint256 selfLiquidationAmount;
-        uint256 mintAmount;
         uint256 jUsdTotalSupplyBeforeSL;
         uint256 requiredCollateral;
         uint256 expectedFeeBalanceAfterSL;
@@ -119,6 +119,7 @@ contract SelfLiquidationTest is Test {
         manager.setJUsdOracle();
 
         jUsd = new JigsawUSD(address(this), address(managerContainer));
+        jUsd.updateMintLimit(type(uint256).max);
 
         liquidationManager = new LiquidationManager(address(this), address(managerContainer));
         holdingManager = new HoldingManager(address(this), address(managerContainer));
@@ -191,9 +192,8 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        testData.mintAmount = 200 * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
+        uint256 _amount = 800;
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
@@ -202,7 +202,7 @@ contract SelfLiquidationTest is Test {
             address(registries[testData.collateral]), testData.collateral, false
         );
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         vm.expectRevert();
         liquidationManager.selfLiquidate(testData.collateral, 1, swapParams, strategiesParams);
     }
@@ -212,16 +212,15 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        testData.mintAmount = 200 * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
+        uint256 _amount = 800;
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
 
         usdcOracle.setAVeryLowPrice();
 
-        vm.startPrank(testData.user, testData.user);
+        vm.startPrank(DEFAULT_USER, DEFAULT_USER);
         vm.expectRevert(bytes("3075"));
         liquidationManager.selfLiquidate(testData.collateral, 1, swapParams, strategiesParams);
     }
@@ -231,47 +230,26 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        testData.mintAmount = 200 * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
+        uint256 _amount = 800;
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         vm.expectRevert(bytes("2003"));
         liquidationManager.selfLiquidate(testData.collateral, type(uint256).max, swapParams, strategiesParams);
-    }
-
-    // This test evaluates the self-liquidation mechanism when self-liquidation amount is that small that
-    // due to solidity's rounding required collateral becomes 0
-    function test_selfLiquidate_when_jUsdAmountTooSmall() public {
-        SelfLiquidationTestTempData memory testData;
-
-        testData.collateral = USDC;
-        testData.mintAmount = 200 * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-
-        ILiquidationManager.SwapParamsCalldata memory swapParams;
-        ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
-
-        vm.prank(testData.user, testData.user);
-        vm.expectRevert(bytes("3080"));
-        liquidationManager.selfLiquidate(testData.collateral, 1, swapParams, strategiesParams);
     }
 
     // This test evaluates the self-liquidation mechanism when the {slippagePercentage} is set too high
     function test_selfLiquidate_when_slippageTooHigh(uint256 _amount, uint256 _slippagePercentage) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
         vm.assume(_slippagePercentage > liquidationManager.LIQUIDATION_PRECISION());
 
         testData.collateral = USDC;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd / 2;
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
@@ -280,7 +258,7 @@ contract SelfLiquidationTest is Test {
         swapParams.slippagePercentage = _slippagePercentage;
         swapParams.amountInMaximum = type(uint256).max;
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         vm.expectRevert(bytes("3081"));
         liquidationManager.selfLiquidate(
             testData.collateral, testData.selfLiquidationAmount, swapParams, strategiesParams
@@ -293,13 +271,11 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         testData.collateral = USDC;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd / 2;
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
         testData.jUsdTotalSupplyBeforeSL = jUsd.totalSupply();
@@ -319,7 +295,7 @@ contract SelfLiquidationTest is Test {
         swapParams.slippagePercentage = 0.1e3;
         swapParams.amountInMaximum = testData.requiredCollateral * 2;
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         vm.expectRevert(bytes("3078"));
         liquidationManager.selfLiquidate(
             testData.collateral, testData.selfLiquidationAmount, swapParams, strategiesParams
@@ -332,13 +308,11 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         testData.collateral = USDC;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd / 2;
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
         testData.jUsdTotalSupplyBeforeSL = jUsd.totalSupply();
@@ -358,7 +332,7 @@ contract SelfLiquidationTest is Test {
         swapParams.slippagePercentage = 1e5;
         swapParams.amountInMaximum = testData.requiredCollateral * 2;
 
-        vm.startPrank(testData.user, testData.user);
+        vm.startPrank(DEFAULT_USER, DEFAULT_USER);
 
         // Reduce amount of available collateral even more to get wanted error
         strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
@@ -378,16 +352,15 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        testData.mintAmount = 200 * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
+        uint256 _amount = 800;
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
-
-        vm.prank(testData.user, testData.user);
+        strategiesParams.useHoldingBalance = true;
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         vm.expectRevert(bytes("3077"));
-        liquidationManager.selfLiquidate(testData.collateral, testData.mintAmount / 100, swapParams, strategiesParams);
+        liquidationManager.selfLiquidate(testData.collateral, _amount, swapParams, strategiesParams);
     }
 
     // This test evaluates the self-liquidation mechanism when:
@@ -397,16 +370,17 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDT;
-        testData.mintAmount = 200 * (10 ** jUsd.decimals());
-        testData.user = address(101);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
+        uint256 _amount = 800;
+        DEFAULT_USER = address(101);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
+        strategiesParams.useHoldingBalance = true;
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         vm.expectRevert(bytes("3077"));
-        liquidationManager.selfLiquidate(testData.collateral, testData.mintAmount / 100, swapParams, strategiesParams);
+        liquidationManager.selfLiquidate(testData.collateral, _amount, swapParams, strategiesParams);
     }
 
     // This test evaluates the self-liquidation mechanism when:
@@ -418,12 +392,10 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
         testData.collateral = USDC;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd;
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
         testData.requiredCollateral = _getCollateralAmountForUSDValue(
@@ -439,8 +411,9 @@ contract SelfLiquidationTest is Test {
         ILiquidationManager.SwapParamsCalldata memory swapParams;
         swapParams.swapPath = abi.encodePacked(jUsd, uint24(100), testData.collateral);
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
+        strategiesParams.useHoldingBalance = true;
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         vm.expectRevert(bytes("3083"));
         liquidationManager.selfLiquidate(
             testData.collateral, testData.selfLiquidationAmount, swapParams, strategiesParams
@@ -456,13 +429,11 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, 100_000);
+        _amount = bound(_amount, 800, 100_000);
 
         testData.collateral = USDT;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd;
         testData.userCollateralAmount = IERC20(USDT).balanceOf(testData.userHolding);
         testData.jUsdTotalSupplyBeforeSL = jUsd.totalSupply();
@@ -478,7 +449,7 @@ contract SelfLiquidationTest is Test {
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
-
+        strategiesParams.useHoldingBalance = true;
         swapParams.swapPath = abi.encodePacked(address(jUsd), uint24(100), USDC, uint24(100), testData.collateral);
 
         (swapParams.amountInMaximum,,,) = quoter.quoteExactOutput(
@@ -486,7 +457,7 @@ contract SelfLiquidationTest is Test {
         );
         swapParams.slippagePercentage = 1e3; // we allow 1% slippage for this test case
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         vm.expectRevert(bytes("3083"));
         liquidationManager.selfLiquidate(
             testData.collateral, testData.selfLiquidationAmount, swapParams, strategiesParams
@@ -502,15 +473,13 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
         testData.collateral = USDC;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd;
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
         testData.jUsdTotalSupplyBeforeSL = jUsd.totalSupply();
@@ -524,6 +493,7 @@ contract SelfLiquidationTest is Test {
         uint256 feeBalanceBeforeSL = IERC20(testData.collateral).balanceOf(manager.feeAddress());
 
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
+        strategiesParams.useHoldingBalance = true;
         ILiquidationManager.SwapParamsCalldata memory swapParams;
         swapParams.swapPath = abi.encodePacked(address(jUsd), uint24(100), testData.collateral);
         (swapParams.amountInMaximum,,,) = quoter.quoteExactOutput(swapParams.swapPath, testData.selfLiquidationAmount);
@@ -534,7 +504,7 @@ contract SelfLiquidationTest is Test {
             + testData.requiredCollateral.mulDiv(swapParams.slippagePercentage, liquidationManager.LIQUIDATION_PRECISION());
         if (swapParams.amountInMaximum > limit) return;
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         liquidationManager.selfLiquidate(
             testData.collateral, testData.selfLiquidationAmount, swapParams, strategiesParams
         );
@@ -569,15 +539,13 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, 100_000);
+        _amount = bound(_amount, 800, 100_000);
 
         _createJUsdUsdcPool();
 
         testData.collateral = USDT;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd;
         testData.userCollateralAmount = IERC20(USDT).balanceOf(testData.userHolding);
         testData.jUsdTotalSupplyBeforeSL = jUsd.totalSupply();
@@ -592,6 +560,7 @@ contract SelfLiquidationTest is Test {
             IERC20(testData.collateral).balanceOf(manager.feeAddress()) + testData.protocolFee;
 
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
+        strategiesParams.useHoldingBalance = true;
         ILiquidationManager.SwapParamsCalldata memory swapParams;
 
         swapParams.swapPath = abi.encodePacked(address(jUsd), uint24(100), USDC, uint24(100), testData.collateral);
@@ -600,7 +569,7 @@ contract SelfLiquidationTest is Test {
         swapParams.amountInMaximum = swapParams.amountInMaximum * 101 / 100;
         swapParams.deadline = block.timestamp;
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         liquidationManager.selfLiquidate(
             testData.collateral, testData.selfLiquidationAmount, swapParams, strategiesParams
         );
@@ -638,15 +607,13 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
         testData.collateral = USDC;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd;
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
         testData.jUsdTotalSupplyBeforeSL = jUsd.totalSupply();
@@ -665,9 +632,8 @@ contract SelfLiquidationTest is Test {
         swapParams.slippagePercentage = 0.1e3; // we allow 0.1% slippage for this test case
         swapParams.deadline = block.timestamp;
 
-        vm.startPrank(testData.user, testData.user);
+        vm.startPrank(DEFAULT_USER, DEFAULT_USER);
         strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
-        uint256 strategyBalanceBeforeSL = usdc.balanceOf(address(strategyWithoutRewardsMock));
 
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
         strategiesParams.useHoldingBalance = true;
@@ -680,31 +646,27 @@ contract SelfLiquidationTest is Test {
             + testData.requiredCollateral.mulDiv(swapParams.slippagePercentage, liquidationManager.LIQUIDATION_PRECISION());
         if (swapParams.amountInMaximum > limit) return;
 
-        liquidationManager.selfLiquidate(
+        (uint256 collateralUsed, uint256 jUsdAmountRepaid) = liquidationManager.selfLiquidate(
             testData.collateral, testData.selfLiquidationAmount, swapParams, strategiesParams
         );
         vm.stopPrank();
 
+        assertEq(jUsdAmountRepaid, testData.selfLiquidationAmount, "jUsdAmountRepaid incorrect");
         assertGe(
             IERC20(testData.collateral).balanceOf(manager.feeAddress()), feeBalanceBeforeSL, "Fee balance incorrect"
         );
-        assertEq(
-            registries[testData.collateral].borrowed(testData.userHolding),
-            testData.userJUsd - testData.selfLiquidationAmount,
-            "Total borrow incorrect"
-        );
+        assertEq(registries[testData.collateral].borrowed(testData.userHolding), 0, "Total borrow incorrect");
         assertEq(
             testData.jUsdTotalSupplyBeforeSL - testData.selfLiquidationAmount,
             jUsd.totalSupply(),
             "Total supply incorrect"
         );
-        assertEq(0, IERC20(testData.collateral).balanceOf(testData.userHolding), "Holding collateral incorrect");
-        assertApproxEqRel(
-            strategyBalanceBeforeSL - testData.requiredCollateral,
-            usdc.balanceOf(address(strategyWithoutRewardsMock)),
-            0.08e18,
-            "Strategy balance incorrect"
+        assertEq(
+            IERC20(testData.collateral).balanceOf(testData.userHolding),
+            testData.userCollateralAmount - collateralUsed,
+            "Holding collateral incorrect"
         );
+        assertEq(usdc.balanceOf(address(strategyWithoutRewardsMock)), 0, "Strategy balance incorrect");
     }
 
     // This test evaluates the self-liquidation mechanism when:
@@ -718,15 +680,14 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
+        _amount = 6000;
 
         _createJUsdUsdcPool();
 
         testData.collateral = USDC;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd / 2;
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
         testData.jUsdTotalSupplyBeforeSL = jUsd.totalSupply();
@@ -747,8 +708,7 @@ contract SelfLiquidationTest is Test {
 
         uint256 investAmount = swapParams.amountInMaximum * 2;
 
-        vm.startPrank(testData.user, testData.user);
-
+        vm.startPrank(DEFAULT_USER, DEFAULT_USER);
         strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), investAmount, "");
 
         uint256 strategyBalanceBeforeSL = usdc.balanceOf(address(strategyWithoutRewardsMock));
@@ -786,20 +746,16 @@ contract SelfLiquidationTest is Test {
             "Total borrow incorrect"
         );
         assertEq(
-            testData.jUsdTotalSupplyBeforeSL - testData.selfLiquidationAmount,
             jUsd.totalSupply(),
+            testData.jUsdTotalSupplyBeforeSL - testData.selfLiquidationAmount,
             "Total supply incorrect"
         );
         assertEq(
-            testData.userCollateralAmount - investAmount,
             IERC20(testData.collateral).balanceOf(testData.userHolding),
+            testData.userCollateralAmount - collateralUsed,
             "Holding collateral incorrect"
         );
-        assertEq(
-            strategyBalanceBeforeSL - collateralUsed,
-            usdc.balanceOf(address(strategyWithoutRewardsMock)),
-            "Strategy balance incorrect"
-        );
+        assertEq(usdc.balanceOf(address(strategyWithoutRewardsMock)), 0, "Strategy balance incorrect");
     }
 
     // This test evaluates the self-liquidation mechanism when:
@@ -811,15 +767,13 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, uniswapPoolCap / 100_000);
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
         testData.collateral = USDC;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd;
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
         testData.jUsdTotalSupplyBeforeSL = jUsd.totalSupply();
@@ -838,7 +792,7 @@ contract SelfLiquidationTest is Test {
         swapParams.slippagePercentage = 0.1e3; // we allow 0.1% slippage for this test case
         swapParams.deadline = block.timestamp;
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
         uint256 strategyBalanceBeforeSL = usdc.balanceOf(address(strategyWithoutRewardsMock));
 
@@ -846,7 +800,7 @@ contract SelfLiquidationTest is Test {
         _getUSDC(testData.userHolding, testData.requiredCollateral * 2);
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
 
-        vm.startPrank(testData.user, testData.user);
+        vm.startPrank(DEFAULT_USER, DEFAULT_USER);
 
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
         strategiesParams.useHoldingBalance = true;
@@ -880,9 +834,10 @@ contract SelfLiquidationTest is Test {
             jUsd.totalSupply(),
             "Total supply incorrect"
         );
-        assertEq(
+        assertApproxEqAbs(
             expectedHoldingBalance,
             IERC20(testData.collateral).balanceOf(testData.userHolding),
+            1,
             "Holding collateral incorrect"
         );
         assertEq(
@@ -900,15 +855,13 @@ contract SelfLiquidationTest is Test {
         uint256 _amount
     ) public {
         SelfLiquidationTestTempData memory testData;
-        _amount = bound(_amount, 200, 100_000);
+        _amount = bound(_amount, 800, 100_000);
 
         _createJUsdUsdcPool();
 
         testData.collateral = USDT;
-        testData.mintAmount = _amount * (10 ** jUsd.decimals());
-        testData.user = address(1);
-        testData.userHolding = initiateUser(testData.user, testData.collateral, testData.mintAmount);
-        testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
+        testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
         testData.selfLiquidationAmount = testData.userJUsd;
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
         testData.jUsdTotalSupplyBeforeSL = jUsd.totalSupply();
@@ -924,6 +877,7 @@ contract SelfLiquidationTest is Test {
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
+        strategiesParams.useHoldingBalance = true;
 
         swapParams.swapPath = abi.encodePacked(address(jUsd), uint24(100), USDC, uint24(100), testData.collateral);
         swapParams.slippagePercentage = 50e3; // we allow 50% slippage for this test case
@@ -934,7 +888,7 @@ contract SelfLiquidationTest is Test {
         deal(testData.collateral, testData.userHolding, testData.requiredCollateral * 2);
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
 
-        vm.prank(testData.user, testData.user);
+        vm.prank(DEFAULT_USER, DEFAULT_USER);
         liquidationManager.selfLiquidate(
             testData.collateral, testData.selfLiquidationAmount, swapParams, strategiesParams
         );
@@ -965,31 +919,16 @@ contract SelfLiquidationTest is Test {
 
     //Utility functions
 
-    function initiateUser(
-        address _user,
-        address _collateral,
-        uint256 _mintAmount
-    ) public returns (address userHolding) {
+    function initiateUser(address _user, address _collateral, uint256 _amount) public returns (address userHolding) {
         IERC20Metadata collateralContract = IERC20Metadata(_collateral);
+        uint256 _collateralAmount = _amount * 10 ** collateralContract.decimals();
 
-        uint256 _collateralAmount =
-            _getCollateralAmountForUSDValue(_collateral, _mintAmount, registries[_collateral].getExchangeRate()) * 4;
-
-        //get tokens for user
-        deal(_collateral, _user, _collateralAmount);
-
-        //startPrank so every next call is made from the _user address (both msg.sender and tx.origin will be set to
-        // _user)
         vm.startPrank(_user, _user);
-
-        // create holding for user
+        deal(_collateral, _user, _collateralAmount);
         userHolding = holdingManager.createHolding();
-
-        // make deposit to the holding
         collateralContract.approve(address(holdingManager), _collateralAmount);
         holdingManager.deposit(_collateral, _collateralAmount);
-        holdingManager.borrow(_collateral, _collateralAmount / 2, 0, true);
-
+        holdingManager.borrow(_collateral, _collateralAmount / 3, 0, true);
         vm.stopPrank();
     }
 
