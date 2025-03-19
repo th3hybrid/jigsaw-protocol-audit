@@ -532,9 +532,14 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
             });
         }
 
-        require(!_getStablesManager().isLiquidatable(_token, _holding), "3103");
+        // Ensure user doesn't harm themselves by becoming liquidatable after claiming investment.
+        // If function is called by liquidation manager, we don't need to check if holding is liquidatable,
+        // as we need to save as much collateral as possible.
+        if (_getManager().liquidationManager() != msg.sender) {
+            require(!_getStablesManager().isLiquidatable(_token, _holding), "3103");
+        }
 
-        // If after the claim holding no longer has shares in the strategy remove that strategy from the set
+        // If after the claim holding no longer has shares in the strategy remove that strategy from the set.
         (, tempData.remainingShares) = tempData.strategyContract.recipients(_holding);
         if (0 == tempData.remainingShares) holdingToStrategy[_holding].remove(_strategy);
 
