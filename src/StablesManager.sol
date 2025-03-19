@@ -390,12 +390,13 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         if (registry.borrowed(_holding) == 0) return false;
 
-        // Compute threshold for specified collateral.
+        // Compute threshold for specified collateral
         ISharesRegistry.RegistryConfig memory registryConfig = registry.getConfig();
-        uint256 threshold = registryConfig.collateralizationRate - registryConfig.liquidationBuffer;
+        uint256 threshold = registryConfig.collateralizationRate + registryConfig.liquidationBuffer;
 
+        // Returns true when the ratio is below the liquidation threshold
         return _getRatio({ _holding: _holding, registry: registry, rate: threshold })
-            < registry.borrowed(_holding).mulDiv(
+            <= registry.borrowed(_holding).mulDiv(
                 _getManager().getJUsdExchangeRate(), _getManager().EXCHANGE_RATE_PRECISION()
             );
     }
