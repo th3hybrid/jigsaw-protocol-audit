@@ -175,7 +175,6 @@ interface IStrategyManager is IStrategyManagerMin {
      * @notice Emits:
      * - Invested event indicating successful investment operation.
      *
-     * @dev Some Strategies will not give back any receipt tokens; in this case 'tokenOutAmount' will be 0.
      * @dev 'tokenInAmount' will be equal to '_amount' in case the '_asset' is the same as strategy 'tokenIn()'.
      *
      * @param _token address.
@@ -227,13 +226,12 @@ interface IStrategyManager is IStrategyManagerMin {
      *
      * @notice Requirements:
      * - The `_strategy` must be valid.
-     * - Msg.sender should be allowed to execute the call.
-     * - `_shares` should be of valid amount.
+     * - Msg.sender must be allowed to execute the call.
+     * - `_shares` must be of valid amount.
      * - Specified `_holding` must exist within protocol.
      *
      * @notice Effects:
-     * - Unstakes receipt tokens.
-     * - Withdraws investment from `withdraw`.
+     * - Withdraws investment from `_strategy`.
      * - Updates `holdingToStrategy` if needed.
      *
      * @notice Emits:
@@ -244,9 +242,9 @@ interface IStrategyManager is IStrategyManagerMin {
      * @dev 'AssetAmount' will be equal to 'tokenInAmount' in case the '_asset' is the same as strategy 'tokenIn()'.
      *
      * @param _holding holding's address.
+     * @param _token address to be received.
      * @param _strategy strategy to invest into.
      * @param _shares shares amount.
-     * @param _asset token address to be received.
      * @param _data extra data.
      *
      * @return assetAmount returned asset amount obtained from the operation.
@@ -254,9 +252,9 @@ interface IStrategyManager is IStrategyManagerMin {
      */
     function claimInvestment(
         address _holding,
+        address _token,
         address _strategy,
         uint256 _shares,
-        address _asset,
         bytes calldata _data
     ) external returns (uint256 assetAmount, uint256 tokenInAmount);
 
