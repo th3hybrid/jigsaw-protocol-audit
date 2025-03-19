@@ -566,7 +566,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
 
             // Withdraw collateral.
             (tempData.withdrawResult,) = IStrategyManager(_getManager().strategyManager()).claimInvestment(
-                _holding, _strategies[i], tempData.shares, _token, _strategiesData[i]
+                _holding, _strategies[i], _token, tempData.shares, _strategiesData[i]
             );
 
             // Update amount of retrieved collateral.
