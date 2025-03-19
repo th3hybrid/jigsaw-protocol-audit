@@ -174,9 +174,6 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         tempData.totalRequiredCollateral =
             _getCollateralForJUsd(_collateral, tempData.jUsdAmountToBurn, tempData.exchangeRate);
 
-        // Ensure there are no potential rounding errors resulting from a small self-liquidation amount.
-        require(tempData.totalRequiredCollateral > 0, "3080");
-
         // Calculate the self-liquidation fee amount.
         tempData.totalFeeCollateral =
             tempData.totalRequiredCollateral.mulDiv(selfLiquidationFee, precision, Math.Rounding.Ceil);
