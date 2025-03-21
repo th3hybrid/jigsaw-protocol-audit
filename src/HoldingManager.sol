@@ -20,8 +20,6 @@ import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 
 import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
-import { IStrategy } from "./interfaces/core/IStrategy.sol";
-import { IStrategyManager } from "./interfaces/core/IStrategyManager.sol";
 
 /**
  * @title HoldingManager
