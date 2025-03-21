@@ -27,7 +27,6 @@ contract DeployManager is Script, Base {
 
     // Get values from configs
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
-    address internal USDC = managerConfig.readAddress(".USDC");
     address internal WETH = managerConfig.readAddress(".WETH");
     address internal JUSD_Oracle = deployments.readAddress(".JUSD_GENESIS_ORACLE");
     bytes internal JUSD_OracleData = managerConfig.readBytes(".JUSD_OracleData");
@@ -37,14 +36,12 @@ contract DeployManager is Script, Base {
 
     function run() external broadcast returns (Manager manager) {
         // Validate interfaces
-        _validateInterface(IERC20(USDC));
         _validateInterface(IERC20(WETH));
         _validateInterface(IOracle(JUSD_Oracle));
 
         // Deploy Manager contract
         manager = new Manager{ salt: salt }({
             _initialOwner: INITIAL_OWNER,
-            _usdc: USDC,
             _weth: WETH,
             _oracle: JUSD_Oracle,
             _oracleData: JUSD_OracleData
