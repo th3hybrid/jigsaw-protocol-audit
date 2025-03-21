@@ -28,7 +28,7 @@ contract ManagerContainerTest is BasicContractsFixture {
         address oldManager = managerContainer.manager();
 
         SampleOracle jUsdOracle = new SampleOracle();
-        Manager newManager = new Manager(address(this), address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        Manager newManager = new Manager(address(this), address(weth), address(jUsdOracle), bytes(""));
 
         vm.expectEmit(true, true, false, false);
         emit ManagerUpdated(oldManager, address(newManager));
@@ -41,7 +41,7 @@ contract ManagerContainerTest is BasicContractsFixture {
         holdingManager.createHolding();
 
         SampleOracle jUsdOracle = new SampleOracle();
-        Manager newManager = new Manager(OWNER, address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        Manager newManager = new Manager(OWNER, address(weth), address(jUsdOracle), bytes(""));
 
         newManager.setPerformanceFee(3000);
 

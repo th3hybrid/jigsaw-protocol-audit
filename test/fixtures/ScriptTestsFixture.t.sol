@@ -90,13 +90,14 @@ contract ScriptTestsFixture is Test {
 
         // Update config files with needed values
         Strings.toHexString(uint160(INITIAL_OWNER), 20).write(commonConfigPath, ".INITIAL_OWNER");
-        Strings.toHexString(uint160(USDC), 20).write(managerConfigPath, ".USDC");
+
         Strings.toHexString(uint160(WETH), 20).write(managerConfigPath, ".WETH");
         Strings.toHexString(uint256(bytes32("")), 32).write(managerConfigPath, ".JUSD_OracleData");
         Strings.toHexString(uint160(UNISWAP_FACTORY), 20).write(managersConfigPath, ".UNISWAP_FACTORY");
         Strings.toHexString(uint160(UNISWAP_SWAP_ROUTER), 20).write(managersConfigPath, ".UNISWAP_SWAP_ROUTER");
         Strings.toHexString(uint160(PYTH), 20).write(pythConfigPath, ".PYTH");
         Strings.toHexString(uint160(USDT_USDC_POOL), 20).write(uniswapV3OracleConfigPath, ".JUSD_USDC_UNISWAP_POOL");
+        Strings.toHexString(uint160(USDC), 20).write(uniswapV3OracleConfigPath, ".USDC");
 
         //Run Manager deployment script
         DeployManager deployManagerScript = new DeployManager();

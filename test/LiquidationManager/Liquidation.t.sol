@@ -33,7 +33,7 @@ import { SampleTokenSmallDecimals } from "../utils/mocks/SampleTokenSmallDecimal
 /// @notice This contract encompasses tests and utility functions for conducting fuzzy testing of the `liquidate`
 /// function in the LiquidationManager Contract.
 /// @notice for other tests of the LiquidationManager Contract see other files in this directory.
-contract LiquidationTest is Test {
+contract LiquidationTestThis is Test {
     using Math for uint256;
 
     HoldingManager public holdingManager;
@@ -66,7 +66,7 @@ contract LiquidationTest is Test {
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
-        manager = new Manager(address(this), address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        manager = new Manager(address(this), address(weth), address(jUsdOracle), bytes(""));
         managerContainer = new ManagerContainer(address(this), address(manager));
         liquidationManager = new LiquidationManager(address(this), address(managerContainer));
 
@@ -160,11 +160,10 @@ contract LiquidationTest is Test {
 
     // Tests liquidation when the liquidation amount is greater than the borrowed amount
     // Expects a revert with error "2003" during liquidation attempt
-    function test_liquidate_when_liquidationAmounGtBorrowedAmount(
+    function test_liquidate_when_liquidationAmountGtBorrowedAmount(
         uint256 _userCollateral,
         uint256 _liquidatorCollateral
     ) public {
-        vm.assume(_liquidatorCollateral <= 1000e18);
         vm.assume(_liquidatorCollateral / 2 > _userCollateral / 2);
 
         // initiate user
@@ -180,7 +179,7 @@ contract LiquidationTest is Test {
 
         // make liquidation call
         vm.expectRevert(bytes("2003"));
-        liquidationManager.liquidate(user, address(usdc), _liquidatorCollateral / 2, 0, liquidateCalldata);
+        liquidationManager.liquidate(user, address(usdc), type(uint256).max, 0, liquidateCalldata);
 
         vm.stopPrank();
     }
@@ -251,9 +250,6 @@ contract LiquidationTest is Test {
         testData.liquidatorJUsd = jUsd.balanceOf(testData.liquidator);
         testData.liquidatorCollateralAmountAfterInitiation = collateralContract.balanceOf(address(testData.liquidator));
 
-        //get feeAdress balance before liquidation
-        testData.feeAddressBalanceAfterInitiation = collateralContract.balanceOf(manager.feeAddress());
-
         //change the price of the collateral
         collateralOracle.setPriceForLiquidation();
 
@@ -263,10 +259,8 @@ contract LiquidationTest is Test {
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
 
         //compute expected liquidatorReward and jUsdAmountToBurn after liquidation
-        (testData.liquidatorReward, testData.totalRequiredCollateral, testData.jUsdAmountToBurn) =
-        computeLiquidationAmounts(
-            address(testData.user), address(collateralContract), testData.userJUsd, liquidateCalldata
-        );
+        testData.expectedLiquidatorCollateral =
+            computeLiquidationAmounts(address(collateralContract), testData.userJUsd);
 
         //make liquidation call
         liquidationManager.liquidate(
@@ -278,15 +272,7 @@ contract LiquidationTest is Test {
         //get state after liquidation
         testData.liquidatorJUsdAfterLiquidation = jUsd.balanceOf(testData.liquidator);
         testData.liquidatorCollateralAfterLiquidation = collateralContract.balanceOf(testData.liquidator);
-        testData.feeAddressBalanceAfterLiquidation = collateralContract.balanceOf(manager.feeAddress());
         testData.holdingBorrowedAmountAfterLiquidation = sharesRegistry.borrowed(testData.userHolding);
-
-        //compute expected amounts
-        testData.expectedLiquidatorCollateralAfterLiquidation =
-            testData.liquidatorCollateralAmountAfterInitiation + testData.liquidatorReward;
-
-        testData.expectedFeeAddressBalance =
-            testData.feeAddressBalanceAfterInitiation + testData.totalRequiredCollateral - testData.liquidatorReward;
 
         // perform checks
         assertEq(
@@ -299,14 +285,8 @@ contract LiquidationTest is Test {
         );
         assertEq(
             testData.liquidatorCollateralAfterLiquidation,
-            testData.expectedLiquidatorCollateralAfterLiquidation,
+            testData.expectedLiquidatorCollateral,
             "Liquidator didn't receive user's collateral after liquidation"
-        );
-
-        assertEq(
-            testData.feeAddressBalanceAfterLiquidation,
-            testData.expectedFeeAddressBalance,
-            "feeAddress didn't receive fee after liquidation"
         );
     }
 
@@ -376,42 +356,24 @@ contract LiquidationTest is Test {
         testData.liquidatorJUsd = jUsd.balanceOf(testData.liquidator);
         testData.liquidatorCollateralAmountAfterInitiation = collateralContract.balanceOf(address(testData.liquidator));
 
-        //get feeAdress balance before liquidation
-        testData.feeAddressBalanceAfterInitiation = collateralContract.balanceOf(manager.feeAddress());
-
         //change the price of the collateral
         collateralOracle.setPriceForLiquidation();
 
-        //initiate liquidation from liquidator's address
-        vm.startPrank(testData.liquidator, testData.liquidator);
-
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
 
-        //compute expected liquidatorReward and jUsdAmountToBurn after liquidation
-        (testData.liquidatorReward, testData.totalRequiredCollateral, testData.jUsdAmountToBurn) =
-        computeLiquidationAmounts(
-            address(testData.user), address(collateralContract), testData.userJUsd, liquidateCalldata
-        );
+        testData.expectedLiquidatorCollateral =
+            computeLiquidationAmounts(address(collateralContract), testData.userJUsd);
 
         //make liquidation call
+        vm.prank(testData.liquidator, testData.liquidator);
         liquidationManager.liquidate(
             address(testData.user), address(collateralContract), testData.userJUsd, 0, liquidateCalldata
         );
 
-        vm.stopPrank();
-
         //get state after liquidation
         testData.liquidatorJUsdAfterLiquidation = jUsd.balanceOf(testData.liquidator);
         testData.liquidatorCollateralAfterLiquidation = collateralContract.balanceOf(testData.liquidator);
-        testData.feeAddressBalanceAfterLiquidation = collateralContract.balanceOf(manager.feeAddress());
         testData.holdingBorrowedAmountAfterLiquidation = sharesRegistry.borrowed(testData.userHolding);
-
-        //compute expected amounts
-        testData.expectedLiquidatorCollateralAfterLiquidation =
-            testData.liquidatorCollateralAmountAfterInitiation + testData.liquidatorReward;
-
-        testData.expectedFeeAddressBalance =
-            testData.feeAddressBalanceAfterInitiation + testData.totalRequiredCollateral - testData.liquidatorReward;
 
         // perform checks
         assertEq(
@@ -424,28 +386,23 @@ contract LiquidationTest is Test {
         );
         assertEq(
             testData.liquidatorCollateralAfterLiquidation,
-            testData.expectedLiquidatorCollateralAfterLiquidation,
+            testData.expectedLiquidatorCollateral,
             "Liquidator didn't receive user's collateral after liquidation"
-        );
-
-        assertEq(
-            testData.feeAddressBalanceAfterLiquidation,
-            testData.expectedFeeAddressBalance,
-            "feeAddress didn't receive fee after liquidation"
         );
     }
 
     // Tests liquidation with strategies
     // Checks various states and amounts after liquidation
-    function test_liquidate_when_withStrategies(uint256 _collateralAmount, bool invest) public {
-        vm.assume(_collateralAmount <= 1000e18);
+    function test_liquidate_when_withStrategies(
+        uint256 _collateralAmount
+    ) public {
         TestTempData memory testData;
 
         // initialize user
         testData.user = user;
-        testData.userCollateralAmount = _collateralAmount;
-        testData.userHolding = initiateWithUsdc(testData.user, testData.userCollateralAmount);
+        testData.userHolding = initiateWithUsdc(testData.user, _collateralAmount);
         testData.userJUsd = jUsd.balanceOf(testData.user);
+        testData.userCollateralAmount = usdc.balanceOf(testData.userHolding);
 
         // initialize liquidator
         testData.liquidator = liquidator;
@@ -454,89 +411,45 @@ contract LiquidationTest is Test {
         testData.liquidatorJUsd = jUsd.balanceOf(testData.liquidator);
         testData.liquidatorCollateralAmountAfterInitiation = usdc.balanceOf(address(testData.liquidator));
 
-        // get feeAdress balance before liquidation
-        testData.feeAddressBalanceAfterInitiation = usdc.balanceOf(manager.feeAddress());
+        // make investment
+        vm.prank(testData.user, testData.user);
+        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
 
-        if (invest) {
-            // make investment
-            vm.prank(testData.user);
-            if (testData.userCollateralAmount == 0) {
-                vm.expectRevert(bytes("2001"));
-            }
-            strategyManager.invest(
-                address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, ""
-            );
-        }
+        ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
+        liquidateCalldata.strategies = new address[](1);
+        liquidateCalldata.strategiesData = new bytes[](1);
+        liquidateCalldata.strategies[0] = address(strategyWithoutRewardsMock);
+        liquidateCalldata.strategiesData[0] = "";
+
+        //compute expected liquidatorReward and jUsdAmountToBurn after liquidation
+        testData.expectedLiquidatorCollateral = computeLiquidationAmounts(address(usdc), testData.userJUsd);
 
         // change the price of the usdc
         usdcOracle.setPriceForLiquidation();
 
         // execute liquidation from liquidator's address
-        vm.startPrank(testData.liquidator, testData.liquidator);
-
-        ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
-
-        if (invest) {
-            liquidateCalldata.strategies = new address[](1);
-            liquidateCalldata.strategies[0] = address(strategyWithoutRewardsMock);
-            liquidateCalldata.strategiesData = new bytes[](1);
-            liquidateCalldata.strategiesData[0] = "";
-        }
-
-        //compute expected liquidatorReward and jUsdAmountToBurn after liquidation
-        (testData.liquidatorReward, testData.totalRequiredCollateral, testData.jUsdAmountToBurn) =
-            computeLiquidationAmounts(address(testData.user), address(usdc), testData.userJUsd, liquidateCalldata);
-
-        // handle possible errors when making liquidation call
-        if (jUsd.balanceOf(testData.liquidator) < testData.userJUsd) {
-            vm.expectRevert("ERC20: burn amount exceeds balance");
+        vm.prank(testData.liquidator, testData.liquidator);
+        uint256 collateralUsed =
             liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, 0, liquidateCalldata);
-            return;
-        }
-
-        if (testData.userJUsd == 0) {
-            vm.expectRevert(bytes("2001"));
-        }
-        //make liquidation call
-        liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, 0, liquidateCalldata);
-
-        vm.stopPrank();
 
         // get state after liquidation
         testData.liquidatorJUsdAfterLiquidation = jUsd.balanceOf(testData.liquidator);
         testData.liquidatorCollateralAfterLiquidation = usdc.balanceOf(testData.liquidator);
-        testData.feeAddressBalanceAfterLiquidation = usdc.balanceOf(manager.feeAddress());
         testData.holdingBorrowedAmountAfterLiquidation = sharesRegistry.borrowed(testData.userHolding);
-
-        // compute expected amounts
-        testData.expectedLiquidatorCollateralAfterLiquidation =
-            testData.liquidatorCollateralAmountAfterInitiation + testData.liquidatorReward;
-        testData.expectedHoldingBorrowedAmountAfterLiquidation = testData.userJUsd - testData.jUsdAmountToBurn;
-        testData.expectedFeeAddressBalance =
-            testData.feeAddressBalanceAfterInitiation + testData.totalRequiredCollateral - testData.liquidatorReward;
 
         // perform checks
         assertEq(
-            testData.holdingBorrowedAmountAfterLiquidation,
-            testData.expectedHoldingBorrowedAmountAfterLiquidation,
-            "Holding's borrow amount is incorrect after liquidation"
+            testData.holdingBorrowedAmountAfterLiquidation, 0, "Holding's borrow amount is incorrect after liquidation"
         );
         assertEq(
             testData.liquidatorJUsdAfterLiquidation,
-            testData.liquidatorJUsd - testData.jUsdAmountToBurn,
+            testData.liquidatorJUsd - testData.userJUsd,
             "jUsd wasn't taken from liquidator after liquidation"
         );
         assertEq(
             testData.liquidatorCollateralAfterLiquidation,
-            testData.expectedLiquidatorCollateralAfterLiquidation,
+            testData.expectedLiquidatorCollateral,
             "Liquidator didn't receive user's collateral after liquidation"
-        );
-
-        assertApproxEqAbs(
-            testData.feeAddressBalanceAfterLiquidation,
-            testData.expectedFeeAddressBalance,
-            2,
-            "feeAddress didn't receive fee after liquidation"
         );
     }
 
@@ -544,54 +457,37 @@ contract LiquidationTest is Test {
     function test_liquidate_when_strategyListFormatError(
         uint256 _collateralAmount
     ) public {
-        vm.assume(_collateralAmount > 1e18 && _collateralAmount <= 1000e18);
         TestTempData memory testData;
 
         // initialize user
         testData.user = user;
-        testData.userCollateralAmount = _collateralAmount;
-        testData.userHolding = initiateWithUsdc(testData.user, testData.userCollateralAmount);
+        testData.userHolding = initiateWithUsdc(testData.user, _collateralAmount);
+        testData.userCollateralAmount = usdc.balanceOf(testData.userHolding);
         testData.userJUsd = jUsd.balanceOf(testData.user);
 
         // initialize liquidator
         testData.liquidator = liquidator;
-        testData.liquidatorCollateralAmount = _collateralAmount;
-        initiateWithUsdc(testData.liquidator, testData.liquidatorCollateralAmount);
+        initiateWithUsdc(testData.liquidator, _collateralAmount);
         testData.liquidatorJUsd = jUsd.balanceOf(testData.liquidator);
 
         // make investment
-        vm.prank(testData.user);
-        if (testData.userCollateralAmount == 0) {
-            vm.expectRevert(bytes("2001"));
-        }
+        vm.prank(testData.user, testData.user);
         strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
 
         // change the price of the usdc
         usdcOracle.setPriceForLiquidation();
 
-        // execute liquidation from liquidator's address
-        vm.startPrank(testData.liquidator, testData.liquidator);
-
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
-
-        liquidateCalldata.strategies = new address[](1);
-        liquidateCalldata.strategies[0] = address(strategyWithoutRewardsMock);
+        liquidateCalldata.strategies = new address[](2);
         liquidateCalldata.strategiesData = new bytes[](1);
+
+        liquidateCalldata.strategies[0] = address(strategyWithoutRewardsMock);
         liquidateCalldata.strategiesData[0] = "";
 
-        //compute expected liquidatorReward and jUsdAmountToBurn after liquidation
-        (testData.liquidatorReward, testData.totalRequiredCollateral, testData.jUsdAmountToBurn) =
-            computeLiquidationAmounts(address(testData.user), address(usdc), testData.userJUsd, liquidateCalldata);
-
-        liquidateCalldata.strategies = new address[](2);
-        liquidateCalldata.strategies[0] = address(strategyWithoutRewardsMock);
         liquidateCalldata.strategies[1] = vm.addr(uint256(keccak256(bytes("Unexisting strategy address"))));
-        if (testData.userJUsd == 0) {
-            vm.expectRevert(bytes("2001"));
-        } else {
-            vm.expectRevert(bytes("3026"));
-        }
-        //make liquidation call
+
+        vm.startPrank(testData.liquidator, testData.liquidator);
+        vm.expectRevert(bytes("3026"));
         liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, 0, liquidateCalldata);
 
         vm.stopPrank();
@@ -600,56 +496,16 @@ contract LiquidationTest is Test {
     //Utility functions
 
     function initiateWithUsdc(address _user, uint256 _collateralAmount) public returns (address userHolding) {
-        // calculate mintAmount
-        uint256 mintAmount = _collateralAmount / 2;
+        _collateralAmount = bound(_collateralAmount, 1000, 100_000);
+        _collateralAmount = _collateralAmount * 10 ** usdc.decimals();
 
-        // startPrank so every next call is made from the _user address (both msg.sender and tx.origin will be
-        // set to _user)
         vm.startPrank(_user, _user);
 
-        // check whether further addition will cause overflow
-        (bool isNotOverflow,) = _collateralAmount.tryAdd(usdc.totalSupply());
-
-        // expect overflow revert if _collateralAmount + usdc.totalSupply() will result in overflow
-        if (!isNotOverflow) {
-            vm.expectRevert(stdError.arithmeticError);
-        }
-
-        // get some usdc tokens for user
         usdc.getTokens(_collateralAmount);
-
-        // create holding for user
         userHolding = holdingManager.createHolding();
-
         usdc.approve(address(holdingManager), _collateralAmount);
-
-        bool enoughBalance = usdc.balanceOf(_user) >= _collateralAmount;
-
-        //make deposit for user
-        if (_collateralAmount == 0) {
-            vm.expectRevert(bytes("2001"));
-        }
-        if (!enoughBalance) {
-            vm.expectRevert("ERC20: transfer amount exceeds balance");
-        }
-
         holdingManager.deposit(address(usdc), _collateralAmount);
-
-        // borrow
-        // check if mint operation will be >= jUsd.mintLimit;
-        bool exceedsMintLimit = jUsd.totalSupply() + mintAmount > jUsd.mintLimit();
-        bool isUserSolvent = isSolvent(_user, mintAmount, address(userHolding));
-
-        if (mintAmount == 0) {
-            vm.expectRevert(bytes("3010"));
-        }
-        if (exceedsMintLimit) {
-            vm.expectRevert(bytes("2007"));
-        } else if (!isUserSolvent) {
-            vm.expectRevert(bytes("3009"));
-        }
-
-        holdingManager.borrow(address(usdc), mintAmount, 0, true);
+        holdingManager.borrow(address(usdc), _collateralAmount / 3, 0, true);
 
         vm.stopPrank();
     }
@@ -676,60 +532,17 @@ contract LiquidationTest is Test {
     }
 
     function computeLiquidationAmounts(
-        address _user,
         address _collateral,
-        uint256 _jUsdAmountToBurn,
-        ILiquidationManager.LiquidateCalldata memory _data
-    )
-        public
-        view
-        returns (uint256 totalLiquidatorCollateral, uint256 totalRequiredCollateral, uint256 jUsdAmountToBurn)
-    {
-        address holding = holdingManager.userHolding(_user);
-
-        uint256 exchangeRate = SharesRegistry(registries[_collateral]).getExchangeRate();
-        totalRequiredCollateral = _getCollateralAmountForUSDValue(_collateral, _jUsdAmountToBurn, exchangeRate);
-
-        uint256 totalAvailableCollateral = SharesRegistry(registries[_collateral]).collateral(holding);
-
-        totalRequiredCollateral =
-            totalRequiredCollateral > totalAvailableCollateral ? totalAvailableCollateral : totalRequiredCollateral;
-
-        totalLiquidatorCollateral = (
-            totalRequiredCollateral * SharesRegistry(registries[_collateral]).getConfig().liquidatorBonus
-        ) / liquidationManager.LIQUIDATION_PRECISION();
-
-        totalRequiredCollateral += totalLiquidatorCollateral;
-
-        uint256 finalAvailableCollateralAmount = (_data.strategies.length > 0)
-            ? _retrieveCollateral(_collateral, holding, totalRequiredCollateral, _data.strategies, _data.strategiesData)
-            : totalRequiredCollateral - totalLiquidatorCollateral;
-
-        if (totalRequiredCollateral >= finalAvailableCollateralAmount) {
-            totalRequiredCollateral = finalAvailableCollateralAmount;
-
-            // LC = FAC / (1 + (p/100))
-            totalLiquidatorCollateral = _user != msg.sender
-                ? (
-                    totalRequiredCollateral
-                        / (
-                            10
-                                + SharesRegistry(registries[_collateral]).getConfig().liquidatorBonus.mulDiv(
-                                    10, liquidationManager.LIQUIDATION_PRECISION()
-                                )
-                        )
-                ) / 10
-                : 0;
-        }
-
-        uint256 collateralWithJUsdDecimals = (totalRequiredCollateral != 0) ? totalRequiredCollateral : 0;
-        uint256 collateralDecimals = IERC20Metadata(_collateral).decimals();
-        if (collateralDecimals > 18) {
-            collateralWithJUsdDecimals = collateralWithJUsdDecimals / (10 ** (collateralDecimals - 18));
-        } else if (collateralDecimals < 18) {
-            collateralWithJUsdDecimals = collateralWithJUsdDecimals / 10 ** (18 - collateralDecimals);
-        }
-        jUsdAmountToBurn = collateralWithJUsdDecimals.mulDiv(exchangeRate, manager.EXCHANGE_RATE_PRECISION());
+        uint256 _jUsdAmountToBurn
+    ) public view returns (uint256 collateralUsed) {
+        collateralUsed = _getCollateralAmountForUSDValue(
+            _collateral, _jUsdAmountToBurn, SharesRegistry(registries[_collateral]).getExchangeRate()
+        );
+        collateralUsed += collateralUsed.mulDiv(
+            ISharesRegistry(registries[_collateral]).getConfig().liquidatorBonus,
+            liquidationManager.LIQUIDATION_PRECISION(),
+            Math.Rounding.Ceil
+        );
     }
 
     function _getCollateralAmountForUSDValue(
@@ -787,17 +600,9 @@ contract LiquidationTest is Test {
         uint256 liquidatorJUsd;
         uint256 liquidatorCollateralAmount;
         uint256 liquidatorCollateralAmountAfterInitiation;
-        uint256 liquidatorReward;
         uint256 liquidatorJUsdAfterLiquidation;
         uint256 liquidatorCollateralAfterLiquidation;
-        uint256 feeAddressBalanceAfterInitiation;
-        uint256 feeAddressBalanceAfterLiquidation;
         uint256 holdingBorrowedAmountAfterLiquidation;
-        uint256 totalRequiredCollateral;
-        uint256 jUsdAmountToBurn;
         uint256 expectedLiquidatorCollateral;
-        uint256 expectedFeeAddressBalance;
-        uint256 expectedLiquidatorCollateralAfterLiquidation;
-        uint256 expectedHoldingBorrowedAmountAfterLiquidation;
     }
 }

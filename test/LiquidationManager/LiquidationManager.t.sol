@@ -39,7 +39,7 @@ contract LiquidationManagerTest is Test {
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
-        manager = new Manager(address(this), address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        manager = new Manager(address(this), address(weth), address(jUsdOracle), bytes(""));
         managerContainer = new ManagerContainer(address(this), address(manager));
         liquidationManager = new LiquidationManager(address(this), address(managerContainer));
 

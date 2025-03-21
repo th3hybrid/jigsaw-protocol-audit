@@ -30,7 +30,7 @@ contract GenesisOracleIntegrationTest is Test, BasicContractsFixture {
         vm.startPrank(OWNER, OWNER);
         manager.requestNewJUsdOracle(address(genesisJUsdOracle));
         skip(manager.timelockAmount() + 1);
-        manager.setJUsdOracle();
+        manager.acceptNewJUsdOracle();
         vm.stopPrank();
 
         address holding = initiateUser(_user, collateral, _mintAmount);

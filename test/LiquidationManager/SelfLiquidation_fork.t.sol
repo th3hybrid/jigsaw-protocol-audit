@@ -110,13 +110,13 @@ contract SelfLiquidationTest is Test {
         usdc = IUSDC(USDC);
         weth = IERC20Metadata(WETH);
 
-        manager = new Manager(address(this), USDC, WETH, address(1), bytes(""));
+        manager = new Manager(address(this), WETH, address(1), bytes(""));
         managerContainer = new ManagerContainer(address(this), address(manager));
 
         SampleOracle jUsdOracle = new SampleOracle();
         manager.requestNewJUsdOracle(address(jUsdOracle));
         vm.warp(block.timestamp + manager.timelockAmount());
-        manager.setJUsdOracle();
+        manager.acceptNewJUsdOracle();
 
         jUsd = new JigsawUSD(address(this), address(managerContainer));
         jUsd.updateMintLimit(type(uint256).max);

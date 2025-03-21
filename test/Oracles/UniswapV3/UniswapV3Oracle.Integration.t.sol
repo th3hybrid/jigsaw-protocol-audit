@@ -31,7 +31,7 @@ contract UniswapV3OracleIntegrationTest is Test, BasicContractsFixture {
         vm.startPrank(OWNER, OWNER);
         manager.requestNewJUsdOracle(address(uniswapJUsdOracle));
         skip(manager.timelockAmount() + 1);
-        manager.setJUsdOracle();
+        manager.acceptNewJUsdOracle();
         vm.stopPrank();
 
         address holding = initiateUser(_user, collateral, _mintAmount);

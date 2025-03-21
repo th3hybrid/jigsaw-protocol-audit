@@ -39,7 +39,7 @@ contract StakerTest is Test {
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
-        manager = new Manager(OWNER, address(usdc), address(weth), address(jUsdOracle), bytes(""));
+        manager = new Manager(OWNER, address(weth), address(jUsdOracle), bytes(""));
         managerContainer = new ManagerContainer(address(this), address(manager));
 
         tokenIn = address(new SampleTokenERC20("TokenIn", "TI", 0));

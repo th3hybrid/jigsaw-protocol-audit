@@ -59,7 +59,7 @@ contract SwapManagerTest is Test {
         quoter = IQuoterV2(0x61fFE014bA17989E743c5F6cB21bF9697530B21e);
         usdc = IUSDC(USDC);
         weth = IERC20Metadata(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
-        manager = new Manager(address(this), USDC, address(weth), address(1), bytes(""));
+        manager = new Manager(address(this), address(weth), address(1), bytes(""));
         managerContainer = new ManagerContainer(address(this), address(manager));
         swapManager =
             new SwapManager(address(this), address(uniswapFactory), UniswapSwapRouter, address(managerContainer));
