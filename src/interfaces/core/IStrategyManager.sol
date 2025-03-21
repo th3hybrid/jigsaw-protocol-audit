@@ -280,52 +280,6 @@ interface IStrategyManager is IStrategyManagerMin {
         bytes calldata _data
     ) external returns (uint256[] memory rewards, address[] memory tokens);
 
-    /**
-     * @notice invokes a generic call on holding.
-     * @param _holding the address of holding the call is invoked for.
-     * @param _contract the external contract called by holding.
-     * @param _call the call data.
-     * @return success true/false.
-     * @return result data obtained from the external call.
-     */
-    function invokeHolding(
-        address _holding,
-        address _contract,
-        bytes calldata _call
-    ) external returns (bool success, bytes memory result);
-
-    /**
-     * @notice Invokes an approve operation for holding.
-     *
-     * @notice Requirements:
-     * - Msg.sender should be allowed invoker.
-     *
-     * @notice Effects:
-     * - Gives approve from the `_holding`'s address for `_spender`.
-     *
-     * @param _holding address the approve is given from.
-     * @param _token which the approval is given.
-     * @param _spender the contract's address.
-     * @param _amount the approval amount.
-     */
-    function invokeApprove(address _holding, address _token, address _spender, uint256 _amount) external;
-
-    /**
-     * @notice Invokes a transfer operation for holding.
-     *
-     * @notice Requirements:
-     * - Msg.sender should be allowed invoker.
-     *
-     * @notice Effects:
-     * - Makes a transfer from the `_holding`'s address to `_to` address.
-     *
-     * @param _holding the address of holding the call is invoked for.
-     * @param _token the asset for which the approval is performed.
-     * @param _to the receiver address.
-     * @param _amount the approval amount.
-     */
-    function invokeTransferal(address _holding, address _token, address _to, uint256 _amount) external;
-
     // -- Administration --
 
     /**
