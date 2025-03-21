@@ -61,6 +61,13 @@ interface IManager {
     event HoldingManagerUpdated(address indexed oldAddress, address indexed newAddress);
 
     /**
+     * @notice Emitted when a new liquidation manager is requested.
+     * @param oldAddress The previous address of the liquidation manager.
+     * @param newAddress The new address of the liquidation manager.
+     */
+    event NewLiquidationManagerRequested(address indexed oldAddress, address indexed newAddress);
+
+    /**
      * @notice Emitted when the liquidation manager is set.
      * @param oldAddress The previous address of the liquidation manager.
      * @param newAddress The new address of the liquidation manager.
@@ -80,6 +87,13 @@ interface IManager {
      * @param newAddress The new address of the strategy manager.
      */
     event StrategyManagerUpdated(address indexed oldAddress, address indexed newAddress);
+
+    /**
+     * @notice Emitted when a new swap manager is requested.
+     * @param oldAddress The previous address of the swap manager.
+     * @param newAddress The new address of the swap manager.
+     */
+    event NewSwapManagerRequested(address indexed oldAddress, address indexed newAddress);
 
     /**
      * @notice Emitted when the swap manager is set.
@@ -199,11 +213,6 @@ interface IManager {
     ) external view returns (bool);
 
     // -- Essential tokens --
-
-    /**
-     * @notice USDC address.
-     */
-    function USDC() external view returns (address);
 
     /**
      * @notice WETH address.
@@ -445,7 +454,8 @@ interface IManager {
      * @notice Sets the Liquidation Manager Contract's address.
      *
      * @notice Requirements:
-     * - `_val` must be different from previous `liquidationManager` address.
+     * - Can only be called once.
+     * - `_val` must be non-zero address.
      *
      * @notice Effects:
      * - Updates the `liquidationManager` state variable.
@@ -458,6 +468,43 @@ interface IManager {
     function setLiquidationManager(
         address _val
     ) external;
+
+    /**
+     * @notice Initiates the process to update the Liquidation Manager Contract's address.
+     *
+     * @notice Requirements:
+     * - `_val` must be non-zero address.
+     * - `_val` must be different from previous `liquidationManager` address.
+     *
+     * @notice Effects:
+     * - Updates the the `_newLiquidationManager` state variable.
+     * - Updates the the `_newLiquidationManagerTimestamp` state variable.
+     *
+     * @notice Emits:
+     * - `LiquidationManagerUpdateRequested` event indicating successful liquidation manager change request.
+     *
+     * @param _val The new liquidation manager's address.
+     */
+    function requestNewLiquidationManager(
+        address _val
+    ) external;
+
+    /**
+     * @notice Sets the Liquidation Manager Contract's address.
+     *
+     * @notice Requirements:
+     * - `_val` must be different from previous `liquidationManager` address.
+     * - Timelock must expire.
+     *
+     * @notice Effects:
+     * - Updates the `liquidationManager` state variable.
+     * - Updates the the `_newLiquidationManager` state variable.
+     * - Updates the the `_newLiquidationManagerTimestamp` state variable.
+     *
+     * @notice Emits:
+     * - `LiquidationManagerUpdated` event indicating the successful setting of the Liquidation Manager's address.
+     */
+    function acceptNewLiquidationManager() external;
 
     /**
      * @notice Sets the Stablecoin Manager Contract's address.
@@ -499,7 +546,8 @@ interface IManager {
      * @notice Sets the Swap Manager Contract's address.
      *
      * @notice Requirements:
-     * - `_val` must be different from previous `swapManager` address.
+     * - Can only be called once.
+     * - `_val` must be non-zero address.
      *
      * @notice Effects:
      * - Updates the `swapManager` state variable.
@@ -512,6 +560,42 @@ interface IManager {
     function setSwapManager(
         address _val
     ) external;
+
+    /**
+     * @notice Initiates the process to update the Swap Manager Contract's address.
+     *
+     * @notice Requirements:
+     * - `_val` must be non-zero address.
+     * - `_val` must be different from previous `swapManager` address.
+     *
+     * @notice Effects:
+     * - Updates the the `_newSwapManager` state variable.
+     * - Updates the the `_newSwapManagerTimestamp` state variable.
+     *
+     * @notice Emits:
+     * - `NewSwapManagerRequested` event indicating successful swap manager change request.
+     *
+     * @param _val The new swap manager's address.
+     */
+    function requestNewSwapManager(
+        address _val
+    ) external;
+
+    /**
+     * @notice Updates the Swap Manager Contract    .
+     *
+     * @notice Requirements:
+     * - Timelock must expire.
+     *
+     * @notice Effects:
+     * - Updates the `swapManager` state variable.
+     * - Resets `_newSwapManager` to address(0).
+     * - Resets `_newSwapManagerTimestamp` to 0.
+     *
+     * @notice Emits:
+     * - `SwapManagerUpdated` event indicating the successful setting of the Swap Manager's address.
+     */
+    function acceptNewSwapManager() external;
 
     /**
      * @notice Sets the performance fee.
@@ -625,7 +709,7 @@ interface IManager {
      * @notice Emits:
      * - `OracleUpdated` event indicating successful jUSD's oracle change.
      */
-    function setJUsdOracle() external;
+    function acceptNewJUsdOracle() external;
 
     /**
      * @notice Updates the jUSD's oracle data.
@@ -657,16 +741,15 @@ interface IManager {
     function setMinDebtAmount(
         uint256 _minDebtAmount
     ) external;
+
     /**
      * @notice Registers timelock change request.
      *
      * @notice Requirements:
-     * - Contract must not be in active change.
      * - `_oldTimelock` must be set zero.
      * - `_newVal` must be greater than zero.
      *
      * @notice Effects:
-     * - Updates the the `_isActiveChange` state variable.
      * - Updates the the `_oldTimelock` state variable.
      * - Updates the the `_newTimelock` state variable.
      * - Updates the the `_newTimelockTimestamp` state variable.
@@ -676,7 +759,7 @@ interface IManager {
      *
      * @param _newVal The new timelock value in seconds.
      */
-    function requestTimelockAmountChange(
+    function requestNewTimelock(
         uint256 _newVal
     ) external;
 
@@ -697,7 +780,7 @@ interface IManager {
      * @notice Emits:
      * - `TimelockAmountUpdated` event indicating successful timelock amount change.
      */
-    function acceptTimelockAmountChange() external;
+    function acceptNewTimelock() external;
 
     // -- Getters --
 
