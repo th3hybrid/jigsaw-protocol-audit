@@ -258,12 +258,8 @@ contract LiquidationTestThis is Test {
 
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
 
-        //compute expected liquidatorReward and jUsdAmountToBurn after liquidation
-        testData.expectedLiquidatorCollateral =
-            computeLiquidationAmounts(address(collateralContract), testData.userJUsd);
-
         //make liquidation call
-        liquidationManager.liquidate(
+        testData.expectedLiquidatorCollateral = liquidationManager.liquidate(
             address(testData.user), address(collateralContract), testData.userJUsd, 0, liquidateCalldata
         );
 
@@ -361,12 +357,9 @@ contract LiquidationTestThis is Test {
 
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
 
-        testData.expectedLiquidatorCollateral =
-            computeLiquidationAmounts(address(collateralContract), testData.userJUsd);
-
         //make liquidation call
         vm.prank(testData.liquidator, testData.liquidator);
-        liquidationManager.liquidate(
+        testData.expectedLiquidatorCollateral = liquidationManager.liquidate(
             address(testData.user), address(collateralContract), testData.userJUsd, 0, liquidateCalldata
         );
 
@@ -421,15 +414,14 @@ contract LiquidationTestThis is Test {
         liquidateCalldata.strategies[0] = address(strategyWithoutRewardsMock);
         liquidateCalldata.strategiesData[0] = "";
 
-        //compute expected liquidatorReward and jUsdAmountToBurn after liquidation
-        testData.expectedLiquidatorCollateral = computeLiquidationAmounts(address(usdc), testData.userJUsd);
-
+        console.log(stablesManager.isLiquidatable({ _token: address(usdc), _holding: testData.userHolding }));
         // change the price of the usdc
         usdcOracle.setPriceForLiquidation();
+        console.log(stablesManager.isLiquidatable({ _token: address(usdc), _holding: testData.userHolding }));
 
         // execute liquidation from liquidator's address
         vm.prank(testData.liquidator, testData.liquidator);
-        uint256 collateralUsed =
+        testData.expectedLiquidatorCollateral =
             liquidationManager.liquidate(address(testData.user), address(usdc), testData.userJUsd, 0, liquidateCalldata);
 
         // get state after liquidation
@@ -496,7 +488,7 @@ contract LiquidationTestThis is Test {
     //Utility functions
 
     function initiateWithUsdc(address _user, uint256 _collateralAmount) public returns (address userHolding) {
-        _collateralAmount = bound(_collateralAmount, 1000, 100_000);
+        _collateralAmount = bound(_collateralAmount, 500, 100_000);
         _collateralAmount = _collateralAmount * 10 ** usdc.decimals();
 
         vm.startPrank(_user, _user);
@@ -505,7 +497,7 @@ contract LiquidationTestThis is Test {
         userHolding = holdingManager.createHolding();
         usdc.approve(address(holdingManager), _collateralAmount);
         holdingManager.deposit(address(usdc), _collateralAmount);
-        holdingManager.borrow(address(usdc), _collateralAmount / 3, 0, true);
+        holdingManager.borrow(address(usdc), _collateralAmount / 2, 0, true);
 
         vm.stopPrank();
     }
@@ -529,20 +521,6 @@ contract LiquidationTestThis is Test {
         ) / 1e18;
 
         return _result >= borrowedAmount;
-    }
-
-    function computeLiquidationAmounts(
-        address _collateral,
-        uint256 _jUsdAmountToBurn
-    ) public view returns (uint256 collateralUsed) {
-        collateralUsed = _getCollateralAmountForUSDValue(
-            _collateral, _jUsdAmountToBurn, SharesRegistry(registries[_collateral]).getExchangeRate()
-        );
-        collateralUsed += collateralUsed.mulDiv(
-            ISharesRegistry(registries[_collateral]).getConfig().liquidatorBonus,
-            liquidationManager.LIQUIDATION_PRECISION(),
-            Math.Rounding.Ceil
-        );
     }
 
     function _getCollateralAmountForUSDValue(
