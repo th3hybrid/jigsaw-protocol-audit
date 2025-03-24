@@ -523,10 +523,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address token = address(0);
         bytes memory data = bytes("");
 
-        vm.assume(
-            caller != manager.holdingManager() && caller != manager.liquidationManager()
-                && caller != holdingManager.holdingUser(holding)
-        );
+        vm.assume(caller != manager.liquidationManager() && caller != holdingManager.holdingUser(holding));
 
         vm.expectRevert(bytes("1000"));
         vm.prank(caller, caller);
@@ -541,7 +538,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address token = address(0);
         bytes memory data = bytes("");
 
-        vm.prank(manager.holdingManager(), manager.holdingManager());
+        vm.prank(manager.liquidationManager(), manager.liquidationManager());
         vm.expectRevert(bytes("2001"));
         strategyManager.claimInvestment(holding, token, strategy, shares, data);
     }
@@ -557,7 +554,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         vm.prank(strategyManager.owner(), strategyManager.owner());
         strategyManager.pause();
 
-        vm.prank(manager.holdingManager(), manager.holdingManager());
+        vm.prank(manager.liquidationManager(), manager.liquidationManager());
         vm.expectRevert();
         strategyManager.claimInvestment(holding, strategy, asset, shares, data);
     }
@@ -571,7 +568,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address token = address(0);
         bytes memory data = bytes("");
 
-        vm.prank(manager.holdingManager(), manager.holdingManager());
+        vm.prank(manager.liquidationManager(), manager.liquidationManager());
         vm.expectRevert(bytes("3002"));
         strategyManager.claimInvestment(holding, token, strategy, shares, data);
     }
