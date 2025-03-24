@@ -77,7 +77,7 @@ contract StrategyWithRewardsMock is IStrategy, StrategyBase {
         address _recipient,
         address _asset,
         bytes calldata
-    ) external override onlyStrategyManager onlyValidAmount(_shares) returns (uint256, uint256, int256) {
+    ) external override onlyStrategyManager onlyValidAmount(_shares) returns (uint256, uint256, int256, uint256) {
         require(_shares > 0, "Too low");
         require(_shares <= recipients[_recipient].totalShares, "Too much");
 
@@ -90,7 +90,7 @@ contract StrategyWithRewardsMock is IStrategy, StrategyBase {
         totalInvestments -= _shares;
 
         IERC20(_asset).safeTransfer(_recipient, _shares);
-        return (_shares, _shares, 0);
+        return (_shares, _shares, 0, 0);
     }
 
     function claimRewards(
