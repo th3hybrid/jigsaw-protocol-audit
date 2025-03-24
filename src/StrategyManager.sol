@@ -158,7 +158,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         require(_data.strategyFrom != _data.strategyTo, "3086");
         require(strategyInfo[_data.strategyTo].active, "1202");
 
-        (uint256 claimResult,) = _claimInvestment({
+        (uint256 claimResult,,,) = _claimInvestment({
             _holding: _holding,
             _token: _token,
             _strategy: _data.strategyFrom,
@@ -207,8 +207,10 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @param _shares shares amount.
      * @param _data extra data.
      *
-     * @return assetAmount returned asset amount obtained from the operation.
-     * @return tokenInAmount returned token in amount.
+     * @return withdrawnAmount returned asset amount obtained from the operation.
+     * @return initialInvestment returned token in amount.
+     * @return yield The yield amount (positive for profit, negative for loss)
+     * @return fee The amount of fee charged by the strategy
      */
     function claimInvestment(
         address _holding,
@@ -224,10 +226,10 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         validAmount(_shares)
         nonReentrant
         whenNotPaused
-        returns (uint256 assetAmount, uint256 tokenInAmount)
+        returns (uint256 withdrawnAmount, uint256 initialInvestment, int256 yield, uint256 fee)
     {
         require(_getHoldingManager().isHolding(_holding), "3002");
-        (assetAmount, tokenInAmount) = _claimInvestment({
+        (withdrawnAmount, initialInvestment, yield, fee) = _claimInvestment({
             _holding: _holding,
             _token: _token,
             _strategy: _strategy,
@@ -235,7 +237,17 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
             _data: _data
         });
 
-        emit StrategyClaim(_holding, msg.sender, _token, _strategy, _shares, assetAmount, tokenInAmount);
+        emit StrategyClaim({
+            holding: _holding,
+            user: msg.sender,
+            token: _token,
+            strategy: _strategy,
+            shares: _shares,
+            withdrawnAmount: withdrawnAmount,
+            initialInvestment: initialInvestment,
+            yield: yield,
+            fee: fee
+        });
     }
 
     /**
@@ -436,35 +448,28 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         address _strategy,
         uint256 _shares,
         bytes calldata _data
-    ) private returns (uint256, uint256) {
+    ) private returns (uint256, uint256, int256, uint256) {
         ClaimInvestmentData memory tempData = ClaimInvestmentData({
             strategyContract: IStrategy(_strategy),
-            assetResult: 0,
-            tokenInResult: 0,
-            yieldAmount: 0,
+            withdrawnAmount: 0,
+            initialInvestment: 0,
+            yield: 0,
+            fee: 0,
             remainingShares: 0
         });
 
         // First check if holding has enough receipt tokens to burn.
         _checkReceiptTokenAvailability({ _strategy: tempData.strategyContract, _shares: _shares, _holding: _holding });
 
-        (tempData.assetResult, tempData.tokenInResult, tempData.yieldAmount) =
+        (tempData.withdrawnAmount, tempData.initialInvestment, tempData.yield, tempData.fee) =
             tempData.strategyContract.withdraw({ _shares: _shares, _recipient: _holding, _asset: _token, _data: _data });
-        require(tempData.assetResult > 0, "3016");
+        require(tempData.withdrawnAmount > 0, "3016");
 
-        if (tempData.yieldAmount > 0) {
-            _getStablesManager().addCollateral({
-                _holding: _holding,
-                _token: _token,
-                _amount: uint256(tempData.yieldAmount)
-            });
+        if (tempData.yield > 0) {
+            _getStablesManager().addCollateral({ _holding: _holding, _token: _token, _amount: uint256(tempData.yield) });
         }
-        if (tempData.yieldAmount < 0) {
-            _getStablesManager().removeCollateral({
-                _holding: _holding,
-                _token: _token,
-                _amount: tempData.yieldAmount.abs()
-            });
+        if (tempData.yield < 0) {
+            _getStablesManager().removeCollateral({ _holding: _holding, _token: _token, _amount: tempData.yield.abs() });
         }
 
         // Ensure user doesn't harm themselves by becoming liquidatable after claiming investment.
@@ -478,7 +483,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         (, tempData.remainingShares) = tempData.strategyContract.recipients(_holding);
         if (0 == tempData.remainingShares) holdingToStrategy[_holding].remove(_strategy);
 
-        return (tempData.assetResult, tempData.tokenInResult);
+        return (tempData.withdrawnAmount, tempData.initialInvestment, tempData.yield, tempData.fee);
     }
 
     /**
