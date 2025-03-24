@@ -562,7 +562,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
             (, tempData.shares) = IStrategy(_strategies[i]).recipients(_holding);
 
             // Withdraw collateral.
-            (tempData.withdrawResult,) = IStrategyManager(_getManager().strategyManager()).claimInvestment({
+            (tempData.withdrawResult,,,) = IStrategyManager(_getManager().strategyManager()).claimInvestment({
                 _holding: _holding,
                 _token: _token,
                 _strategy: _strategies[i],
