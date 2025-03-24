@@ -36,16 +36,18 @@ interface IStrategyManager is IStrategyManagerMin {
     /**
      * @dev Struct used for _claimInvestment function
      * @param strategyContract The strategy contract instance being interacted with
-     * @param assetResult The amount of the asset withdrawn from the strategy
-     * @param tokenInResult The amount of tokens received in exchange for the withdrawn asset
-     * @param yieldAmount The yield amount (positive for profit, negative for loss)
+     * @param withdrawnAmount The amount of the asset withdrawn from the strategy
+     * @param initialInvestment The amount of initial investment
+     * @param yield The yield amount (positive for profit, negative for loss)
+     * @param fee The amount of fee charged by the strategy
      * @param remainingShares The number of shares remaining after the withdrawal
      */
     struct ClaimInvestmentData {
         IStrategy strategyContract;
-        uint256 assetResult;
-        uint256 tokenInResult;
-        int256 yieldAmount;
+        uint256 withdrawnAmount;
+        uint256 initialInvestment;
+        int256 yield;
+        uint256 fee;
         uint256 remainingShares;
     }
 
@@ -129,8 +131,10 @@ interface IStrategyManager is IStrategyManagerMin {
      * @param token The address of the token withdrawn.
      * @param strategy The address of the strategy from which the investment is withdrawn.
      * @param shares The amount of shares withdrawn.
-     * @param tokenAmount The amount of tokens withdrawn.
-     * @param tokenInAmount The amount of tokens received after withdrawal.
+     * @param withdrawnAmount The amount of tokens withdrawn.
+     * @param initialInvestment The amount of initial investment.
+     * @param yield The yield amount (positive for profit, negative for loss)
+     * @param fee The amount of fee charged by the strategy
      */
     event StrategyClaim(
         address indexed holding,
@@ -138,8 +142,10 @@ interface IStrategyManager is IStrategyManagerMin {
         address indexed token,
         address strategy,
         uint256 shares,
-        uint256 tokenAmount,
-        uint256 tokenInAmount
+        uint256 withdrawnAmount,
+        uint256 initialInvestment,
+        int256 yield,
+        uint256 fee
     );
 
     /**
@@ -247,8 +253,10 @@ interface IStrategyManager is IStrategyManagerMin {
      * @param _shares shares amount.
      * @param _data extra data.
      *
-     * @return assetAmount returned asset amount obtained from the operation.
-     * @return tokenInAmount returned token in amount.
+     * @return withdrawnAmount The amount of tokens withdrawn.
+     * @return initialInvestment The amount of initial investment.
+     * @return yield The yield amount (positive for profit, negative for loss)
+     * @return fee The amount of fee charged by the strategy
      */
     function claimInvestment(
         address _holding,
@@ -256,7 +264,7 @@ interface IStrategyManager is IStrategyManagerMin {
         address _strategy,
         uint256 _shares,
         bytes calldata _data
-    ) external returns (uint256 assetAmount, uint256 tokenInAmount);
+    ) external returns (uint256 withdrawnAmount, uint256 initialInvestment, int256 yield, uint256 fee);
 
     /**
      * @notice Claims rewards from strategy.
