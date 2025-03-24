@@ -572,8 +572,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         address _holding
     ) {
         require(
-            _getManager().holdingManager() == msg.sender || _getManager().liquidationManager() == msg.sender
-                || _getHoldingManager().holdingUser(_holding) == msg.sender,
+            _getManager().liquidationManager() == msg.sender || _getHoldingManager().holdingUser(_holding) == msg.sender,
             "1000"
         );
         _;
