@@ -192,8 +192,11 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
     }
 
     modifier onlyUser() {
-        IManager manager = IManager(managerContainer.manager());
-        require(msg.sender == IHoldingManager(manager.holdingManager()).holdingUser(address(this)), "1000");
+        require(
+            msg.sender
+                == IHoldingManager(IManager(managerContainer.manager()).holdingManager()).holdingUser(address(this)),
+            "1000"
+        );
         _;
     }
 
