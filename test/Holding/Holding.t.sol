@@ -17,6 +17,8 @@ import { SimpleContract } from "../utils/mocks/SimpleContract.sol";
 contract HoldingTest is BasicContractsFixture {
     using Math for uint256;
 
+    event EmergencyInvokerSet(address indexed oldInvoker, address indexed newInvoker);
+
     Holding holdingImplementation;
     Holding holdingClone;
 
@@ -145,6 +147,28 @@ contract HoldingTest is BasicContractsFixture {
         holdingClone.transfer(address(usdc), _to, _amount);
 
         assertEq(usdc.balanceOf(_to), toBalanceBefore + _amount, "Didn't transfer when authorized");
+    }
+
+    // Tests if set emergency invoker works correctly when authorized
+    function test_emergency_invoker_authorized(address _caller) public {
+        assumeNotOwnerNotZero(_caller);
+        SimpleContract simpleContract = new SimpleContract();
+
+        vm.prank(OWNER);
+        manager.whitelistContract(address(simpleContract));
+
+        vm.prank(_caller);
+        address holding = simpleContract.shouldCreateHolding(address(holdingManager));
+
+        Holding holdingContract = Holding(holding);
+        address holdingUser = holdingManager.holdingUser(holding);
+
+        vm.expectEmit(true, true, false, false);
+        emit EmergencyInvokerSet(holdingContract.emergencyInvoker(), _caller);
+
+        vm.startPrank(address(simpleContract), address(simpleContract));
+        holdingContract.setEmergencyInvoker(_caller);
+        vm.stopPrank();
     }
 
     // Modifiers
