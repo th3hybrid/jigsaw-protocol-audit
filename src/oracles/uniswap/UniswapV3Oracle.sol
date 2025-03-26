@@ -28,7 +28,7 @@ contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
 
     /**
      * @notice Returns the address of the token the oracle is for.
-     * @dev Is used as a `baseToken` for UnsiwapV3 TWAP.
+     * @dev Is used as a `baseToken` for UniswapV3 TWAP.
      */
     address public override underlying;
 
