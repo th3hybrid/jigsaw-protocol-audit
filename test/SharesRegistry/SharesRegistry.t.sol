@@ -40,8 +40,7 @@ contract SharesRegistryTest is BasicContractsFixture {
         ISharesRegistry.RegistryConfig memory config =
             ISharesRegistry.RegistryConfig({ collateralizationRate: 0, liquidationBuffer: 0, liquidatorBonus: 0 });
         vm.expectRevert(bytes("3065"));
-        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, config);
-        failedSharesRegistry;
+        new SharesRegistry(owner, container, token, oracle, data, config);
     }
 
     // Tests if init fails correctly when token is address(0)
@@ -54,8 +53,7 @@ contract SharesRegistryTest is BasicContractsFixture {
         ISharesRegistry.RegistryConfig memory config =
             ISharesRegistry.RegistryConfig({ collateralizationRate: 0, liquidationBuffer: 0, liquidatorBonus: 0 });
         vm.expectRevert(bytes("3001"));
-        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, config);
-        failedSharesRegistry;
+        new SharesRegistry(owner, container, token, oracle, data, config);
     }
 
     // Tests if init fails correctly when oracle is address(0)
@@ -69,8 +67,7 @@ contract SharesRegistryTest is BasicContractsFixture {
             ISharesRegistry.RegistryConfig({ collateralizationRate: 0, liquidationBuffer: 0, liquidatorBonus: 0 });
 
         vm.expectRevert(bytes("3034"));
-        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, config);
-        failedSharesRegistry;
+        new SharesRegistry(owner, container, token, oracle, data, config);
     }
 
     // Tests if init fails correctly when _collateralizationRate is invalid
@@ -83,12 +80,8 @@ contract SharesRegistryTest is BasicContractsFixture {
         address oracle = address(1);
         bytes memory data = "0x0";
 
-        if (_colRate > 1e5) {
+        if (_colRate > 1e5 || _colRate < 20e3) {
             vm.expectRevert(bytes("3066"));
-        } else if (_colRate < 20e3) {
-            vm.expectRevert(bytes("2001"));
-        } else {
-            return;
         }
 
         ISharesRegistry.RegistryConfig memory config = ISharesRegistry.RegistryConfig({
@@ -97,8 +90,7 @@ contract SharesRegistryTest is BasicContractsFixture {
             liquidatorBonus: 0
         });
 
-        SharesRegistry failedSharesRegistry = new SharesRegistry(owner, container, token, oracle, data, config);
-        failedSharesRegistry;
+        new SharesRegistry(owner, container, token, oracle, data, config);
     }
 
     // Tests if requestNewOracle reverts correctly when caller is not authorized
@@ -332,22 +324,19 @@ contract SharesRegistryTest is BasicContractsFixture {
     }
 
     // Tests if setCollateralizationRate reverts correctly when invalid amount
-    function test_setCollateralizationRate_when_invalidAmount(
-        uint256 _newVal
-    ) public {
-        // _newVal = bound(_newVal, 0, 20e3 - 1);
+    function test_setCollateralizationRate_when_invalidAmount() public {
+        uint256 newVal = 2e5;
         vm.prank(registry.owner(), registry.owner());
-
-        if (_newVal > 1e5) {
-            vm.expectRevert(bytes("3066"));
-        } else if (_newVal < 20e3) {
-            vm.expectRevert(bytes("2001"));
-        } else {
-            return;
-        }
-
+        vm.expectRevert(bytes("3066"));
         registry.updateConfig(
-            ISharesRegistry.RegistryConfig({ collateralizationRate: _newVal, liquidationBuffer: 0, liquidatorBonus: 0 })
+            ISharesRegistry.RegistryConfig({ collateralizationRate: newVal, liquidationBuffer: 0, liquidatorBonus: 0 })
+        );
+
+        newVal = 19e3;
+        vm.prank(registry.owner(), registry.owner());
+        vm.expectRevert(bytes("3066"));
+        registry.updateConfig(
+            ISharesRegistry.RegistryConfig({ collateralizationRate: newVal, liquidationBuffer: 0, liquidatorBonus: 0 })
         );
     }
 
