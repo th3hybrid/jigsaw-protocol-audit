@@ -163,12 +163,26 @@ contract StrategyManagerTest is BasicContractsFixture {
         address strategy = address(strategyWithoutRewardsMock);
 
         vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.expectRevert(bytes("3104"));
+        strategyManager.updateStrategy(strategy, info);
+
+        info.whitelisted = true;
+        info.performanceFee = 100_000_000;
+
+        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.expectRevert(bytes("3105"));
+        strategyManager.updateStrategy(strategy, info);
+
+        info.performanceFee = 3000;
+
+        vm.prank(strategyManager.owner(), strategyManager.owner());
         vm.expectEmit();
         emit StrategyUpdated(strategy, info.active, info.performanceFee);
         strategyManager.updateStrategy(strategy, info);
 
-        (,, bool whitelisted) = strategyManager.strategyInfo(strategy);
-        assertEq(whitelisted, false, "Strategy not updated when authorized");
+        (uint256 performanceFee, bool active,) = strategyManager.strategyInfo(strategy);
+        assertEq(active, info.active, "Strategy active not updated when authorized");
+        assertEq(performanceFee, info.performanceFee, "Strategy performance fee not updated when authorized");
     }
 
     // Tests if invest function reverts correctly when invalid strategy
