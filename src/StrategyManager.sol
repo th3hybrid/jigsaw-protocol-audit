@@ -10,6 +10,8 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 import { SignedMath } from "@openzeppelin/contracts/utils/math/SignedMath.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import { OperationsLib } from "./libraries/OperationsLib.sol";
+
 import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
@@ -332,6 +334,8 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         address _strategy,
         StrategyInfo calldata _info
     ) external override onlyOwner validStrategy(_strategy) {
+        require(_info.whitelisted, "3104");
+        require(_info.performanceFee <= OperationsLib.FEE_FACTOR, "3105");
         strategyInfo[_strategy] = _info;
         emit StrategyUpdated(_strategy, _info.active, _info.performanceFee);
     }
