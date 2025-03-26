@@ -12,7 +12,6 @@ import { OperationsLib } from "./libraries/OperationsLib.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { IJigsawUSD } from "./interfaces/core/IJigsawUSD.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
-import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 
@@ -46,9 +45,9 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
     IJigsawUSD public immutable override jUSD;
 
     /**
-     * @notice Returns managerContainer address that contains the address of the Manager Contract.
+     * @notice Contract that contains all the necessary configs of the protocol.
      */
-    IManagerContainer public immutable override managerContainer;
+    IManager public immutable override manager;
 
     // -- Constructor --
 
@@ -56,13 +55,13 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
      * @notice Creates a new StablesManager contract.
      *
      * @param _initialOwner The initial owner of the contract.
-     * @param _managerContainer Contract that contains the address of the manager contract.
+     * @param _manager Contract that holds all the necessary configs of the protocol.
      * @param _jUSD The protocol's stablecoin address.
      */
-    constructor(address _initialOwner, address _managerContainer, address _jUSD) Ownable(_initialOwner) {
-        require(_managerContainer != address(0), "3065");
+    constructor(address _initialOwner, address _manager, address _jUSD) Ownable(_initialOwner) {
+        require(_manager != address(0), "3065");
         require(_jUSD != address(0), "3001");
-        managerContainer = IManagerContainer(_managerContainer);
+        manager = IManager(_manager);
         jUSD = IJigsawUSD(_jUSD);
     }
 
@@ -149,7 +148,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
      * @param _amount Amount of collateral.
      */
     function forceRemoveCollateral(address _holding, address _token, uint256 _amount) external override whenNotPaused {
-        require(msg.sender == _getManager().liquidationManager(), "1000");
+        require(msg.sender == manager.liquidationManager(), "1000");
         require(shareRegistryInfo[_token].active, "1201");
 
         emit RemovedCollateral({ holding: _holding, token: _token, amount: _amount });
@@ -194,7 +193,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         BorrowTempData memory tempData = BorrowTempData({
             registry: ISharesRegistry(shareRegistryInfo[_token].deployedAt),
-            exchangeRatePrecision: _getManager().EXCHANGE_RATE_PRECISION(),
+            exchangeRatePrecision: manager.EXCHANGE_RATE_PRECISION(),
             amount: 0,
             amountValue: 0
         });
@@ -207,8 +206,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
             tempData.amount.mulDiv(tempData.registry.getExchangeRate(), tempData.exchangeRatePrecision);
 
         // Get the jUSD amount based on the provided collateral's USD value.
-        jUsdMintAmount =
-            tempData.amountValue.mulDiv(tempData.exchangeRatePrecision, _getManager().getJUsdExchangeRate());
+        jUsdMintAmount = tempData.amountValue.mulDiv(tempData.exchangeRatePrecision, manager.getJUsdExchangeRate());
 
         // Ensure the amount of jUSD minted is greater than the minimum amount specified by the user.
         require(jUsdMintAmount >= _minJUsdAmountOut, "2100");
@@ -311,7 +309,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         if (shareRegistryInfo[_token].deployedAt == address(0)) {
             info.deployedAt = _registry;
-            _getManager().addWithdrawableToken(_token);
+            manager.addWithdrawableToken(_token);
             emit RegistryAdded({ token: _token, registry: _registry });
         } else {
             info.deployedAt = shareRegistryInfo[_token].deployedAt;
@@ -366,9 +364,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         if (registry.borrowed(_holding) == 0) return true;
 
         return _getRatio({ _holding: _holding, registry: registry, rate: registry.getConfig().collateralizationRate })
-            >= registry.borrowed(_holding).mulDiv(
-                _getManager().getJUsdExchangeRate(), _getManager().EXCHANGE_RATE_PRECISION()
-            );
+            >= registry.borrowed(_holding).mulDiv(manager.getJUsdExchangeRate(), manager.EXCHANGE_RATE_PRECISION());
     }
 
     /**
@@ -396,9 +392,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         // Returns true when the ratio is below the liquidation threshold
         return _getRatio({ _holding: _holding, registry: registry, rate: threshold })
-            <= registry.borrowed(_holding).mulDiv(
-                _getManager().getJUsdExchangeRate(), _getManager().EXCHANGE_RATE_PRECISION()
-            );
+            <= registry.borrowed(_holding).mulDiv(manager.getJUsdExchangeRate(), manager.EXCHANGE_RATE_PRECISION());
     }
 
     // -- Private methods --
@@ -437,7 +431,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         // Get holding's available collateral amount.
         uint256 colAmount = registry.collateral(_holding);
         // Calculate the final divider for precise calculations.
-        uint256 precision = _getManager().EXCHANGE_RATE_PRECISION() * _getManager().PRECISION();
+        uint256 precision = manager.EXCHANGE_RATE_PRECISION() * manager.PRECISION();
 
         // Calculate the solvency ratio.
         uint256 result = colAmount * rate * exchangeRate / precision;
@@ -457,20 +451,12 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
     }
 
     /**
-     * @notice Gets the Manager Contract from the Manager Container Contract.
-     * @return The  Manager Contract.
-     */
-    function _getManager() private view returns (IManager) {
-        return IManager(managerContainer.manager());
-    }
-
-    /**
      * @notice Gets the Holding Manager Contract.
      * @dev Returns the address of the Holding Manager Contract from the Manager Contract.
      * @return The Holding Manager Contract.
      */
     function _getHoldingManager() private view returns (IHoldingManager) {
-        return IHoldingManager(_getManager().holdingManager());
+        return IHoldingManager(manager.holdingManager());
     }
 
     // -- Modifiers --
@@ -484,7 +470,6 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
      * - Strategy Manager Contract.
      */
     modifier onlyAllowed() {
-        IManager manager = _getManager();
         require(
             msg.sender == manager.holdingManager() || msg.sender == manager.liquidationManager()
                 || msg.sender == manager.strategyManager(),

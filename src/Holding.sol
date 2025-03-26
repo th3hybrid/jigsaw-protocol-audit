@@ -12,7 +12,6 @@ import { IHolding } from "./interfaces/core/IHolding.sol";
 
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
-import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 import { IStrategyManagerMin } from "./interfaces/core/IStrategyManagerMin.sol";
 /**
  * @title Holding Contract
@@ -37,9 +36,9 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
     address public override emergencyInvoker;
 
     /**
-     * @notice Contract that contains the address of the manager contract.
+     * @notice Contract that contains all the necessary configs of the protocol.
      */
-    IManagerContainer public override managerContainer;
+    IManager public override manager;
 
     // --- Constructor ---
 
@@ -58,19 +57,19 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
      *
      * @notice Requirements:
      * - The contract must not be already initialized.
-     * - `_managerContainer` must not be the zero address.
+     * - `_manager` must not be the zero address.
      *
      * @notice Effects:
      * - Sets `_initialized` to true.
-     * - Sets `managerContainer` to the provided `_managerContainer` address.
+     * - Sets `manager` to the provided `_manager` address.
      *
-     * @param _managerContainer Contract that contains the address of the manager container contract.
+     * @param _manager Contract that holds all the necessary configs of the protocol.
      */
     function init(
-        address _managerContainer
+        address _manager
     ) public initializer {
-        require(_managerContainer != address(0), "3065");
-        managerContainer = IManagerContainer(_managerContainer);
+        require(_manager != address(0), "3065");
+        manager = IManager(_manager);
     }
 
     // -- User specific methods --
@@ -179,7 +178,6 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
     // -- Modifiers
 
     modifier onlyAllowed() {
-        IManager manager = IManager(managerContainer.manager());
         (,, bool isStrategyWhitelisted) = IStrategyManagerMin(manager.strategyManager()).strategyInfo(msg.sender);
 
         require(
@@ -192,18 +190,12 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
     }
 
     modifier onlyUser() {
-        require(
-            msg.sender
-                == IHoldingManager(IManager(managerContainer.manager()).holdingManager()).holdingUser(address(this)),
-            "1000"
-        );
+        require(msg.sender == IHoldingManager(manager.holdingManager()).holdingUser(address(this)), "1000");
         _;
     }
 
     modifier onlyEmergencyInvoker() {
-        require(
-            msg.sender == emergencyInvoker && IManager(managerContainer.manager()).allowedInvokers(msg.sender), "1000"
-        );
+        require(msg.sender == emergencyInvoker && manager.allowedInvokers(msg.sender), "1000");
         _;
     }
 }

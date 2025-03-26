@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IManagerContainer } from "../core/IManagerContainer.sol";
 import { IOracle } from "../oracle/IOracle.sol";
+import { IManager } from "./IManager.sol";
 
 /**
  * @title ISharesRegistry
@@ -123,10 +123,10 @@ interface ISharesRegistry {
     function token() external view returns (address);
 
     /**
-     * @notice Interface of the manager container contract.
-     * @return The manager container.
+     * @notice Contract that contains all the necessary configs of the protocol.
+     * @return The manager contract.
      */
-    function managerContainer() external view returns (IManagerContainer);
+    function manager() external view returns (IManager);
 
     /**
      * @notice Oracle contract associated with this share registry.

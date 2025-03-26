@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { IHoldingManager } from "./IHoldingManager.sol";
-import { IManagerContainer } from "./IManagerContainer.sol";
+import { IManager } from "./IManager.sol";
 import { IStablesManager } from "./IStablesManager.sol";
 import { ISwapManager } from "./ISwapManager.sol";
 
@@ -59,9 +59,10 @@ interface ILiquidationManager {
     event SelfLiquidationFeeUpdated(uint256 oldAmount, uint256 newAmount);
 
     /**
-     * @notice returns the address of the manager container contract
+     * @notice Contract that contains all the necessary configs of the protocol.
+     * @return The manager contract.
      */
-    function managerContainer() external view returns (IManagerContainer);
+    function manager() external view returns (IManager);
 
     /**
      * @notice The max % amount the protocol gets when a self-liquidation operation happens.

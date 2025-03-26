@@ -16,7 +16,6 @@ import { IWETH } from "./interfaces/IWETH.sol";
 import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
-import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 
 import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
@@ -56,18 +55,18 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     address public immutable override holdingImplementationReference;
 
     /**
-     * @notice Contract that contains the address of the manager contract.
+     * @notice Contract that contains all the necessary configs of the protocol.
      */
-    IManagerContainer public immutable override managerContainer;
+    IManager public immutable override manager;
 
     /**
      * @notice Creates a new HoldingManager Contract.
      * @param _initialOwner The initial owner of the contract
-     * @param _managerContainer Contract that contains the address of the manager contract.
+     * @param _manager Contract that holds all the necessary configs of the protocol.
      */
-    constructor(address _initialOwner, address _managerContainer) Ownable(_initialOwner) {
-        require(_managerContainer != address(0), "3065");
-        managerContainer = IManagerContainer(_managerContainer);
+    constructor(address _initialOwner, address _manager) Ownable(_initialOwner) {
+        require(_manager != address(0), "3065");
+        manager = IManager(_manager);
         holdingImplementationReference = address(new Holding());
     }
 
@@ -94,7 +93,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         require(userHolding[msg.sender] == address(0), "1101");
 
         if (msg.sender != tx.origin) {
-            require(_getManager().isContractWhitelisted(msg.sender), "1000");
+            require(manager.isContractWhitelisted(msg.sender), "1000");
         }
 
         // Instead of deploying the contract, it is cloned to save on gas.
@@ -106,7 +105,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         holdingUser[newHoldingAddress] = msg.sender;
 
         Holding newHolding = Holding(newHoldingAddress);
-        newHolding.init(address(managerContainer));
+        newHolding.init(address(manager));
 
         return newHoldingAddress;
     }
@@ -150,13 +149,13 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         external
         payable
         override
-        validToken(_getManager().WETH())
+        validToken(manager.WETH())
         validHolding(userHolding[msg.sender])
         nonReentrant
         whenNotPaused
     {
         _wrap();
-        _deposit({ _from: address(this), _token: _getManager().WETH(), _amount: msg.value });
+        _deposit({ _from: address(this), _token: manager.WETH(), _amount: msg.value });
     }
 
     /**
@@ -192,7 +191,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
 
         // Transfer the fee amount to the fee address.
         if (feeAmount > 0) {
-            holding.transfer({ _token: _token, _to: _getManager().feeAddress(), _amount: feeAmount });
+            holding.transfer({ _token: _token, _to: manager.feeAddress(), _amount: feeAmount });
         }
 
         // Transfer the remaining amount to the user.
@@ -219,12 +218,12 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     function withdrawAndUnwrap(
         uint256 _amount
     ) external override validAmount(_amount) validHolding(userHolding[msg.sender]) nonReentrant whenNotPaused {
-        address wethAddress = _getManager().WETH();
+        address wethAddress = manager.WETH();
         IHolding(userHolding[msg.sender]).transfer({ _token: wethAddress, _to: address(this), _amount: _amount });
         _unwrap(_amount);
         (uint256 userAmount, uint256 feeAmount) = _withdraw({ _token: wethAddress, _amount: _amount });
 
-        (bool feeSuccess,) = payable(_getManager().feeAddress()).call{ value: feeAmount }("");
+        (bool feeSuccess,) = payable(manager.feeAddress()).call{ value: feeAmount }("");
         require(feeSuccess, "3016");
 
         (bool success,) = payable(msg.sender).call{ value: userAmount }("");
@@ -438,19 +437,11 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     // -- Private methods --
 
     /**
-     * @notice Returns the manager contract.
-     * @return The IManager instance.
-     */
-    function _getManager() private view returns (IManager) {
-        return IManager(managerContainer.manager());
-    }
-
-    /**
      * @notice Returns the stables manager contract.
      * @return The IStablesManager instance.
      */
     function _getStablesManager() private view returns (IStablesManager) {
-        return IStablesManager(_getManager().stablesManager());
+        return IStablesManager(manager.stablesManager());
     }
 
     /**
@@ -469,7 +460,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     function _wrap() private {
         require(msg.value > 0, "2001");
         emit NativeCoinWrapped({ user: msg.sender, amount: msg.value });
-        IWETH(_getManager().WETH()).deposit{ value: msg.value }();
+        IWETH(manager.WETH()).deposit{ value: msg.value }();
     }
 
     /**
@@ -490,7 +481,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         uint256 _amount
     ) private {
         emit NativeCoinUnwrapped({ user: msg.sender, amount: _amount });
-        IWETH(_getManager().WETH()).withdraw(_amount);
+        IWETH(manager.WETH()).withdraw(_amount);
     }
 
     /**
@@ -543,7 +534,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
      * @return The available amount to be withdrawn and the withdrawal fee amount.
      */
     function _withdraw(address _token, uint256 _amount) private returns (uint256, uint256) {
-        require(_getManager().isTokenWithdrawable(_token), "3071");
+        require(manager.isTokenWithdrawable(_token), "3071");
         address holding = userHolding[msg.sender];
 
         // Perform the check to see if this is an airdropped token or user actually has collateral for it
@@ -551,7 +542,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         if (_tokenRegistry != address(0) && ISharesRegistry(_tokenRegistry).collateral(holding) > 0) {
             _getStablesManager().removeCollateral({ _holding: holding, _token: _token, _amount: _amount });
         }
-        uint256 withdrawalFee = _getManager().withdrawalFee();
+        uint256 withdrawalFee = manager.withdrawalFee();
         uint256 withdrawalFeeAmount = 0;
         if (withdrawalFee > 0) withdrawalFeeAmount = OperationsLib.getFeeAbsolute(_amount, withdrawalFee);
         emit Withdrawal({ holding: holding, token: _token, totalAmount: _amount, feeAmount: withdrawalFeeAmount });
@@ -601,7 +592,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     modifier validToken(
         address _token
     ) {
-        require(_getManager().isTokenWhitelisted(_token), "3001");
+        require(manager.isTokenWhitelisted(_token), "3001");
         _;
     }
 }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { IStrategy } from ".//IStrategy.sol";
-import { IManagerContainer } from "./IManagerContainer.sol";
+import { IManager } from "./IManager.sol";
 import { IStrategyManagerMin } from "./IStrategyManagerMin.sol";
 
 /**
@@ -167,10 +167,10 @@ interface IStrategyManager is IStrategyManagerMin {
     event RewardsClaimed(address indexed token, address indexed holding, uint256 amount);
 
     /**
-     * @notice Returns the contract that contains the address of the Manager contract.
-     * @return IManagerContainer The contract instance containing the Manager contract address.
+     * @notice Contract that contains all the necessary configs of the protocol.
+     * @return The manager contract.
      */
-    function managerContainer() external view returns (IManagerContainer);
+    function manager() external view returns (IManager);
 
     // -- User specific methods --
 

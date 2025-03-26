@@ -6,7 +6,6 @@ import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IManager } from "./interfaces/core/IManager.sol";
-import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 import { IOracle } from "./interfaces/oracle/IOracle.sol";
@@ -37,9 +36,10 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     mapping(address holding => uint256 amount) public override collateral;
 
     /**
-     * @notice Returns the address of the manager container contract.
+     * /**
+     * @notice Contract that contains the address of the Manager Contract.
      */
-    IManagerContainer public immutable override managerContainer;
+    IManager public override manager;
 
     /**
      * @notice Configuration parameters for the registry.
@@ -89,7 +89,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @notice Creates a SharesRegistry for a specific token.
      *
      * @param _initialOwner The initial owner of the contract.
-     * @param _managerContainer Contract that contains the address of the manager contract.
+     * @param _manager Contract that holds all the necessary configs of the protocol.
      * @param _token The address of the token contract, used as a collateral within this contract.
      * @param _oracle The oracle used to retrieve price data for the `_token`.
      * @param _oracleData Extra data for the oracle.
@@ -97,20 +97,20 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      */
     constructor(
         address _initialOwner,
-        address _managerContainer,
+        address _manager,
         address _token,
         address _oracle,
         bytes memory _oracleData,
         RegistryConfig memory _config
     ) Ownable(_initialOwner) {
-        require(_managerContainer != address(0), "3065");
+        require(_manager != address(0), "3065");
         require(_token != address(0), "3001");
         require(_oracle != address(0), "3034");
 
         token = _token;
         oracle = IOracle(_oracle);
         oracleData = _oracleData;
-        managerContainer = IManagerContainer(_managerContainer);
+        manager = IManager(_manager);
 
         _updateConfig(_config);
     }
@@ -135,7 +135,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      */
     function setBorrowed(address _holding, uint256 _newVal) external override onlyStableManager {
         // Ensure the `holding` holds allowed minimum jUSD debt amount
-        require(_newVal == 0 || _newVal >= IManager(managerContainer.manager()).minDebtAmount(), "3102");
+        require(_newVal == 0 || _newVal >= manager.minDebtAmount(), "3102");
         // Emit event indicating successful update
         emit BorrowedSet({ _holding: _holding, oldVal: borrowed[_holding], newVal: _newVal });
         // Update the borrowed amount for the holding
@@ -414,7 +414,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     function _updateConfig(
         RegistryConfig memory _config
     ) private {
-        uint256 precision = IManager(managerContainer.manager()).PRECISION();
+        uint256 precision = manager.PRECISION();
 
         require(_config.collateralizationRate >= minCR && _config.collateralizationRate <= precision, "3066");
         require(_config.liquidationBuffer <= maxLiquidationBuffer, "3100");
@@ -432,7 +432,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @notice Modifier to only allow access to a function by the Stables Manager Contract.
      */
     modifier onlyStableManager() {
-        require(msg.sender == IManager(managerContainer.manager()).stablesManager(), "1000");
+        require(msg.sender == manager.stablesManager(), "1000");
         _;
     }
 }

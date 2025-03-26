@@ -8,7 +8,6 @@ import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/Saf
 
 import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
-import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
 import { ISwapManager } from "./interfaces/core/ISwapManager.sol";
 
@@ -38,9 +37,9 @@ contract SwapManager is ISwapManager, Ownable2Step {
     address public immutable override uniswapFactory;
 
     /**
-     * @notice Returns the contract that contains the address of the Manager contract.
+     * @notice Contract that contains all the necessary configs of the protocol.
      */
-    IManagerContainer public immutable override managerContainer;
+    IManager public immutable override manager;
 
     /**
      * @notice Returns UniswapV3 pool initialization code hash used to deterministically compute the pool address.
@@ -53,21 +52,21 @@ contract SwapManager is ISwapManager, Ownable2Step {
      * @param _initialOwner The initial owner of the contract.
      * @param _uniswapFactory the address of the UniswapV3 Factory.
      * @param _swapRouter the address of the UniswapV3 Swap Router.
-     * @param _managerContainer contract that contains the address of the Manager contract.
+     * @param _manager contract that contains all the necessary configs of the protocol.
      */
     constructor(
         address _initialOwner,
         address _uniswapFactory,
         address _swapRouter,
-        address _managerContainer
+        address _manager
     ) Ownable(_initialOwner) {
         require(_uniswapFactory != address(0), "3000");
         require(_swapRouter != address(0), "3000");
-        require(_managerContainer != address(0), "3000");
+        require(_manager != address(0), "3000");
 
         uniswapFactory = _uniswapFactory;
         swapRouter = _swapRouter;
-        managerContainer = IManagerContainer(_managerContainer);
+        manager = IManager(_manager);
     }
 
     // -- User specific methods --
@@ -103,7 +102,7 @@ contract SwapManager is ISwapManager, Ownable2Step {
         uint256 _amountInMaximum
     ) external override validPool(_swapPath, _amountOut) returns (uint256 amountIn) {
         // Ensure the caller is Liquidation Manager Contract.
-        require(msg.sender == IManager(managerContainer.manager()).liquidationManager(), "1000");
+        require(msg.sender == manager.liquidationManager(), "1000");
 
         // Initialize tempData struct.
         SwapTempData memory tempData = SwapTempData({
@@ -189,14 +188,6 @@ contract SwapManager is ISwapManager, Ownable2Step {
     // -- Private methods --
 
     /**
-     * @notice Returns the stables manager contract.
-     * @return The IStablesManager instance.
-     */
-    function _getStablesManager() private view returns (IStablesManager) {
-        return IStablesManager(IManager(managerContainer.manager()).stablesManager());
-    }
-
-    /**
      * @notice Computes the pool address given the tokens of the pool and its fee.
      * @param tokenA The address of the first token of the UniswapV3 Pool.
      * @param tokenB The address of the second token of the UniswapV3 Pool.
@@ -245,7 +236,7 @@ contract SwapManager is ISwapManager, Ownable2Step {
 
         // Initialize tempData struct.
         ValidPoolTempData memory tempData = ValidPoolTempData({
-            jUsd: _getStablesManager().jUSD(),
+            jUsd: IStablesManager(manager.stablesManager()).jUSD(),
             tokenA: address(bytes20(_path[0:20])),
             fee: uint24(bytes3(_path[20:23])),
             tokenB: address(bytes20(_path[23:43]))

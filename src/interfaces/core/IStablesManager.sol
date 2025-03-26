@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { IJigsawUSD } from "../core/IJigsawUSD.sol";
 import { ISharesRegistry } from "../core/ISharesRegistry.sol";
-import { IManagerContainer } from "./IManagerContainer.sol";
+import { IManager } from "./IManager.sol";
 
 /**
  * @title IStablesManager
@@ -108,10 +108,10 @@ interface IStablesManager {
     function jUSD() external view returns (IJigsawUSD);
 
     /**
-     * @notice Returns managerContainer address that contains the address of the Manager Contract.
-     * @return The address of the manager container contract.
+     * @notice Contract that contains all the necessary configs of the protocol.
+     * @return The manager contract.
      */
-    function managerContainer() external view returns (IManagerContainer);
+    function manager() external view returns (IManager);
 
     // -- User specific methods --
 

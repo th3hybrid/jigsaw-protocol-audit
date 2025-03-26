@@ -13,7 +13,6 @@ import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { ILiquidationManager } from "./interfaces/core/ILiquidationManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
-import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 
 import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
@@ -62,20 +61,20 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
     uint256 public constant override LIQUIDATION_PRECISION = 1e5;
 
     /**
-     * @notice contract that contains the address of the Manager Container.
+     * @notice Contract that contains all the necessary configs of the protocol.
      */
-    IManagerContainer public immutable override managerContainer;
+    IManager public override manager;
 
     // -- Constructor --
 
     /**
      * @notice Creates a new LiquidationManager contract.
      * @param _initialOwner The initial owner of the contract.
-     * @param _managerContainer Contract that contains the address of the manager contract.
+     * @param _manager Contract that holds all the necessary configs of the protocol.
      */
-    constructor(address _initialOwner, address _managerContainer) Ownable(_initialOwner) {
-        require(_managerContainer != address(0), "3065");
-        managerContainer = IManagerContainer(_managerContainer);
+    constructor(address _initialOwner, address _manager) Ownable(_initialOwner) {
+        require(_manager != address(0), "3065");
+        manager = IManager(_manager);
     }
 
     // -- User specific methods --
@@ -239,7 +238,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         if (finalFeeCollateral != 0) {
             IHolding(tempData.holding).transfer({
                 _token: _collateral,
-                _to: _getManager().feeAddress(),
+                _to: manager.feeAddress(),
                 _amount: finalFeeCollateral
             });
         }
@@ -408,11 +407,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         // Perform sanity checks.
         require(isRegistryActive, "1200");
         require(holdingManager.isHolding(holding), "3002");
-        require(
-            _data.strategies.length
-                == IStrategyManager(_getManager().strategyManager()).getHoldingToStrategyLength(holding),
-            "3098"
-        );
+        require(_data.strategies.length == _getStrategyManager().getHoldingToStrategyLength(holding), "3098");
 
         uint256 totalBorrowed = ISharesRegistry(registryAddress).borrowed(holding);
         uint256 totalCollateral = ISharesRegistry(registryAddress).collateral(holding);
@@ -510,13 +505,13 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         uint256 _jUsdAmount,
         uint256 _exchangeRate
     ) private view returns (uint256 totalCollateral) {
-        uint256 EXCHANGE_RATE_PRECISION = _getManager().EXCHANGE_RATE_PRECISION();
+        uint256 EXCHANGE_RATE_PRECISION = manager.EXCHANGE_RATE_PRECISION();
         // Calculate collateral amount based on its USD value.
         totalCollateral = _jUsdAmount.mulDiv(EXCHANGE_RATE_PRECISION, _exchangeRate, Math.Rounding.Ceil);
 
         // Adjust collateral amount in accordance with current jUSD price.
         totalCollateral =
-            totalCollateral.mulDiv(_getManager().getJUsdExchangeRate(), EXCHANGE_RATE_PRECISION, Math.Rounding.Ceil);
+            totalCollateral.mulDiv(manager.getJUsdExchangeRate(), EXCHANGE_RATE_PRECISION, Math.Rounding.Ceil);
 
         // Perform sanity check to avoid miscalculations.
         require(totalCollateral > 0, "3079");
@@ -562,7 +557,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
             (, tempData.shares) = IStrategy(_strategies[i]).recipients(_holding);
 
             // Withdraw collateral.
-            (tempData.withdrawResult,,,) = IStrategyManager(_getManager().strategyManager()).claimInvestment({
+            (tempData.withdrawResult,,,) = _getStrategyManager().claimInvestment({
                 _holding: _holding,
                 _token: _token,
                 _strategy: _strategies[i],
@@ -585,31 +580,31 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
     }
 
     /**
-     * @notice Utility function do get available Manager Contract.
-     */
-    function _getManager() private view returns (IManager) {
-        return IManager(managerContainer.manager());
-    }
-
-    /**
      * @notice Utility function do get available StablesManager Contract.
      */
     function _getStablesManager() private view returns (IStablesManager) {
-        return IStablesManager(_getManager().stablesManager());
+        return IStablesManager(manager.stablesManager());
     }
 
     /**
      * @notice Utility function do get available HoldingManager Contract.
      */
     function _getHoldingManager() private view returns (IHoldingManager) {
-        return IHoldingManager(_getManager().holdingManager());
+        return IHoldingManager(manager.holdingManager());
     }
 
     /**
      * @notice Utility function do get available SwapManager Contract.
      */
     function _getSwapManager() private view returns (ISwapManager) {
-        return ISwapManager(_getManager().swapManager());
+        return ISwapManager(manager.swapManager());
+    }
+
+    /**
+     * @notice Utility function do get available StrategyManager Contract.
+     */
+    function _getStrategyManager() private view returns (IStrategyManager) {
+        return IStrategyManager(manager.strategyManager());
     }
 
     // -- Modifiers --

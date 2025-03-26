@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IManagerContainer } from "./IManagerContainer.sol";
+import { IManager } from "./IManager.sol";
 
 /**
  * @title IHolding
@@ -24,9 +24,9 @@ interface IHolding {
     function emergencyInvoker() external view returns (address);
 
     /**
-     * @notice Contract that contains the address of the manager contract.
+     * @notice Contract that contains all the necessary configs of the protocol.
      */
-    function managerContainer() external view returns (IManagerContainer);
+    function manager() external view returns (IManager);
 
     // -- User specific methods --
 

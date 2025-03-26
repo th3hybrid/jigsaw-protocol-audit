@@ -15,7 +15,6 @@ import { OperationsLib } from "./libraries/OperationsLib.sol";
 import { IHolding } from "./interfaces/core/IHolding.sol";
 import { IHoldingManager } from "./interfaces/core/IHoldingManager.sol";
 import { IManager } from "./interfaces/core/IManager.sol";
-import { IManagerContainer } from "./interfaces/core/IManagerContainer.sol";
 
 import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
 import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
@@ -49,18 +48,18 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
     mapping(address holding => EnumerableSet.AddressSet strategies) private holdingToStrategy;
 
     /**
-     * @notice Returns the contract that contains the address of the Manager contract.
+     * @notice Contract that contains all the necessary configs of the protocol.
      */
-    IManagerContainer public immutable override managerContainer;
+    IManager public immutable override manager;
 
     /**
      * @notice Creates a new StrategyManager contract.
      * @param _initialOwner The initial owner of the contract.
-     * @param _managerContainer contract that contains the address of the Manager contract.
+     * @param _manager Contract that holds all the necessary configs of the protocol.
      */
-    constructor(address _initialOwner, address _managerContainer) Ownable(_initialOwner) {
-        require(_managerContainer != address(0), "3065");
-        managerContainer = IManagerContainer(_managerContainer);
+    constructor(address _initialOwner, address _manager) Ownable(_initialOwner) {
+        require(_manager != address(0), "3065");
+        manager = IManager(_manager);
     }
 
     // -- User specific methods --
@@ -316,7 +315,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
     ) public override onlyOwner validAddress(_strategy) {
         require(!strategyInfo[_strategy].whitelisted, "3014");
         StrategyInfo memory info = StrategyInfo(0, false, false);
-        info.performanceFee = _getManager().performanceFee();
+        info.performanceFee = manager.performanceFee();
         info.active = true;
         info.whitelisted = true;
 
@@ -496,7 +495,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         // Ensure user doesn't harm themselves by becoming liquidatable after claiming investment.
         // If function is called by liquidation manager, we don't need to check if holding is liquidatable,
         // as we need to save as much collateral as possible.
-        if (_getManager().liquidationManager() != msg.sender) {
+        if (manager.liquidationManager() != msg.sender) {
             require(!_getStablesManager().isLiquidatable(_token, _holding), "3103");
         }
 
@@ -532,19 +531,11 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
     }
 
     /**
-     * @notice Retrieves the instance of the Manager contract.
-     * @return IManager contract's instance.
-     */
-    function _getManager() private view returns (IManager) {
-        return IManager(managerContainer.manager());
-    }
-
-    /**
      * @notice Retrieves the instance of the Holding Manager contract.
      * @return IHoldingManager contract's instance.
      */
     function _getHoldingManager() private view returns (IHoldingManager) {
-        return IHoldingManager(_getManager().holdingManager());
+        return IHoldingManager(manager.holdingManager());
     }
 
     /**
@@ -552,7 +543,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @return IStablesManager contract's instance.
      */
     function _getStablesManager() private view returns (IStablesManager) {
-        return IStablesManager(_getManager().stablesManager());
+        return IStablesManager(manager.stablesManager());
     }
 
     // -- Modifiers --
@@ -598,7 +589,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         address _holding
     ) {
         require(
-            _getManager().liquidationManager() == msg.sender || _getHoldingManager().holdingUser(_holding) == msg.sender,
+            manager.liquidationManager() == msg.sender || _getHoldingManager().holdingUser(_holding) == msg.sender,
             "1000"
         );
         _;
@@ -611,7 +602,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
     modifier validToken(
         address _token
     ) {
-        require(_getManager().isTokenWhitelisted(_token), "3001");
+        require(manager.isTokenWhitelisted(_token), "3001");
         _;
     }
 }
