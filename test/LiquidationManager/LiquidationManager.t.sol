@@ -42,6 +42,7 @@ contract LiquidationManagerTest is Test {
         manager = new Manager(OWNER, address(weth), address(jUsdOracle), bytes(""));
         liquidationManager = new LiquidationManager(OWNER, address(manager));
 
+        vm.prank(OWNER, OWNER);
         manager.setLiquidationManager(address(liquidationManager));
     }
 
@@ -67,40 +68,21 @@ contract LiquidationManagerTest is Test {
         assertEq(prevFee, liquidationManager.selfLiquidationFee());
     }
 
-    // Tests setting liquidator bonus from Manager's address
-    function test_setSelfLiquidationFee_when_authorized(
-        uint256 _amount
-    ) public {
-        uint256 MAX_SELF_LIQUIDATION_FEE = liquidationManager.MAX_SELF_LIQUIDATION_FEE();
+    // Tests the liquidator bonus setting in a real-world scenario through owner
+    function test_setSelfLiquidationFee_when_authorized() public {
+        vm.startPrank(OWNER, OWNER);
+        uint256 maxFee = liquidationManager.MAX_SELF_LIQUIDATION_FEE();
 
-        vm.startPrank(address(OWNER), address(OWNER));
-
-        //Tests setting SL fee , when SL fee  < MAX_SELF_LIQUIDATION_FEE
-        if (_amount < MAX_SELF_LIQUIDATION_FEE) {
-            liquidationManager.setSelfLiquidationFee(_amount);
-            assertEq(_amount, liquidationManager.selfLiquidationFee());
-        }
-        //Tests setting SL fee , when SL fee > MAX_SELF_LIQUIDATION_FEE
-        else {
-            //Tests if reverts with error code 2001
-            vm.expectRevert(bytes("3066"));
-            liquidationManager.setSelfLiquidationFee(_amount);
-        }
-    }
-
-    // Tests the liquidator bonus setting in a real-world scenario via the Manager Contract
-    function test_setSelfLiquidationFee_when_fromManager(
-        uint256 _amount
-    ) public {
-        vm.assume(_amount < liquidationManager.MAX_SELF_LIQUIDATION_FEE());
+        vm.expectRevert(bytes("3066"));
+        liquidationManager.setSelfLiquidationFee(maxFee + 1);
 
         vm.expectEmit();
-        emit SelfLiquidationFeeUpdated(liquidationManager.selfLiquidationFee(), _amount);
+        emit SelfLiquidationFeeUpdated(liquidationManager.selfLiquidationFee(), maxFee);
+        liquidationManager.setSelfLiquidationFee(maxFee);
 
-        liquidationManager.setSelfLiquidationFee(_amount);
+        assertEq(maxFee, liquidationManager.selfLiquidationFee());
 
-        assertEq(_amount, liquidationManager.selfLiquidationFee());
-        assertEq(liquidationManager.selfLiquidationFee(), liquidationManager.selfLiquidationFee());
+        vm.stopPrank();
     }
 
     // Tests setting contract paused from non-Owner's address
@@ -116,10 +98,12 @@ contract LiquidationManagerTest is Test {
     // Tests setting contract paused from Owner's address
     function test_setPaused_when_authorized() public {
         //Sets contract paused and checks if after pausing contract is paused and event is emitted
+        vm.prank(OWNER, OWNER);
         liquidationManager.pause();
         assertEq(liquidationManager.paused(), true);
 
         //Sets contract unpaused and checks if after pausing contract is unpaused and event is emitted
+        vm.prank(OWNER, OWNER);
         liquidationManager.unpause();
         assertEq(liquidationManager.paused(), false);
     }

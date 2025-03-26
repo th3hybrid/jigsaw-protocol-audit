@@ -14,7 +14,6 @@ import { HoldingManager } from "../../src/HoldingManager.sol";
 import { JigsawUSD } from "../../src/JigsawUSD.sol";
 import { LiquidationManager } from "../../src/LiquidationManager.sol";
 import { Manager } from "../../src/Manager.sol";
-
 import { ReceiptToken } from "../../src/ReceiptToken.sol";
 import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
 import { SharesRegistry } from "../../src/SharesRegistry.sol";
@@ -59,6 +58,7 @@ contract SelfLiquidationTest is Test {
     IQuoterV2 public quoter;
     LiquidationManager public liquidationManager;
     Manager public manager;
+    Manager public IGNORE_ME;
     JigsawUSD public jUsd;
     ReceiptTokenFactory public receiptTokenFactory;
     SampleOracle public usdcOracle;
@@ -78,7 +78,7 @@ contract SelfLiquidationTest is Test {
     address public UniswapSwapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     mapping(address => SharesRegistry) public registries;
-    uint256 internal uniswapPoolCap = 1_000_000;
+    uint256 internal uniswapPoolCap = 1_000_000_000;
 
     address public jUsdPool;
     uint256 public jUsdPoolMintTokenId;
@@ -110,6 +110,7 @@ contract SelfLiquidationTest is Test {
         weth = IERC20Metadata(WETH);
 
         manager = new Manager(address(this), WETH, address(1), bytes(""));
+        IGNORE_ME = new Manager(address(this), WETH, address(1), bytes(""));
 
         SampleOracle jUsdOracle = new SampleOracle();
         manager.requestNewJUsdOracle(address(jUsdOracle));
@@ -189,7 +190,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        uint256 _amount = 1600;
+        uint256 _amount = 800;
         testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
@@ -209,7 +210,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        uint256 _amount = 1600;
+        uint256 _amount = 800;
         testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
@@ -227,7 +228,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        uint256 _amount = 1600;
+        uint256 _amount = 800;
         testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
@@ -239,11 +240,9 @@ contract SelfLiquidationTest is Test {
     }
 
     // This test evaluates the self-liquidation mechanism when the {slippagePercentage} is set too high
-    function test_selfLiquidate_when_slippageTooHigh(
-        uint256 _slippagePercentage
-    ) public {
+    function test_selfLiquidate_when_slippageTooHigh(uint256 _amount, uint256 _slippagePercentage) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
         vm.assume(_slippagePercentage > liquidationManager.LIQUIDATION_PRECISION());
 
         testData.collateral = USDC;
@@ -266,9 +265,11 @@ contract SelfLiquidationTest is Test {
 
     // This test evaluates the self-liquidation mechanism when {amountIn} is set too big, i.e.
     // {slippagePercentage} doesn't allow that big deviation
-    function test_selfLiquidate_when_amountInTooBig() public {
+    function test_selfLiquidate_when_amountInTooBig(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         testData.collateral = USDC;
         testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
@@ -301,9 +302,11 @@ contract SelfLiquidationTest is Test {
 
     // This test evaluates the self-liquidation mechanism when the required collateral exceeds the collateral
     // amount available in holding
-    function test_selfLiquidate_when_notEnoughAvailableCollateral() public {
+    function test_selfLiquidate_when_notEnoughAvailableCollateral(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         testData.collateral = USDC;
         testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
@@ -347,7 +350,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDC;
-        uint256 _amount = 1600;
+        uint256 _amount = 800;
         testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
         ILiquidationManager.SwapParamsCalldata memory swapParams;
@@ -365,7 +368,7 @@ contract SelfLiquidationTest is Test {
         SelfLiquidationTestTempData memory testData;
 
         testData.collateral = USDT;
-        uint256 _amount = 1600;
+        uint256 _amount = 800;
         DEFAULT_USER = address(101);
         testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
 
@@ -383,9 +386,11 @@ contract SelfLiquidationTest is Test {
     //      * without strategies
     //      * collateral is denominated in USDC
     //      * no jUsd in the Uniswap pool
-    function test_selfLiquidate_when_fullDebt_USDC_withoutStrategies_jUSDPoolEmpty() public {
+    function test_selfLiquidate_when_fullDebt_USDC_withoutStrategies_jUSDPoolEmpty(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
         testData.collateral = USDC;
         testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
         testData.userJUsd = jUsd.balanceOf(DEFAULT_USER);
@@ -418,9 +423,11 @@ contract SelfLiquidationTest is Test {
     //      * without strategies
     //      * collateral is denominated in USDT
     //      * no jUsd in the Uniswap pool
-    function test_selfLiquidate_when_fullDebt_USDT_withoutStrategies_jUSDPoolEmpty() public {
+    function test_selfLiquidate_when_fullDebt_USDT_withoutStrategies_jUSDPoolEmpty(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, 100_000);
 
         testData.collateral = USDT;
         testData.userHolding = initiateUser(DEFAULT_USER, testData.collateral, _amount);
@@ -460,9 +467,11 @@ contract SelfLiquidationTest is Test {
     //      * without strategies
     //      * collateral is denominated in USDC
     //      * there is jUsd in the Uniswap pool
-    function test_selfLiquidate_when_fullDebt_USDC_withoutStrategies_jUSDPoolNotEmpty() public {
+    function test_selfLiquidate_when_fullDebt_USDC_withoutStrategies_jUSDPoolNotEmpty(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
@@ -524,9 +533,11 @@ contract SelfLiquidationTest is Test {
     //      * without strategies
     //      * collateral is denominated in USDT
     //      * there is jUsd in the Uniswap pool
-    function test_selfLiquidate_when_fullDebt_USDT_withoutStrategies_jUSDPoolNotEmpty() public {
+    function test_selfLiquidate_when_fullDebt_USDT_withoutStrategies_jUSDPoolNotEmpty(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, 100_000);
 
         _createJUsdUsdcPool();
 
@@ -590,9 +601,11 @@ contract SelfLiquidationTest is Test {
     //      * with strategies
     //      * collateral is denominated in USDC
     //      * there is jUsd in the Uniswap pool
-    function test_selfLiquidate_when_fullDebt_USDC_withStrategies_jUSDPoolNotEmpty() public {
+    function test_selfLiquidate_when_fullDebt_USDC_withStrategies_jUSDPoolNotEmpty(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
@@ -661,9 +674,12 @@ contract SelfLiquidationTest is Test {
     //      affecting holding's collateral
     //      * collateral is denominated in USDC
     //      * there is jUsd in the Uniswap pool
-    function test_selfLiquidate_when_halfDebt_USDC_withStrategiesOnly_jUSDPoolNotEmpty() public {
+    function test_selfLiquidate_when_halfDebt_USDC_withStrategiesOnly_jUSDPoolNotEmpty(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 6000;
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
+        _amount = 6000;
 
         _createJUsdUsdcPool();
 
@@ -745,9 +761,11 @@ contract SelfLiquidationTest is Test {
     //      * with strategies, but there is enough collateral in holding (strategies should be ignored)
     //      * collateral is denominated in USDC
     //      * there is jUsd in the Uniswap pool
-    function test_selfLiquidate_when_fullDebt_USDC_withStrategies_jUSDPoolNotEmpty_useOnlyHoldingBalance() public {
+    function test_selfLiquidate_when_fullDebt_USDC_withStrategies_jUSDPoolNotEmpty_useOnlyHoldingBalance(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, uniswapPoolCap / 100_000);
 
         _createJUsdUsdcPool();
 
@@ -831,9 +849,11 @@ contract SelfLiquidationTest is Test {
     //      * collateral is denominated in USDT
     //      * there is jUsd in the Uniswap pool
     //      * {slippagePercentage} and {amountInMaximum} are set higher
-    function test_selfLiquidate_when_fullDebt_USDT_withoutStrategies_jUSDPoolNotEmpty_highSlippage() public {
+    function test_selfLiquidate_when_fullDebt_USDT_withoutStrategies_jUSDPoolNotEmpty_highSlippage(
+        uint256 _amount
+    ) public {
         SelfLiquidationTestTempData memory testData;
-        uint256 _amount = 1600;
+        _amount = bound(_amount, 800, 100_000);
 
         _createJUsdUsdcPool();
 
@@ -991,19 +1011,19 @@ contract SelfLiquidationTest is Test {
 
     // crestes Uniswap pool for jUsd and initiates it with volume of {uniswapPoolCap}
     function _createJUsdUsdcPool() internal returns (address pool, uint256 tokenId) {
-        address token0 = USDC;
-        address token1 = address(jUsd);
+        address token0 = address(jUsd);
+        address token1 = USDC;
+
+        uint256 jUsdAmount = uniswapPoolCap * 10 ** jUsd.decimals();
+        uint256 usdcAmount = uniswapPoolCap * 10 ** usdc.decimals();
         uint24 fee = 100;
         uint160 sqrtPriceX96 = 79_228_162_514_264_337_593_543; //price of approx 1 to 1
 
         pool = nonfungiblePositionManager.createAndInitializePoolIfNecessary(token0, token1, fee, sqrtPriceX96);
 
-        uint256 jUsdAmount = uniswapPoolCap * 10 ** jUsd.decimals();
-        uint256 usdcAmount = uniswapPoolCap * 10 ** usdc.decimals();
-
         //get usdc and jUsd and approve spending
-        deal(address(jUsd), address(this), jUsdAmount * 100);
-        _getUSDC(address(this), usdcAmount * 100);
+        deal(address(jUsd), address(this), jUsdAmount * 2, true);
+        _getUSDC(address(this), usdcAmount * 2);
 
         jUsd.approve(address(nonfungiblePositionManager), type(uint256).max);
         usdc.approve(address(nonfungiblePositionManager), type(uint256).max);
@@ -1015,10 +1035,10 @@ contract SelfLiquidationTest is Test {
                 fee: fee,
                 tickLower: TickMath.MIN_TICK,
                 tickUpper: TickMath.MAX_TICK,
-                amount0Desired: usdcAmount,
-                amount1Desired: jUsdAmount,
-                amount0Min: 0,
-                amount1Min: 0,
+                amount0Desired: jUsdAmount,
+                amount1Desired: usdcAmount,
+                amount0Min: 1,
+                amount1Min: 1,
                 recipient: address(this),
                 deadline: block.timestamp
             })

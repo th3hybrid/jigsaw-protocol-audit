@@ -14,7 +14,6 @@ import { HoldingManager } from "../../src/HoldingManager.sol";
 
 import { JigsawUSD } from "../../src/JigsawUSD.sol";
 import { Manager } from "../../src/Manager.sol";
-
 import { StablesManager } from "../../src/StablesManager.sol";
 import { StrategyManager } from "../../src/StrategyManager.sol";
 import { SwapManager } from "../../src/SwapManager.sol";
@@ -45,6 +44,7 @@ contract SwapManagerTest is Test {
     SwapManager public swapManager;
     JigsawUSD public jUsd;
     Manager public manager;
+    Manager public IGNORE_ME;
 
     address USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
     address USDT = 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9;
@@ -59,6 +59,7 @@ contract SwapManagerTest is Test {
         usdc = IUSDC(USDC);
         weth = IERC20Metadata(0x82aF49447D8a07e3bd95BD0d56f35241523fBab1);
         manager = new Manager(address(this), address(weth), address(1), bytes(""));
+        IGNORE_ME = new Manager(address(this), address(weth), address(1), bytes(""));
         swapManager = new SwapManager(address(this), address(uniswapFactory), UniswapSwapRouter, address(manager));
         jUsd = new JigsawUSD(address(this), address(manager));
         stablesManager = new StablesManager(address(this), address(manager), address(jUsd));
@@ -225,27 +226,26 @@ contract SwapManagerTest is Test {
         usdc.mint(_receiver, amount);
     }
 
-    // crestes Uniswap pool for jUsd and initiates it with volume of `uniswapPoolCap`
+    // crestes Uniswap pool for jUsd and initiates it with volume of {uniswapPoolCap}
     function _createJUsdUsdcPool() internal returns (address pool, uint256 tokenId) {
         INonfungiblePositionManager nonfungiblePositionManager =
             INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
 
-        uint256 uniswapPoolCap = 1_000_000;
+        uint256 uniswapPoolCap = 1_000_000_000_000_000;
 
-        address token0 = USDC;
-        address token1 = address(jUsd);
+        address token0 = address(jUsd);
+        address token1 = USDC;
 
+        uint256 jUsdAmount = uniswapPoolCap * 10 ** jUsd.decimals();
+        uint256 usdcAmount = uniswapPoolCap * 10 ** usdc.decimals();
         uint24 fee = 100;
         uint160 sqrtPriceX96 = 79_228_162_514_264_337_593_543; //price of approx 1 to 1
 
         pool = nonfungiblePositionManager.createAndInitializePoolIfNecessary(token0, token1, fee, sqrtPriceX96);
 
-        uint256 jUsdAmount = uniswapPoolCap * 10 ** jUsd.decimals();
-        uint256 usdcAmount = uniswapPoolCap * 10 ** usdc.decimals();
-
         //get usdc and jUsd and approve spending
-        deal(address(jUsd), address(this), jUsdAmount * 100);
-        _getUSDC(address(this), usdcAmount * 100);
+        deal(address(jUsd), address(this), jUsdAmount * 2, true);
+        _getUSDC(address(this), usdcAmount * 2);
 
         jUsd.approve(address(nonfungiblePositionManager), type(uint256).max);
         usdc.approve(address(nonfungiblePositionManager), type(uint256).max);
@@ -257,8 +257,8 @@ contract SwapManagerTest is Test {
                 fee,
                 TickMath.MIN_TICK,
                 TickMath.MAX_TICK,
-                usdcAmount,
                 jUsdAmount,
+                usdcAmount,
                 0,
                 0,
                 address(this),
