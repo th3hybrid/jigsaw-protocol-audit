@@ -8,12 +8,6 @@ pragma solidity ^0.8.16;
  */
 interface IChronicleMinimal {
     /**
-     * @notice Returns the oracle's identifier.
-     * @return wat The oracle's identifier.
-     */
-    function wat() external view returns (bytes32 wat);
-
-    /**
      * @notice Returns the oracle's current value and its age.
      * @dev Reverts if no value set.
      * @return value The oracle's current value.
