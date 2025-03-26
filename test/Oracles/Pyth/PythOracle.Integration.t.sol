@@ -10,7 +10,7 @@ import { IPyth } from "@pyth/IPyth.sol";
 import { MockPyth } from "@pyth/MockPyth.sol";
 import { PythStructs } from "@pyth/PythStructs.sol";
 
-import { BasicContractsFixture } from "../..//fixtures/BasicContractsFixture.t.sol";
+import { BasicContractsFixture } from "../../fixtures/BasicContractsFixture.t.sol";
 
 import { PythOracle } from "src/oracles/pyth/PythOracle.sol";
 import { PythOracleFactory } from "src/oracles/pyth/PythOracleFactory.sol";
