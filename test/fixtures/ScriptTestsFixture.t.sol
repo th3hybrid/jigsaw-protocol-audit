@@ -98,6 +98,7 @@ contract ScriptTestsFixture is Test {
         Strings.toHexString(uint160(PYTH), 20).write(pythConfigPath, ".PYTH");
         Strings.toHexString(uint160(USDT_USDC_POOL), 20).write(uniswapV3OracleConfigPath, ".JUSD_USDC_UNISWAP_POOL");
         Strings.toHexString(uint160(USDC), 20).write(uniswapV3OracleConfigPath, ".USDC");
+        Strings.toHexString(uint160(JUSD_Oracle), 20).write(uniswapV3OracleConfigPath, ".USDC_ORACLE");
 
         //Run Manager deployment script
         DeployManager deployManagerScript = new DeployManager();

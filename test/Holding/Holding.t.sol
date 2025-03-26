@@ -150,7 +150,9 @@ contract HoldingTest is BasicContractsFixture {
     }
 
     // Tests if set emergency invoker works correctly when authorized
-    function test_emergency_invoker_authorized(address _caller) public {
+    function test_emergency_invoker_authorized(
+        address _caller
+    ) public {
         assumeNotOwnerNotZero(_caller);
         SimpleContract simpleContract = new SimpleContract();
 

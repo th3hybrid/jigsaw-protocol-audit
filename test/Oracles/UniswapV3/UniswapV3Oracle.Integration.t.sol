@@ -18,9 +18,19 @@ contract UniswapV3OracleIntegrationTest is Test, BasicContractsFixture {
 
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"), 21_722_108);
+
+        address[] memory initialPools = new address[](1);
+        initialPools[0] = USDC_POOL;
+
         init();
-        uniswapJUsdOracle =
-            new UniswapV3Oracle({ _initialOwner: OWNER, _jUSD: USDT, _quoteToken: USDC, _uniswapV3Pool: USDC_POOL });
+
+        uniswapJUsdOracle = new UniswapV3Oracle({
+            _initialOwner: OWNER,
+            _jUSD: USDT,
+            _quoteToken: USDC,
+            _quoteTokenOracle: address(usdcOracle),
+            _uniswapV3Pools: initialPools
+        });
     }
 
     function test_borrow_when_uniswapOracle(address _user, uint256 _mintAmount) public {
