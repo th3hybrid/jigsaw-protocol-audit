@@ -189,7 +189,7 @@ contract PythOracleUnitTest is Test {
         _updateMockPythPrice(int64(100_000_000), uint64(1_000_000_000_000_000_000), int32(-8));
 
         // Expect the next call to revert with the correct error
-        vm.expectRevert(IPythOracle.InvaidConfidence.selector);
+        vm.expectRevert(IPythOracle.InvalidConfidence.selector);
         pythOracle.peek("");
     }
 
