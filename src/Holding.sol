@@ -181,9 +181,8 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
         (,, bool isStrategyWhitelisted) = IStrategyManagerMin(manager.strategyManager()).strategyInfo(msg.sender);
 
         require(
-            msg.sender == manager.strategyManager() || msg.sender == manager.holdingManager()
-                || msg.sender == manager.liquidationManager() || msg.sender == manager.swapManager()
-                || isStrategyWhitelisted,
+            msg.sender == manager.holdingManager() || msg.sender == manager.liquidationManager()
+                || msg.sender == manager.swapManager() || isStrategyWhitelisted,
             "1000"
         );
         _;
