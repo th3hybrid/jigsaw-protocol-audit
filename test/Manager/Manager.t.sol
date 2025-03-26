@@ -695,4 +695,24 @@ contract ManagerTest is BasicContractsFixture {
         manager.setMinDebtAmount(newAmount);
         assertEq(manager.minDebtAmount(), newAmount);
     }
+
+    function test_should_update_invoker(address _user) public {
+        assumeNotOwnerNotZero(_user);
+
+        vm.prank(_user);
+        vm.expectRevert();
+        manager.updateInvoker(_user, true);
+
+        vm.startPrank(OWNER, OWNER);
+
+        vm.expectRevert(bytes("3000"));
+        manager.updateInvoker(address(0), true);
+
+        assertEq(manager.allowedInvokers(_user), false);
+
+        vm.expectEmit(true, true, false, false);
+        emit InvokerUpdated(_user, true);
+        manager.updateInvoker(_user, true);
+        assertEq(manager.allowedInvokers(_user), true);
+    }
 }
