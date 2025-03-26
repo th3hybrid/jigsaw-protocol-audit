@@ -8,14 +8,13 @@ import { Base } from "../Base.s.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
+import { IManager } from "../../src/interfaces/core/IManager.sol";
 import { ISharesRegistry } from "../../src/interfaces/core/ISharesRegistry.sol";
+import { IStablesManager } from "../../src/interfaces/core/IStablesManager.sol";
 import { IOracle } from "../../src/interfaces/oracle/IOracle.sol";
-
-import { ManagerContainer } from "../../src/ManagerContainer.sol";
+import { PythOracleFactory } from "../../src/oracles/pyth/PythOracleFactory.sol";
 
 import { SharesRegistry } from "../../src/SharesRegistry.sol";
-import { StablesManager } from "../../src/StablesManager.sol";
-import { PythOracleFactory } from "../../src/oracles/pyth/PythOracleFactory.sol";
 
 /**
  * @notice Deploys SharesRegistry Contracts for each configured token (a.k.a. collateral)
@@ -45,7 +44,7 @@ contract DeployRegistries is Script, Base {
 
     // Get values from configs
     address internal INITIAL_OWNER = commonConfig.readAddress(".INITIAL_OWNER");
-    address internal MANAGER_CONTAINER = deployments.readAddress(".MANAGER_CONTAINER");
+    address internal MANAGER = deployments.readAddress(".MANAGER");
     address internal STABLES_MANAGER = deployments.readAddress(".STABLES_MANAGER");
     address internal PYTH_ORACLE_FACTORY = deployments.readAddress(".PYTH_ORACLE_FACTORY");
 
@@ -62,8 +61,8 @@ contract DeployRegistries is Script, Base {
 
     function run() external broadcast returns (address[] memory deployedRegistries) {
         // Validate interfaces
-        _validateInterface(ManagerContainer(MANAGER_CONTAINER));
-        _validateInterface(StablesManager(STABLES_MANAGER));
+        _validateInterface(IManager(MANAGER));
+        _validateInterface(IStablesManager(STABLES_MANAGER));
 
         _populateRegistriesArray();
 
@@ -81,7 +80,7 @@ contract DeployRegistries is Script, Base {
             // Deploy SharesRegistry contract
             SharesRegistry registry = new SharesRegistry({
                 _initialOwner: INITIAL_OWNER,
-                _managerContainer: MANAGER_CONTAINER,
+                _manager: MANAGER,
                 _token: registryConfigs[i].token,
                 _oracle: oracle,
                 _oracleData: registryConfigs[i].oracleData,

@@ -11,7 +11,6 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IOracle } from "../../src/interfaces/oracle/IOracle.sol";
 
 import { Manager } from "../../src/Manager.sol";
-import { ManagerContainer } from "../../src/ManagerContainer.sol";
 
 /**
  * @notice Deploys Manager Contract
