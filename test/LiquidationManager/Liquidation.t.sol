@@ -406,7 +406,7 @@ contract LiquidationTestThis is Test {
 
         // make investment
         vm.prank(testData.user, testData.user);
-        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
+        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, 0, "");
 
         ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
         liquidateCalldata.strategies = new address[](1);
@@ -464,7 +464,7 @@ contract LiquidationTestThis is Test {
 
         // make investment
         vm.prank(testData.user, testData.user);
-        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
+        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, 0, "");
 
         // change the price of the usdc
         usdcOracle.setPriceForLiquidation();

@@ -335,7 +335,7 @@ contract SelfLiquidationTest is Test {
         vm.startPrank(DEFAULT_USER, DEFAULT_USER);
 
         // Reduce amount of available collateral even more to get wanted error
-        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
+        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, 0, "");
 
         vm.expectRevert(bytes("3076"));
         liquidationManager.selfLiquidate(
@@ -633,7 +633,7 @@ contract SelfLiquidationTest is Test {
         swapParams.deadline = block.timestamp;
 
         vm.startPrank(DEFAULT_USER, DEFAULT_USER);
-        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
+        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, 0, "");
 
         ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
         strategiesParams.useHoldingBalance = true;
@@ -709,7 +709,7 @@ contract SelfLiquidationTest is Test {
         uint256 investAmount = swapParams.amountInMaximum * 2;
 
         vm.startPrank(DEFAULT_USER, DEFAULT_USER);
-        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), investAmount, "");
+        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), investAmount, 0, "");
 
         uint256 strategyBalanceBeforeSL = usdc.balanceOf(address(strategyWithoutRewardsMock));
 
@@ -793,7 +793,7 @@ contract SelfLiquidationTest is Test {
         swapParams.deadline = block.timestamp;
 
         vm.prank(DEFAULT_USER, DEFAULT_USER);
-        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, "");
+        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, 0, "");
         uint256 strategyBalanceBeforeSL = usdc.balanceOf(address(strategyWithoutRewardsMock));
 
         // Increase holding's balance so strategies are ingnored

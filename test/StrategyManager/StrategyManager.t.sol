@@ -178,7 +178,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         uint256 amount = 10e18;
 
         vm.expectRevert(bytes("3029"));
-        strategyManager.invest(token, strategy, amount, bytes(""));
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
     }
 
     // Tests if invest function reverts correctly when invalid amount
@@ -188,7 +188,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         uint256 amount = 0;
 
         vm.expectRevert(bytes("2001"));
-        strategyManager.invest(token, strategy, amount, bytes(""));
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
     }
 
     // Tests if invest function reverts correctly when invalid token
@@ -198,7 +198,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         uint256 amount = 10e18;
 
         vm.expectRevert(bytes("3001"));
-        strategyManager.invest(token, strategy, amount, bytes(""));
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
     }
 
     // Tests if invest function reverts correctly when contract is paused
@@ -211,7 +211,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         strategyManager.pause();
 
         vm.expectRevert();
-        strategyManager.invest(token, strategy, amount, bytes(""));
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
     }
 
     // Tests if invest function reverts correctly when msg.sender isn't holding
@@ -221,7 +221,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         uint256 amount = 10e18;
 
         vm.expectRevert(bytes("3002"));
-        strategyManager.invest(token, strategy, amount, bytes(""));
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
     }
 
     // Tests if invest function reverts correctly when strategy is inactive
@@ -240,7 +240,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.prank(user, user);
         vm.expectRevert(bytes("1202"));
-        strategyManager.invest(token, strategy, amount, bytes(""));
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
     }
 
     // Tests if invest function reverts correctly when token != _strategyStakingToken,
@@ -255,7 +255,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.prank(user, user);
         vm.expectRevert(bytes("3085"));
-        strategyManager.invest(token, strategy, amount, bytes(""));
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
     }
 
     // Tests if invest function works correctly
@@ -274,7 +274,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         vm.prank(user, user);
         vm.expectEmit();
         emit Invested(holding, user, token, strategy, amount, amount, amount);
-        strategyManager.invest(token, strategy, amount, bytes(""));
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
 
         address[] memory holdingStrategies = strategyManager.getHoldingToStrategy(holding);
 
@@ -309,7 +309,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.prank(user, user);
         vm.expectRevert(bytes("3030"));
-        strategyManager.invest(token, strategy, amount, bytes(""));
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
 
         address[] memory holdingStrategies = strategyManager.getHoldingToStrategy(holding);
 
@@ -429,7 +429,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address holding = initiateUser(user, address(usdc), amount);
 
         vm.prank(user, user);
-        strategyManager.invest(token, address(strategyFrom), amount, bytes(""));
+        strategyManager.invest(token, address(strategyFrom), amount, 0, bytes(""));
 
         IStrategyManager.MoveInvestmentData memory moveInvestmentData;
         moveInvestmentData.strategyFrom = address(strategyFrom);
@@ -473,7 +473,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address holding = initiateUser(user, address(usdc), amount);
 
         vm.prank(user, user);
-        strategyManager.invest(token, address(strategyFrom), amount, bytes(""));
+        strategyManager.invest(token, address(strategyFrom), amount, 0, bytes(""));
 
         IStrategyManager.MoveInvestmentData memory moveInvestmentData;
         moveInvestmentData.strategyFrom = address(strategyFrom);
@@ -616,7 +616,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         uint256 holdingBalanceBefore = token.balanceOf(holding);
 
         vm.startPrank(user, user);
-        strategyManager.invest(address(token), strategy, holdingBalanceBefore, data);
+        strategyManager.invest(address(token), strategy, holdingBalanceBefore, 0, data);
         uint256 holdingReceiptTokenBalanceAfterInvest = IERC20(receiptToken).balanceOf(holding);
 
         (, uint256 shares) = IStrategy(strategy).recipients(holding);
@@ -645,7 +645,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         uint256 holdingBalanceBefore = usdc.balanceOf(holding);
 
         vm.prank(user, user);
-        strategyManager.invest(token, strategy, holdingBalanceBefore, data);
+        strategyManager.invest(token, strategy, holdingBalanceBefore, 0, data);
         (, uint256 shares) = strategyWithoutRewardsMock.recipients(holding);
         uint256 claimAmount = bound(_shares, 1, shares);
 
@@ -738,7 +738,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         strategyManager.addStrategy(strategy);
 
         vm.startPrank(user, user);
-        strategyManager.invest(asset, strategy, holdingBalanceBefore, data);
+        strategyManager.invest(asset, strategy, holdingBalanceBefore, 0, data);
         strategyManager.claimRewards(strategy, data);
         vm.stopPrank();
 
@@ -778,7 +778,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         strategyManager.addStrategy(strategy);
 
         vm.startPrank(user, user);
-        strategyManager.invest(asset, strategy, holdingBalanceBefore, data);
+        strategyManager.invest(asset, strategy, holdingBalanceBefore, 0, data);
         vm.expectEmit();
         emit CollateralAdjusted(holding, asset, 100 * 10 ** strategyRewardToken.decimals(), true);
         strategyManager.claimRewards(strategy, data);
