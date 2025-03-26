@@ -416,9 +416,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     ) private {
         uint256 precision = IManager(managerContainer.manager()).PRECISION();
 
-        require(_config.collateralizationRate >= minCR, "2001");
-        require(_config.collateralizationRate <= precision, "3066");
-        require(_config.liquidationBuffer <= maxLiquidationBuffer, "3100");
+        require(_config.collateralizationRate >= minCR && _config.collateralizationRate <= precision, "3066");
         require(_config.liquidationBuffer <= maxLiquidationBuffer, "3100");
 
         uint256 maxLiquidatorBonus = precision - _config.collateralizationRate - _config.liquidationBuffer;
