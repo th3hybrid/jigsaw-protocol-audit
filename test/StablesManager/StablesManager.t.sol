@@ -29,8 +29,8 @@ contract StablesManagerTest is BasicContractsFixture {
         allowedCallers = [manager.strategyManager(), manager.holdingManager(), manager.liquidationManager()];
     }
 
-    // Tests if init fails correctly when managerContainer address is address(0)
-    function test_init_when_invalidManagerContainer() public {
+    // Tests if init fails correctly when manager address is address(0)
+    function test_init_when_invalidManager() public {
         vm.expectRevert(bytes("3065"));
         StablesManager failedStablesManager = new StablesManager(address(this), address(0), address(0));
         failedStablesManager;
@@ -47,7 +47,7 @@ contract StablesManagerTest is BasicContractsFixture {
     function test_setPaused_when_unauthorized(
         address _caller
     ) public {
-        vm.assume(_caller != stablesManager.owner());
+        vm.assume(_caller != OWNER);
         vm.prank(_caller, _caller);
         vm.expectRevert();
 
@@ -56,7 +56,7 @@ contract StablesManagerTest is BasicContractsFixture {
 
     // Tests setting contract paused from Owner's address
     function test_setPaused_when_authorized() public {
-        vm.startPrank(stablesManager.owner());
+        vm.startPrank(OWNER);
         stablesManager.pause();
         assertEq(stablesManager.paused(), true);
 
@@ -69,7 +69,7 @@ contract StablesManagerTest is BasicContractsFixture {
     function test_registerOrUpdateShareRegistry_when_unauthorized(
         address _caller
     ) public {
-        vm.assume(_caller != stablesManager.owner());
+        vm.assume(_caller != OWNER);
         vm.prank(_caller, _caller);
         vm.expectRevert();
         stablesManager.registerOrUpdateShareRegistry(address(1), address(2), true);
@@ -77,14 +77,14 @@ contract StablesManagerTest is BasicContractsFixture {
 
     // Tests registerOrUpdateShareRegistry reverts correctly when invalid token address
     function test_registerOrUpdateShareRegistry_when_invalidToken() public {
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectRevert(bytes("3007"));
         stablesManager.registerOrUpdateShareRegistry(address(1), address(0), true);
     }
 
     // Tests if registerOrUpdateShareRegistry reverts correctly when invalid registry
     function test_registerOrUpdateShareRegistry_when_invalidRegistry() public {
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectRevert(bytes("3008"));
         stablesManager.registerOrUpdateShareRegistry(registries[address(usdc)], address(1), true);
     }
@@ -95,7 +95,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address testRegistry = address(
             new SharesRegistry(
                 msg.sender,
-                address(managerContainer),
+                address(manager),
                 _token,
                 address(1),
                 bytes(""),
@@ -110,7 +110,7 @@ contract StablesManagerTest is BasicContractsFixture {
         (, address d) = stablesManager.shareRegistryInfo(_token);
         if (d != address(0)) return;
 
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectEmit();
         emit RegistryAdded(_token, testRegistry);
         stablesManager.registerOrUpdateShareRegistry(testRegistry, _token, _active);
@@ -127,7 +127,7 @@ contract StablesManagerTest is BasicContractsFixture {
         address testRegistry = address(
             new SharesRegistry(
                 msg.sender,
-                address(managerContainer),
+                address(manager),
                 _token,
                 address(1),
                 bytes(""),
@@ -142,7 +142,7 @@ contract StablesManagerTest is BasicContractsFixture {
         (, address d) = stablesManager.shareRegistryInfo(_token);
         if (d != address(0)) return;
 
-        vm.startPrank(stablesManager.owner(), stablesManager.owner());
+        vm.startPrank(OWNER, OWNER);
         stablesManager.registerOrUpdateShareRegistry(testRegistry, _token, _active);
         vm.expectEmit();
         emit RegistryUpdated(_token, testRegistry);
@@ -234,7 +234,7 @@ contract StablesManagerTest is BasicContractsFixture {
 
     // Tests if addCollateral reverts correctly when paused
     function test_addCollateral_when_paused() public {
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.pause();
 
         vm.expectRevert();
@@ -256,7 +256,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.registerOrUpdateShareRegistry(registries[address(usdc)], address(usdc), false);
 
         vm.prank(caller, caller);
@@ -279,7 +279,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.pause();
 
         vm.prank(caller, caller);
@@ -305,7 +305,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.registerOrUpdateShareRegistry(registries[address(usdc)], address(usdc), false);
 
         vm.prank(caller, caller);
@@ -373,7 +373,7 @@ contract StablesManagerTest is BasicContractsFixture {
     function test_forceRemoveCollateral_when_paused(
         address _caller
     ) public {
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.pause();
 
         vm.prank(_caller, _caller);
@@ -405,7 +405,7 @@ contract StablesManagerTest is BasicContractsFixture {
 
     // Tests if forceRemoveCollateral reverts correctly when registry is inactive
     function test_forceRemoveCollateral_when_registryInactive() public {
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.registerOrUpdateShareRegistry(registries[address(usdc)], address(usdc), false);
 
         vm.prank(manager.liquidationManager(), manager.liquidationManager());
@@ -453,7 +453,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.pause();
 
         vm.prank(caller, caller);
@@ -478,7 +478,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.registerOrUpdateShareRegistry(registries[address(usdc)], address(usdc), false);
 
         vm.prank(caller, caller);
@@ -538,7 +538,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.pause();
 
         vm.prank(caller, caller);
@@ -552,7 +552,7 @@ contract StablesManagerTest is BasicContractsFixture {
     ) public {
         address caller = allowedCallers[bound(_callerId, 0, allowedCallers.length - 1)];
 
-        vm.prank(stablesManager.owner(), stablesManager.owner());
+        vm.prank(OWNER, OWNER);
         stablesManager.registerOrUpdateShareRegistry(registries[address(usdc)], address(usdc), false);
 
         vm.prank(caller, caller);

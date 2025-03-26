@@ -136,7 +136,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_wrapAndDeposit_when_wEthNotWhitelisted(
         uint256 _amount
     ) public {
-        vm.prank(manager.owner(), manager.owner());
+        vm.prank(OWNER, OWNER);
         manager.removeToken(address(weth));
 
         address user = address(uint160(uint256(keccak256(bytes("user")))));
@@ -168,7 +168,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(user, user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(user, user);
@@ -250,7 +250,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(_user, _user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(_user, _user);
@@ -381,7 +381,7 @@ contract HoldingManagerTest is BasicContractsFixture {
 
         deal(address(usdc), _user, _depositAmount);
 
-        vm.startPrank(manager.owner(), manager.owner());
+        vm.startPrank(OWNER, OWNER);
         manager.setWithdrawalFee(500);
         vm.stopPrank();
 
@@ -453,7 +453,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(_user, _user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(_user, _user);
@@ -522,7 +522,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         uint256 withdrawAmount = bound(_withdrawAmount, 2, _depositAmount);
         deal(user, _depositAmount * bound(_multiplier, 1, 10));
 
-        vm.prank(manager.owner(), manager.owner());
+        vm.prank(OWNER, OWNER);
         manager.setWithdrawalFee(500);
 
         vm.startPrank(user, user);
@@ -574,7 +574,7 @@ contract HoldingManagerTest is BasicContractsFixture {
 
         deal(user, depositAmount * bound(_multiplier, 1, 10));
 
-        vm.startPrank(manager.owner(), manager.owner());
+        vm.startPrank(OWNER, OWNER);
         manager.setWithdrawalFee(500);
         manager.setFeeAddress(address(simpleContract));
         vm.stopPrank();
@@ -645,7 +645,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(user, user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(user, user);
@@ -730,7 +730,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(user, user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(user, user);
@@ -801,7 +801,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(user, user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(user, user);

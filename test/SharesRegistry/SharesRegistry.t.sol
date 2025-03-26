@@ -30,8 +30,8 @@ contract SharesRegistryTest is BasicContractsFixture {
         registry = SharesRegistry(registries[address(usdc)]);
     }
 
-    // Tests if init fails correctly when _managerContainer is address(0)
-    function test_init_when_invalidContainer() public {
+    // Tests if init fails correctly when _manager is address(0)
+    function test_init_when_invalidManager() public {
         address owner = address(1);
         address container = address(0);
         address token = address(0);
@@ -75,7 +75,7 @@ contract SharesRegistryTest is BasicContractsFixture {
         uint256 _colRate
     ) public {
         address owner = address(1);
-        address container = address(managerContainer);
+        address container = address(manager);
         address token = address(1);
         address oracle = address(1);
         bytes memory data = "0x0";

@@ -519,6 +519,6 @@ contract ManagerTest is BasicContractsFixture {
         vm.startPrank(OWNER, OWNER);
 
         vm.expectRevert(bytes("1000"));
-        manager.renounceOwnership();
+        Manager(address(manager)).renounceOwnership();
     }
 }

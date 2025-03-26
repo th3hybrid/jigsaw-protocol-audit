@@ -5,7 +5,6 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import { Manager } from "../../src/Manager.sol";
-import { ManagerContainer } from "../../src/ManagerContainer.sol";
 
 import { Staker } from "../../src/Staker.sol";
 
@@ -27,7 +26,6 @@ contract StakerTest is Test {
     address internal rewardToken;
 
     Manager internal manager;
-    ManagerContainer internal managerContainer;
     SampleTokenERC20 internal usdc;
     SampleTokenERC20 internal weth;
     Staker internal staker;
@@ -40,7 +38,6 @@ contract StakerTest is Test {
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
         manager = new Manager(OWNER, address(weth), address(jUsdOracle), bytes(""));
-        managerContainer = new ManagerContainer(address(this), address(manager));
 
         tokenIn = address(new SampleTokenERC20("TokenIn", "TI", 0));
         rewardToken = address(new SampleTokenERC20("RewardToken", "RT", 0));

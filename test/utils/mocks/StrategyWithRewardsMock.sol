@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IHolding } from "../../../src/interfaces/core/IHolding.sol";
-import { IManagerContainer } from "../../../src/interfaces/core/IManagerContainer.sol";
+import { IManager } from "../../../src/interfaces/core/IManager.sol";
 
 import { IReceiptToken } from "../../../src/interfaces/core/IReceiptToken.sol";
 import { IReceiptTokenFactory } from "../../../src/interfaces/core/IReceiptTokenFactory.sol";
@@ -33,20 +33,20 @@ contract StrategyWithRewardsMock is IStrategy, StrategyBase {
     IReceiptToken public immutable override receiptToken;
 
     constructor(
-        address _managerContainer,
+        address _manager,
         address _tokenIn,
         address _tokenOut,
         address _rewardToken,
         string memory _receiptTokenName,
         string memory _receiptTokenSymbol
     ) StrategyBase(msg.sender) {
-        managerContainer = IManagerContainer(_managerContainer);
+        manager = IManager(_manager);
         rewardToken = _rewardToken;
         tokenIn = _tokenIn;
         tokenOut = _tokenOut;
         sharesDecimals = IERC20Metadata(_tokenIn).decimals();
         receiptToken = IReceiptToken(
-            IReceiptTokenFactory(_getManager().receiptTokenFactory()).createReceiptToken(
+            IReceiptTokenFactory(manager.receiptTokenFactory()).createReceiptToken(
                 _receiptTokenName, _receiptTokenSymbol, address(this), msg.sender
             )
         );

@@ -37,7 +37,7 @@ contract HoldingTest is BasicContractsFixture {
 
         holdingImplementation = new Holding();
         holdingClone = Holding(Clones.clone(address(holdingImplementation)));
-        holdingClone.init(address(managerContainer));
+        holdingClone.init(address(manager));
     }
 
     // Tests if init fails correctly when trying to initialize the implementation contract
@@ -46,8 +46,8 @@ contract HoldingTest is BasicContractsFixture {
         holdingImplementation.init(address(1));
     }
 
-    // Tests if init fails correctly when managerContainer address is address(0)
-    function test_init_when_invalidManagerContainer() public {
+    // Tests if init fails correctly when manager address is address(0)
+    function test_init_when_invalidManager() public {
         Holding badHoldingClone = Holding(Clones.clone(address(holdingImplementation)));
         vm.expectRevert(bytes("3065"));
         badHoldingClone.init(address(0));
@@ -55,15 +55,13 @@ contract HoldingTest is BasicContractsFixture {
 
     // Tests if init works correctly when authorized
     function test_init_when_authorized(
-        address _randomContainer
+        address _randomManager
     ) public {
-        vm.assume(_randomContainer != address(0));
+        vm.assume(_randomManager != address(0));
         Holding goodHoldingClone = Holding(Clones.clone(address(holdingImplementation)));
 
-        goodHoldingClone.init(address(_randomContainer));
-        assertEq(
-            address(goodHoldingClone.managerContainer()), _randomContainer, "Manager Container set incorrect after init"
-        );
+        goodHoldingClone.init(address(_randomManager));
+        assertEq(address(goodHoldingClone.manager()), _randomManager, "Manager set incorrect after init");
     }
 
     // Tests if approve fails correctly when unauthorized

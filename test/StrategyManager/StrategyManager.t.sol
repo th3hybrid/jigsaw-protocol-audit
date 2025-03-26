@@ -59,7 +59,7 @@ contract StrategyManagerTest is BasicContractsFixture {
     function test_setPaused_when_unauthorized(
         address _caller
     ) public {
-        vm.assume(_caller != strategyManager.owner());
+        vm.assume(_caller != OWNER);
         vm.startPrank(_caller, _caller);
         vm.expectRevert();
 
@@ -68,11 +68,11 @@ contract StrategyManagerTest is BasicContractsFixture {
 
     // Tests setting contract paused from Owner's address
     function test_setPaused_when_authorized() public {
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.pause();
         assertEq(strategyManager.paused(), true);
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.unpause();
         assertEq(strategyManager.paused(), false);
     }
@@ -82,7 +82,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address _caller
     ) public {
         address strategy = address(uint160(uint256(keccak256("random address"))));
-        vm.assume(_caller != strategyManager.owner());
+        vm.assume(_caller != OWNER);
         vm.prank(_caller, _caller);
         vm.expectRevert();
         strategyManager.addStrategy(strategy);
@@ -94,7 +94,7 @@ contract StrategyManagerTest is BasicContractsFixture {
     // Tests adding new strategy to the protocol when invalid address
     function test_addStrategy_when_invalidAddress() public {
         address strategy = address(0);
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectRevert(bytes("3000"));
         strategyManager.addStrategy(strategy);
 
@@ -106,11 +106,11 @@ contract StrategyManagerTest is BasicContractsFixture {
     function test_addStrategy_when_authorized() public {
         address strategy = address(
             new StrategyWithoutRewardsMock(
-                address(managerContainer), address(usdc), address(usdc), address(0), "AnotherMock", "ARM"
+                address(manager), address(usdc), address(usdc), address(0), "AnotherMock", "ARM"
             )
         );
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectEmit();
         emit StrategyAdded(strategy);
         strategyManager.addStrategy(strategy);
@@ -123,7 +123,7 @@ contract StrategyManagerTest is BasicContractsFixture {
     function test_addStrategy_when_whitelisted() public {
         address strategy = address(strategyWithoutRewardsMock);
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectRevert(bytes("3014"));
         strategyManager.addStrategy(strategy);
     }
@@ -135,7 +135,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address strategy = address(uint160(uint256(keccak256("random address"))));
         IStrategyManager.StrategyInfo memory info;
 
-        vm.assume(_caller != strategyManager.owner());
+        vm.assume(_caller != OWNER);
         vm.prank(_caller, _caller);
         vm.expectRevert();
         strategyManager.updateStrategy(strategy, info);
@@ -149,7 +149,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         IStrategyManager.StrategyInfo memory info;
         address strategy = address(0);
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectRevert(bytes("3029"));
         strategyManager.updateStrategy(strategy, info);
 
@@ -162,20 +162,20 @@ contract StrategyManagerTest is BasicContractsFixture {
         IStrategyManager.StrategyInfo memory info;
         address strategy = address(strategyWithoutRewardsMock);
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectRevert(bytes("3104"));
         strategyManager.updateStrategy(strategy, info);
 
         info.whitelisted = true;
         info.performanceFee = 100_000_000;
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectRevert(bytes("3105"));
         strategyManager.updateStrategy(strategy, info);
 
         info.performanceFee = 3000;
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         vm.expectEmit();
         emit StrategyUpdated(strategy, info.active, info.performanceFee);
         strategyManager.updateStrategy(strategy, info);
@@ -221,7 +221,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address strategy = address(strategyWithoutRewardsMock);
         uint256 amount = 10e18;
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.pause();
 
         vm.expectRevert();
@@ -249,7 +249,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         IStrategyManager.StrategyInfo memory info;
         info.whitelisted = true;
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.updateStrategy(strategy, info);
 
         vm.prank(user, user);
@@ -311,9 +311,9 @@ contract StrategyManagerTest is BasicContractsFixture {
         address user = address(uint160(uint256(keccak256("random user"))));
         address token = address(weth);
 
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
+        vm.startPrank(OWNER, OWNER);
         StrategyWithoutRewardsMockBroken strategyWithoutRewardsMockBroken = new StrategyWithoutRewardsMockBroken(
-            address(managerContainer), address(weth), address(weth), address(0), "Broken-Mock", "BRM"
+            address(manager), address(weth), address(weth), address(0), "Broken-Mock", "BRM"
         );
         strategyManager.addStrategy(address(strategyWithoutRewardsMockBroken));
         vm.stopPrank();
@@ -361,7 +361,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         moveInvestmentData.strategyFrom = address(strategyWithoutRewardsMock);
         moveInvestmentData.strategyTo = address(strategyWithoutRewardsMock);
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.pause();
 
         vm.expectRevert();
@@ -408,16 +408,16 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         IStrategyManager.StrategyInfo memory info;
         info.whitelisted = true;
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.updateStrategy(strategyTo, info);
 
         IStrategyManager.MoveInvestmentData memory moveInvestmentData;
         moveInvestmentData.strategyFrom = address(
             new StrategyWithoutRewardsMock(
-                address(managerContainer), address(usdc), address(usdc), address(0), "AnotherMock", "ARM"
+                address(manager), address(usdc), address(usdc), address(0), "AnotherMock", "ARM"
             )
         );
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
+        vm.startPrank(OWNER, OWNER);
         strategyManager.addStrategy(moveInvestmentData.strategyFrom);
         vm.stopPrank();
         moveInvestmentData.strategyTo = strategyTo;
@@ -429,9 +429,8 @@ contract StrategyManagerTest is BasicContractsFixture {
 
     // Tests if moveInvestment function reverts correctly when claimResult from the strategyFrom is 0
     function test_moveInvestment_when_claimResult0() public {
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
-        MaliciousStrategy strategyFrom =
-            new MaliciousStrategy(address(managerContainer), address(usdc), "AnotherMock", "ARM");
+        vm.startPrank(OWNER, OWNER);
+        MaliciousStrategy strategyFrom = new MaliciousStrategy(address(manager), address(usdc), "AnotherMock", "ARM");
         strategyManager.addStrategy(address(strategyFrom));
         vm.stopPrank();
 
@@ -472,9 +471,9 @@ contract StrategyManagerTest is BasicContractsFixture {
 
     // Tests if moveInvestment function works correctly
     function test_moveInvestment_when_authorized() public {
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
+        vm.startPrank(OWNER, OWNER);
         StrategyWithoutRewardsMock strategyTo = new StrategyWithoutRewardsMock(
-            address(managerContainer), address(usdc), address(usdc), address(0), "AnotherMock", "ARM"
+            address(manager), address(usdc), address(usdc), address(0), "AnotherMock", "ARM"
         );
         strategyManager.addStrategy(address(strategyTo));
         vm.stopPrank();
@@ -565,7 +564,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address asset = address(0);
         bytes memory data = bytes("");
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.pause();
 
         vm.prank(manager.liquidationManager(), manager.liquidationManager());
@@ -598,7 +597,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         manager.whitelistToken(address(token));
         SharesRegistry bdtSharesRegistry = new SharesRegistry(
             msg.sender,
-            address(managerContainer),
+            address(manager),
             address(token),
             address(usdcOracle),
             bytes(""),
@@ -615,7 +614,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         address strategy = address(
             new StrategyWithRewardsMock(
-                address(managerContainer), address(token), address(token), address(0), "RandomToken", "RT"
+                address(manager), address(token), address(token), address(0), "RandomToken", "RT"
             )
         );
 
@@ -623,7 +622,7 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         bytes memory data = bytes("");
 
-        vm.startPrank(strategyManager.owner(), strategyManager.owner());
+        vm.startPrank(OWNER, OWNER);
         strategyManager.addStrategy(strategy);
         vm.stopPrank();
 
@@ -698,7 +697,7 @@ contract StrategyManagerTest is BasicContractsFixture {
         address strategy = address(strategyWithoutRewardsMock);
         bytes memory data = bytes("");
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.pause();
 
         vm.expectRevert();
@@ -736,19 +735,14 @@ contract StrategyManagerTest is BasicContractsFixture {
         SampleTokenERC20 strategyRewardToken = new SampleTokenERC20("StrategyRewardToken", "SRT", 0);
         address strategy = address(
             new StrategyWithRewardsMock(
-                address(managerContainer),
-                address(usdc),
-                address(usdc),
-                address(strategyRewardToken),
-                "RandomToken",
-                "RT"
+                address(manager), address(usdc), address(usdc), address(strategyRewardToken), "RandomToken", "RT"
             )
         );
         bytes memory data = bytes("");
         uint256 holdingBalanceBefore = usdc.balanceOf(holding);
         uint256 holdingRewardBalanceBefore = strategyRewardToken.balanceOf(holding);
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.addStrategy(strategy);
 
         vm.startPrank(user, user);
@@ -778,17 +772,12 @@ contract StrategyManagerTest is BasicContractsFixture {
         SampleTokenERC20 strategyRewardToken = usdc;
         address strategy = address(
             new StrategyWithRewardsMock(
-                address(managerContainer),
-                address(usdc),
-                address(usdc),
-                address(strategyRewardToken),
-                "RandomToken",
-                "RT"
+                address(manager), address(usdc), address(usdc), address(strategyRewardToken), "RandomToken", "RT"
             )
         );
         bytes memory data = bytes("");
 
-        vm.prank(strategyManager.owner(), strategyManager.owner());
+        vm.prank(OWNER, OWNER);
         strategyManager.addStrategy(strategy);
 
         vm.startPrank(user, user);

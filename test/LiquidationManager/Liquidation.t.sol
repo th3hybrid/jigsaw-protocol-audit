@@ -11,7 +11,7 @@ import { HoldingManager } from "../../src/HoldingManager.sol";
 import { JigsawUSD } from "../../src/JigsawUSD.sol";
 import { LiquidationManager } from "../../src/LiquidationManager.sol";
 import { Manager } from "../../src/Manager.sol";
-import { ManagerContainer } from "../../src/ManagerContainer.sol";
+
 import { ReceiptToken } from "../../src/ReceiptToken.sol";
 import { ReceiptTokenFactory } from "../../src/ReceiptTokenFactory.sol";
 import { SharesRegistry } from "../../src/SharesRegistry.sol";
@@ -41,7 +41,6 @@ contract LiquidationTestThis is Test {
     IReceiptToken public receiptTokenReference;
     LiquidationManager public liquidationManager;
     Manager public manager;
-    ManagerContainer public managerContainer;
     JigsawUSD public jUsd;
     ReceiptTokenFactory public receiptTokenFactory;
     SampleOracle public usdcOracle;
@@ -67,13 +66,12 @@ contract LiquidationTestThis is Test {
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
         manager = new Manager(address(this), address(weth), address(jUsdOracle), bytes(""));
-        managerContainer = new ManagerContainer(address(this), address(manager));
-        liquidationManager = new LiquidationManager(address(this), address(managerContainer));
+        liquidationManager = new LiquidationManager(address(this), address(manager));
 
-        holdingManager = new HoldingManager(address(this), address(managerContainer));
-        jUsd = new JigsawUSD(address(this), address(managerContainer));
-        stablesManager = new StablesManager(address(this), address(managerContainer), address(jUsd));
-        strategyManager = new StrategyManager(address(this), address(managerContainer));
+        holdingManager = new HoldingManager(address(this), address(manager));
+        jUsd = new JigsawUSD(address(this), address(manager));
+        stablesManager = new StablesManager(address(this), address(manager), address(jUsd));
+        strategyManager = new StrategyManager(address(this), address(manager));
 
         manager.setStablecoinManager(address(stablesManager));
         manager.setHoldingManager(address(holdingManager));
@@ -86,7 +84,7 @@ contract LiquidationTestThis is Test {
         usdcOracle = new SampleOracle();
         sharesRegistry = new SharesRegistry(
             msg.sender,
-            address(managerContainer),
+            address(manager),
             address(usdc),
             address(usdcOracle),
             bytes(""),
@@ -104,7 +102,7 @@ contract LiquidationTestThis is Test {
         manager.setReceiptTokenFactory(address(receiptTokenFactory));
 
         strategyWithoutRewardsMock = new StrategyWithoutRewardsMock(
-            address(managerContainer), address(usdc), address(usdc), address(0), "RUsdc-Mock", "RUSDCM"
+            address(manager), address(usdc), address(usdc), address(0), "RUsdc-Mock", "RUSDCM"
         );
         strategyManager.addStrategy(address(strategyWithoutRewardsMock));
     }
@@ -199,7 +197,7 @@ contract LiquidationTestThis is Test {
         SampleOracle collateralOracle = new SampleOracle();
         SharesRegistry collateralRegistry = new SharesRegistry(
             msg.sender,
-            address(managerContainer),
+            address(manager),
             address(collateralContract),
             address(collateralOracle),
             bytes(""),
@@ -301,7 +299,7 @@ contract LiquidationTestThis is Test {
         SampleOracle collateralOracle = new SampleOracle();
         SharesRegistry collateralRegistry = new SharesRegistry(
             msg.sender,
-            address(managerContainer),
+            address(manager),
             address(collateralContract),
             address(collateralOracle),
             bytes(""),

@@ -9,7 +9,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { LiquidationManager } from "../../src/LiquidationManager.sol";
 
 import { Manager } from "../../src/Manager.sol";
-import { ManagerContainer } from "../../src/ManagerContainer.sol";
+
 import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
 import { IManager } from "../../src/interfaces/core/IManager.sol";
 
@@ -31,17 +31,16 @@ contract LiquidationManagerTest is Test {
 
     LiquidationManager public liquidationManager;
     Manager public manager;
-    ManagerContainer public managerContainer;
     SampleTokenERC20 public usdc;
     SampleTokenERC20 public weth;
+    address internal OWNER = vm.addr(uint256(keccak256(bytes("OWNER"))));
 
     function setUp() public {
         usdc = new SampleTokenERC20("USDC", "USDC", 0);
         weth = new SampleTokenERC20("WETH", "WETH", 0);
         SampleOracle jUsdOracle = new SampleOracle();
-        manager = new Manager(address(this), address(weth), address(jUsdOracle), bytes(""));
-        managerContainer = new ManagerContainer(address(this), address(manager));
-        liquidationManager = new LiquidationManager(address(this), address(managerContainer));
+        manager = new Manager(OWNER, address(weth), address(jUsdOracle), bytes(""));
+        liquidationManager = new LiquidationManager(OWNER, address(manager));
 
         manager.setLiquidationManager(address(liquidationManager));
     }
@@ -74,7 +73,7 @@ contract LiquidationManagerTest is Test {
     ) public {
         uint256 MAX_SELF_LIQUIDATION_FEE = liquidationManager.MAX_SELF_LIQUIDATION_FEE();
 
-        vm.startPrank(address(liquidationManager.owner()), address(liquidationManager.owner()));
+        vm.startPrank(address(OWNER), address(OWNER));
 
         //Tests setting SL fee , when SL fee  < MAX_SELF_LIQUIDATION_FEE
         if (_amount < MAX_SELF_LIQUIDATION_FEE) {
@@ -108,7 +107,7 @@ contract LiquidationManagerTest is Test {
     function test_setPaused_when_unauthorized(
         address _caller
     ) public {
-        vm.assume(_caller != liquidationManager.owner());
+        vm.assume(_caller != OWNER);
         vm.startPrank(_caller, _caller);
         vm.expectRevert();
         liquidationManager.pause();
