@@ -80,11 +80,10 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @notice Emits:
      * - Invested event indicating successful investment operation.
      *
-     * @dev 'tokenInAmount' will be equal to '_amount' in case the '_asset' is the same as strategy 'tokenIn()'.
-     *
      * @param _token address.
      * @param _strategy address.
      * @param _amount to be invested.
+     * @param _minSharesAmountOut minimum amount of shares to receive.
      * @param _data needed by each individual strategy.
      *
      * @return tokenOutAmount receipt tokens amount.
@@ -94,6 +93,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         address _token,
         address _strategy,
         uint256 _amount,
+        uint256 _minSharesAmountOut,
         bytes calldata _data
     )
         external
@@ -110,8 +110,14 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         require(strategyInfo[_strategy].active, "1202");
         require(IStrategy(_strategy).tokenIn() == _token, "3085");
 
-        (tokenOutAmount, tokenInAmount) =
-            _invest({ _holding: _holding, _token: _token, _strategy: _strategy, _amount: _amount, _data: _data });
+        (tokenOutAmount, tokenInAmount) = _invest({
+            _holding: _holding,
+            _token: _token,
+            _strategy: _strategy,
+            _amount: _amount,
+            _minSharesAmountOut: _minSharesAmountOut,
+            _data: _data
+        });
 
         emit Invested(_holding, msg.sender, _token, _strategy, _amount, tokenOutAmount, tokenInAmount);
         return (tokenOutAmount, tokenInAmount);
@@ -121,7 +127,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @notice Claims investment from one strategy and invests it into another.
      *
      * @notice Requirements:
-     * - The `strategyFrom` and `strategyTo` must be valid and active.
+     * - The `strategyTo` must be valid and active.
      * - The `strategyFrom` and `strategyTo` must be different.
      * - Msg.sender must have a holding.
      *
@@ -157,6 +163,8 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         require(_getHoldingManager().isHolding(_holding), "3002");
         require(_data.strategyFrom != _data.strategyTo, "3086");
         require(strategyInfo[_data.strategyTo].active, "1202");
+        require(IStrategy(_data.strategyFrom).tokenIn() == _token, "3001");
+        require(IStrategy(_data.strategyTo).tokenIn() == _token, "3085");
 
         (uint256 claimResult,,,) = _claimInvestment({
             _holding: _holding,
@@ -165,7 +173,14 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
             _shares: _data.shares,
             _data: _data.dataFrom
         });
-        (tokenOutAmount, tokenInAmount) = _invest(_holding, _token, _data.strategyTo, claimResult, _data.dataTo);
+        (tokenOutAmount, tokenInAmount) = _invest({
+            _holding: _holding,
+            _token: _token,
+            _strategy: _data.strategyTo,
+            _amount: claimResult,
+            _minSharesAmountOut: _data.strategyToMinSharesAmountOut,
+            _data: _data.dataTo
+        });
 
         emit InvestmentMoved(
             _holding,
@@ -404,6 +419,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
      * @param _token address to be invested.
      * @param _strategy address into which the token is invested.
      * @param _amount token to invest.
+     * @param _minSharesAmountOut minimum amount of shares to receive.
      * @param _data required by the strategy's deposit function.
      *
      * @return tokenOutAmount The amount of tokens received from the strategy.
@@ -414,10 +430,11 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         address _token,
         address _strategy,
         uint256 _amount,
+        uint256 _minSharesAmountOut,
         bytes calldata _data
     ) private returns (uint256 tokenOutAmount, uint256 tokenInAmount) {
         (tokenOutAmount, tokenInAmount) = IStrategy(_strategy).deposit(_token, _amount, _holding, _data);
-        require(tokenOutAmount > 0, "3030");
+        require(tokenOutAmount != 0 && tokenOutAmount >= _minSharesAmountOut, "3030");
 
         // Ensure holding is not liquidatable after investment
         require(!_getStablesManager().isLiquidatable(_token, _holding), "3103");
