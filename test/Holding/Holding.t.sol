@@ -171,6 +171,79 @@ contract HoldingTest is BasicContractsFixture {
         vm.stopPrank();
     }
 
+    // Tests if set emergency invoker works correctly when unauthorized
+    function test_emergency_invoker_unauthorized(
+        address _caller,
+        address _not_auth_caller
+    ) public {
+        assumeNotOwnerNotZero(_caller);
+        SimpleContract simpleContract = new SimpleContract();
+
+        vm.prank(OWNER);
+        manager.whitelistContract(address(simpleContract));
+
+        vm.prank(_caller);
+        address holding = simpleContract.shouldCreateHolding(address(holdingManager));
+
+        Holding holdingContract = Holding(holding);
+        address holdingUser = holdingManager.holdingUser(holding);
+
+        vm.startPrank(_not_auth_caller, _not_auth_caller);
+        vm.expectRevert(bytes("1000"));
+        holdingContract.setEmergencyInvoker(_not_auth_caller);
+        vm.stopPrank();
+    }
+
+    // Tests emergency generic call works correctly when authorized
+    function test_emergency_generic_call_authorized(
+        address _caller
+    ) public {
+        assumeNotOwnerNotZero(_caller);
+        SimpleContract simpleContract = new SimpleContract();
+
+        vm.startPrank(OWNER);
+        manager.whitelistContract(address(simpleContract));
+        manager.updateInvoker(_caller, true);
+        vm.stopPrank();
+
+        vm.prank(_caller);
+        address holding = simpleContract.shouldCreateHolding(address(holdingManager));
+
+        Holding holdingContract = Holding(holding);
+
+        vm.prank(address(simpleContract), address(simpleContract));
+        holdingContract.setEmergencyInvoker(_caller);
+
+        vm.prank(_caller, _caller);
+        holdingContract.emergencyGenericCall(
+            address(usdc), abi.encodeWithSelector(bytes4(keccak256(("approve(address,uint256)"))), _caller, 10000)
+        );
+    }
+
+    // Tests emergency generic call works correctly when unauthorized
+    function test_emergency_generic_call_unauthorized(
+        address _caller
+    ) public {
+        assumeNotOwnerNotZero(_caller);
+        SimpleContract simpleContract = new SimpleContract();
+
+        vm.startPrank(OWNER);
+        manager.whitelistContract(address(simpleContract));
+        vm.stopPrank();
+
+        vm.prank(_caller);
+        address holding = simpleContract.shouldCreateHolding(address(holdingManager));
+
+        Holding holdingContract = Holding(holding);
+
+        vm.startPrank(_caller, _caller);
+        vm.expectRevert(bytes("1000"));
+        holdingContract.emergencyGenericCall(
+            address(usdc), abi.encodeWithSelector(bytes4(keccak256(("approve(address,uint256)"))), _caller, 10000)
+        );
+        vm.stopPrank();
+    }
+
     // Modifiers
 
     modifier onlyNotAllowed(
