@@ -836,15 +836,4 @@ contract Manager is IManager, Ownable2Step {
         require(_address != address(0), "3000");
         _;
     }
-
-    /**
-     * @dev Modifier to check if the amount is valid (greater than zero).
-     * @param _amount being checked.
-     */
-    modifier validAmount(
-        uint256 _amount
-    ) {
-        require(_amount > 0, "2001");
-        _;
-    }
 }

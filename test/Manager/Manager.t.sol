@@ -428,10 +428,14 @@ contract ManagerTest is BasicContractsFixture {
     }
 
     function test_requestNewJUsdOracle_when_alreadyRequested() public {
-        vm.prank(OWNER, OWNER);
+        vm.startPrank(OWNER, OWNER);
+
+        address oldOracle = address(manager.jUsdOracle());
+        vm.expectRevert(bytes("3017"));
+        manager.requestNewJUsdOracle(oldOracle);
+
         manager.requestNewJUsdOracle(address(1));
 
-        vm.prank(OWNER, OWNER);
         vm.expectRevert(bytes("3017"));
         manager.requestNewJUsdOracle(address(1));
     }
@@ -525,7 +529,7 @@ contract ManagerTest is BasicContractsFixture {
         Manager(address(manager)).renounceOwnership();
     }
 
-    function test_should_requestnew_liquidation_manager(address _user, address newAddress) public {
+    function test_should_request_new_liquidation_manager(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldLiquidationManager = manager.liquidationManager();
@@ -555,12 +559,16 @@ contract ManagerTest is BasicContractsFixture {
         assertEq(manager.newLiquidationManagerTimestamp(), block.timestamp);
     }
 
-    function test_should_acceptnew_liquidation_manager(address _user, address newAddress) public {
+    function test_should_accept_new_liquidation_manager(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldLiquidationManager = manager.liquidationManager();
         vm.assume(newAddress != address(0));
         vm.assume(newAddress != oldLiquidationManager);
+
+        vm.prank(OWNER, OWNER);
+        vm.expectRevert(bytes("3063"));
+        manager.acceptNewLiquidationManager();
 
         vm.prank(OWNER, OWNER);
         manager.requestNewLiquidationManager(newAddress);
@@ -581,7 +589,7 @@ contract ManagerTest is BasicContractsFixture {
         assertEq(manager.newLiquidationManagerTimestamp(), 0);
     }
 
-    function test_should_not_acceptnew_liquidation_manager_due_to_timelock(address _user, address newAddress) public {
+    function test_should_not_accept_new_liquidation_manager_due_to_timelock(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldLiquidationManager = manager.liquidationManager();
@@ -596,7 +604,7 @@ contract ManagerTest is BasicContractsFixture {
         manager.acceptNewLiquidationManager();
     }
 
-    function test_should_requestnew_swap_manager(address _user, address newAddress) public {
+    function test_should_request_new_swap_manager(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldSwapManager = vm.randomAddress();
@@ -628,7 +636,7 @@ contract ManagerTest is BasicContractsFixture {
         assertEq(manager.newSwapManagerTimestamp(), block.timestamp);
     }
 
-    function test_should_acceptnew_swap_manager(address _user, address newAddress) public {
+    function test_should_accept_new_swap_manager(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldSwapManager = vm.randomAddress();
@@ -637,6 +645,10 @@ contract ManagerTest is BasicContractsFixture {
 
         vm.assume(newAddress != address(0));
         vm.assume(newAddress != oldSwapManager);
+
+        vm.prank(OWNER, OWNER);
+        vm.expectRevert(bytes("3063"));
+        manager.acceptNewSwapManager();
 
         vm.prank(OWNER, OWNER);
         manager.requestNewSwapManager(newAddress);
@@ -657,7 +669,7 @@ contract ManagerTest is BasicContractsFixture {
         assertEq(manager.newSwapManagerTimestamp(), 0);
     }
 
-    function test_should_not_acceptnew_swap_manager_due_to_timelock(address _user, address newAddress) public {
+    function test_should_not_accept_new_swap_manager_due_to_timelock(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldSwapManager = vm.randomAddress();
