@@ -28,7 +28,6 @@ contract HoldingTest is BasicContractsFixture {
         init();
 
         allowedCallers = [
-            manager.strategyManager(),
             manager.holdingManager(),
             manager.liquidationManager(),
             manager.swapManager(),
@@ -172,10 +171,7 @@ contract HoldingTest is BasicContractsFixture {
     }
 
     // Tests if set emergency invoker works correctly when unauthorized
-    function test_emergency_invoker_unauthorized(
-        address _caller,
-        address _not_auth_caller
-    ) public {
+    function test_emergency_invoker_unauthorized(address _caller, address _not_auth_caller) public {
         assumeNotOwnerNotZero(_caller);
         SimpleContract simpleContract = new SimpleContract();
 
@@ -216,7 +212,7 @@ contract HoldingTest is BasicContractsFixture {
 
         vm.prank(_caller, _caller);
         holdingContract.emergencyGenericCall(
-            address(usdc), abi.encodeWithSelector(bytes4(keccak256(("approve(address,uint256)"))), _caller, 10000)
+            address(usdc), abi.encodeWithSelector(bytes4(keccak256(("approve(address,uint256)"))), _caller, 10_000)
         );
     }
 
@@ -239,7 +235,7 @@ contract HoldingTest is BasicContractsFixture {
         vm.startPrank(_caller, _caller);
         vm.expectRevert(bytes("1000"));
         holdingContract.emergencyGenericCall(
-            address(usdc), abi.encodeWithSelector(bytes4(keccak256(("approve(address,uint256)"))), _caller, 10000)
+            address(usdc), abi.encodeWithSelector(bytes4(keccak256(("approve(address,uint256)"))), _caller, 10_000)
         );
         vm.stopPrank();
     }
