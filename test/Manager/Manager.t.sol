@@ -36,6 +36,8 @@ contract ManagerTest is BasicContractsFixture {
     event OracleDataUpdated(bytes indexed oldData, bytes indexed newData);
     event TimelockAmountUpdateRequested(uint256 oldVal, uint256 newVal);
     event TimelockAmountUpdated(uint256 oldVal, uint256 newVal);
+    event NewLiquidationManagerRequested(address indexed oldAddress, address indexed newAddress);
+    event NewSwapManagerRequested(address indexed oldAddress, address indexed newAddress);
 
     function setUp() public {
         init();
@@ -520,5 +522,197 @@ contract ManagerTest is BasicContractsFixture {
 
         vm.expectRevert(bytes("1000"));
         Manager(address(manager)).renounceOwnership();
+    }
+
+    function test_should_request_new_liquidation_manager(address _user, address _newAddress) public {
+        assumeNotOwnerNotZero(_user);
+
+        address oldLiquidationManager = manager.liquidationManager();
+
+        vm.assume(_newAddress != address(0));
+        vm.assume(_newAddress != oldLiquidationManager);
+
+        vm.prank(_user);
+        vm.expectRevert();
+        manager.requestNewLiquidationManager(_newAddress);
+
+        vm.startPrank(OWNER, OWNER);
+
+        vm.expectRevert(bytes("3000"));
+        manager.requestNewLiquidationManager(address(0));
+
+        vm.expectRevert(bytes("3017"));
+        manager.requestNewLiquidationManager(oldLiquidationManager);
+
+        assertEq(manager._newLiquidationManager(), address(0));
+        assertEq(manager._newLiquidationManagerTimestamp(), 0);
+
+        vm.expectEmit(true, true, false, false);
+        emit NewLiquidationManagerRequested(oldLiquidationManager, _newAddress);
+        manager.requestNewLiquidationManager(_newAddress);
+        assertEq(manager._newLiquidationManager(), _newAddress);
+        assertEq(manager._newLiquidationManagerTimestamp(), block.timestamp);
+    }
+
+    function test_should_accept_new_liquidation_manager(address _user, address _newAddress) public {
+        assumeNotOwnerNotZero(_user);
+
+        address oldLiquidationManager = manager.liquidationManager();
+        vm.assume(_newAddress != address(0));
+        vm.assume(_newAddress != oldLiquidationManager);
+
+        vm.prank(OWNER, OWNER);
+        manager.requestNewLiquidationManager(_newAddress);
+
+        vm.prank(_user);
+        vm.expectRevert();
+        manager.acceptNewLiquidationManager();
+
+        // Timelock must expire to allow accept new LiquidationManager
+        skip(manager.timelockAmount() + 1 seconds);
+
+        vm.startPrank(OWNER, OWNER);
+        vm.expectEmit(true, true, false, false);
+        emit LiquidationManagerUpdated(oldLiquidationManager, _newAddress);
+        manager.acceptNewLiquidationManager();
+        assertEq(manager.liquidationManager(), _newAddress);
+        assertEq(manager._newLiquidationManager(), address(0));
+        assertEq(manager._newLiquidationManagerTimestamp(), 0);
+    }
+
+    function test_should_not_accept_new_liquidation_manager_due_to_timelock(address _user, address _newAddress) public {
+        assumeNotOwnerNotZero(_user);
+
+        address oldLiquidationManager = manager.liquidationManager();
+
+        vm.assume(_newAddress != address(0));
+        vm.assume(_newAddress != oldLiquidationManager);
+
+        vm.startPrank(OWNER, OWNER);
+        manager.requestNewLiquidationManager(_newAddress);
+
+        vm.expectRevert(bytes("3066"));
+        manager.acceptNewLiquidationManager();
+    }
+
+    function test_should_request_new_swap_manager(address _user, address _newAddress) public {
+        assumeNotOwnerNotZero(_user);
+
+        address oldSwapManager = vm.randomAddress();
+        vm.prank(OWNER);
+        manager.setSwapManager(oldSwapManager);
+
+        vm.assume(_newAddress != address(0));
+        vm.assume(_newAddress != oldSwapManager);
+
+        vm.prank(_user);
+        vm.expectRevert();
+        manager.requestNewSwapManager(_newAddress);
+
+        vm.startPrank(OWNER, OWNER);
+
+        vm.expectRevert(bytes("3000"));
+        manager.requestNewSwapManager(address(0));
+
+        vm.expectRevert(bytes("3017"));
+        manager.requestNewSwapManager(oldSwapManager);
+
+        assertEq(manager._newSwapManager(), address(0));
+        assertEq(manager._newSwapManagerTimestamp(), 0);
+
+        vm.expectEmit(true, true, false, false);
+        emit NewSwapManagerRequested(oldSwapManager, _newAddress);
+        manager.requestNewSwapManager(_newAddress);
+        assertEq(manager._newSwapManager(), _newAddress);
+        assertEq(manager._newSwapManagerTimestamp(), block.timestamp);
+    }
+
+    function test_should_accept_new_swap_manager(address _user, address _newAddress) public {
+        assumeNotOwnerNotZero(_user);
+
+        address oldSwapManager = vm.randomAddress();
+        vm.prank(OWNER);
+        manager.setSwapManager(oldSwapManager);
+
+        vm.assume(_newAddress != address(0));
+        vm.assume(_newAddress != oldSwapManager);
+
+        vm.prank(OWNER, OWNER);
+        manager.requestNewSwapManager(_newAddress);
+
+        vm.prank(_user);
+        vm.expectRevert();
+        manager.requestNewSwapManager(_newAddress);
+
+        // Timelock must expire to allow accept new LiquidationManager
+        skip(manager.timelockAmount() + 1 seconds);
+
+        vm.startPrank(OWNER, OWNER);
+        vm.expectEmit(true, true, false, false);
+        emit SwapManagerUpdated(oldSwapManager, _newAddress);
+        manager.acceptNewSwapManager();
+        assertEq(manager.swapManager(), _newAddress);
+        assertEq(manager._newSwapManager(), address(0));
+        assertEq(manager._newSwapManagerTimestamp(), 0);
+    }
+
+    function test_should_not_accept_new_swap_manager_due_to_timelock(address _user, address _newAddress) public {
+        assumeNotOwnerNotZero(_user);
+
+        address oldSwapManager = vm.randomAddress();
+        vm.prank(OWNER);
+        manager.setSwapManager(oldSwapManager);
+
+        vm.assume(_newAddress != address(0));
+        vm.assume(_newAddress != oldSwapManager);
+
+        vm.startPrank(OWNER, OWNER);
+        manager.requestNewSwapManager(_newAddress);
+
+        vm.expectRevert(bytes("3066"));
+        manager.acceptNewSwapManager();
+    }
+
+    function test_should_set_min_debt_amount(address _user, uint256 _amount) public {
+        assumeNotOwnerNotZero(_user);
+
+        uint256 newAmount = bound(_amount, 1, 100_000e18);
+
+        vm.prank(_user);
+        vm.expectRevert();
+        manager.setMinDebtAmount(newAmount);
+
+        vm.startPrank(OWNER, OWNER);
+
+        vm.expectRevert(bytes("2100"));
+        manager.setMinDebtAmount(0);
+
+        uint256 oldAmount = manager.minDebtAmount();
+
+        vm.expectRevert(bytes("3017"));
+        manager.setMinDebtAmount(oldAmount);
+
+        manager.setMinDebtAmount(newAmount);
+        assertEq(manager.minDebtAmount(), newAmount);
+    }
+
+    function test_should_update_invoker(address _user) public {
+        assumeNotOwnerNotZero(_user);
+
+        vm.prank(_user);
+        vm.expectRevert();
+        manager.updateInvoker(_user, true);
+
+        vm.startPrank(OWNER, OWNER);
+
+        vm.expectRevert(bytes("3000"));
+        manager.updateInvoker(address(0), true);
+
+        assertEq(manager.allowedInvokers(_user), false);
+
+        vm.expectEmit(true, true, false, false);
+        emit InvokerUpdated(_user, true);
+        manager.updateInvoker(_user, true);
+        assertEq(manager.allowedInvokers(_user), true);
     }
 }
