@@ -98,10 +98,22 @@ contract Manager is IManager, Ownable2Step {
     uint256 public override performanceFee = 1500; //15%
 
     /**
+     * @notice Returns the maximum performance fee.
+     * @dev Uses 2 decimal precision, where 1% is represented as 100.
+     */
+    uint256 public immutable override MAX_PERFORMANCE_FEE = 2500; //25%
+
+    /**
      * @notice Fee for withdrawing from a holding.
      * @dev Uses 2 decimal precision, where 1% is represented as 100.
      */
     uint256 public override withdrawalFee;
+
+    /**
+     * @notice Returns the maximum withdrawal fee.
+     * @dev Uses 2 decimal precision, where 1% is represented as 100.
+     */
+    uint256 public immutable override MAX_WITHDRAWAL_FEE = 800; //8%
 
     /**
      * @notice Returns the fee address, where all the fees are collected.
@@ -558,7 +570,7 @@ contract Manager is IManager, Ownable2Step {
      * @notice Sets the performance fee.
      *
      * @notice Requirements:
-     * - `_val` must be smaller than `FEE_FACTOR` to avoid wrong computations.
+     * - `_val` must be smaller than `MAX_PERFORMANCE_FEE`.
      *
      * @notice Effects:
      * - Updates the `performanceFee` state variable.
@@ -573,7 +585,8 @@ contract Manager is IManager, Ownable2Step {
     function setPerformanceFee(
         uint256 _val
     ) external override onlyOwner {
-        require(_val < OperationsLib.FEE_FACTOR, "3018");
+        require(performanceFee != _val, "3017");
+        require(_val < MAX_PERFORMANCE_FEE, "3018");
         emit PerformanceFeeUpdated(performanceFee, _val);
         performanceFee = _val;
     }
@@ -598,7 +611,7 @@ contract Manager is IManager, Ownable2Step {
         uint256 _val
     ) external override onlyOwner {
         require(withdrawalFee != _val, "3017");
-        require(_val <= OperationsLib.FEE_FACTOR, "3018");
+        require(_val <= MAX_WITHDRAWAL_FEE, "3018");
         emit WithdrawalFeeUpdated(withdrawalFee, _val);
         withdrawalFee = _val;
     }

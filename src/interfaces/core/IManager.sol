@@ -267,10 +267,22 @@ interface IManager {
     function performanceFee() external view returns (uint256);
 
     /**
+     * @notice Returns the maximum performance fee.
+     * @dev Uses 2 decimal precision, where 1% is represented as 100.
+     */
+    function MAX_PERFORMANCE_FEE() external view returns (uint256);
+
+    /**
      * @notice Fee for withdrawing from a holding.
      * @dev Uses 2 decimal precision, where 1% is represented as 100.
      */
     function withdrawalFee() external view returns (uint256);
+
+    /**
+     * @notice Returns the maximum withdrawal fee.
+     * @dev Uses 2 decimal precision, where 1% is represented as 100.
+     */
+    function MAX_WITHDRAWAL_FEE() external view returns (uint256);
 
     /**
      * @notice Returns the fee address, where all the fees are collected.
