@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
 
 import "../fixtures/BasicContractsFixture.t.sol";
 
@@ -394,6 +393,66 @@ contract StrategyManagerTest is BasicContractsFixture {
 
         vm.prank(user, user);
         vm.expectRevert(bytes("3086"));
+        strategyManager.moveInvestment(token, moveInvestmentData);
+    }
+
+    // Tests if moveInvestment function reverts correctly when token is strategy's tokenIn
+    function test_moveInvestment_when_token_is_strategy_from_token_in() public {
+        address user = address(uint160(uint256(keccak256("random user"))));
+        address token = address(weth);
+        uint256 amount = 1e18;
+
+        vm.startPrank(OWNER, OWNER);
+        StrategyWithoutRewardsMockBroken strategyFrom = new StrategyWithoutRewardsMockBroken(
+            address(manager), address(usdc), address(weth), address(0), "Broken-Mock", "BRM"
+        );
+        strategyManager.addStrategy(address(strategyFrom));
+
+        StrategyWithoutRewardsMockBroken strategyTo = new StrategyWithoutRewardsMockBroken(
+            address(manager), address(usdc), address(weth), address(0), "Broken-Mock", "BRM"
+        );
+        strategyManager.addStrategy(address(strategyTo));
+
+        vm.stopPrank();
+
+        initiateUser(user, address(usdc), amount);
+
+        IStrategyManager.MoveInvestmentData memory moveInvestmentData;
+        moveInvestmentData.strategyFrom = address(strategyFrom);
+        moveInvestmentData.strategyTo = address(strategyTo);
+
+        vm.prank(user, user);
+        vm.expectRevert(bytes("3001"));
+        strategyManager.moveInvestment(token, moveInvestmentData);
+    }
+
+    // Tests if moveInvestment function reverts correctly when token is strategy's tokenIn
+    function test_moveInvestment_when_token_is_strategy_to_to_token_in() public {
+        address user = address(uint160(uint256(keccak256("random user"))));
+        address token = address(weth);
+        uint256 amount = 1e18;
+
+        vm.startPrank(OWNER, OWNER);
+        StrategyWithoutRewardsMockBroken strategyFrom = new StrategyWithoutRewardsMockBroken(
+            address(manager), address(weth), address(weth), address(0), "Broken-Mock", "BRM"
+        );
+        strategyManager.addStrategy(address(strategyFrom));
+
+        StrategyWithoutRewardsMockBroken strategyTo = new StrategyWithoutRewardsMockBroken(
+            address(manager), address(usdc), address(weth), address(0), "Broken-Mock", "BRM"
+        );
+        strategyManager.addStrategy(address(strategyTo));
+
+        vm.stopPrank();
+
+        initiateUser(user, address(usdc), amount);
+
+        IStrategyManager.MoveInvestmentData memory moveInvestmentData;
+        moveInvestmentData.strategyFrom = address(strategyFrom);
+        moveInvestmentData.strategyTo = address(strategyTo);
+
+        vm.prank(user, user);
+        vm.expectRevert(bytes("3085"));
         strategyManager.moveInvestment(token, moveInvestmentData);
     }
 
@@ -797,6 +856,25 @@ contract StrategyManagerTest is BasicContractsFixture {
             holdingBalanceBefore + 100 * 10 ** strategyRewardToken.decimals(),
             "Holding's collateral amount hasn't increased after claimRewards"
         );
+    }
+
+    //Tests if getHoldingToStrategyLength is correct
+    function test_getHoldingToStrategyLength() public {
+        address user = address(uint160(uint256(keccak256("random user"))));
+        address token = address(usdc);
+        address strategy = address(strategyWithoutRewardsMock);
+        uint256 amount = 1e18;
+
+        address holding = initiateUser(user, token, amount);
+
+        uint256 strategiesCount = strategyManager.getHoldingToStrategyLength(holding);
+        assertEq(strategiesCount, 0, "Holding's strategies' count incorrect");
+
+        vm.prank(user, user);
+        strategyManager.invest(token, strategy, amount, 0, bytes(""));
+
+        strategiesCount = strategyManager.getHoldingToStrategyLength(holding);
+        assertEq(strategiesCount, 1, "Holding's strategies' count incorrect");
     }
 
     //Tests if renouncing ownership reverts with error code 1000
