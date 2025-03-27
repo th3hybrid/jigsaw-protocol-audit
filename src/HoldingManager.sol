@@ -60,6 +60,11 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     IManager public immutable override manager;
 
     /**
+     * @notice Returns the address of the WETH contract to save on `manager.WETH()` calls.
+     */
+    address public immutable override WETH;
+
+    /**
      * @notice Creates a new HoldingManager Contract.
      * @param _initialOwner The initial owner of the contract
      * @param _manager Contract that holds all the necessary configs of the protocol.
@@ -68,6 +73,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         require(_manager != address(0), "3065");
         manager = IManager(_manager);
         holdingImplementationReference = address(new Holding());
+        WETH = manager.WETH();
     }
 
     // -- User specific methods --
@@ -149,13 +155,13 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         external
         payable
         override
-        validToken(manager.WETH())
+        validToken(WETH)
         validHolding(userHolding[msg.sender])
         nonReentrant
         whenNotPaused
     {
         _wrap();
-        _deposit({ _from: address(this), _token: manager.WETH(), _amount: msg.value });
+        _deposit({ _from: address(this), _token: WETH, _amount: msg.value });
     }
 
     /**
@@ -218,10 +224,9 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     function withdrawAndUnwrap(
         uint256 _amount
     ) external override validAmount(_amount) validHolding(userHolding[msg.sender]) nonReentrant whenNotPaused {
-        address wethAddress = manager.WETH();
-        IHolding(userHolding[msg.sender]).transfer({ _token: wethAddress, _to: address(this), _amount: _amount });
+        IHolding(userHolding[msg.sender]).transfer({ _token: WETH, _to: address(this), _amount: _amount });
         _unwrap(_amount);
-        (uint256 userAmount, uint256 feeAmount) = _withdraw({ _token: wethAddress, _amount: _amount });
+        (uint256 userAmount, uint256 feeAmount) = _withdraw({ _token: WETH, _amount: _amount });
 
         (bool feeSuccess,) = payable(manager.feeAddress()).call{ value: feeAmount }("");
         require(feeSuccess, "3016");
@@ -407,9 +412,17 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     }
 
     /**
-     * @notice Receives ETH.
+     * @notice Allows the contract to accept incoming Ether transfers.
+     * @dev This function is executed when the contract receives Ether with no data in the transaction.
+     * @dev Only allows transfers from the WETH contract.
+     *
+     * @notice Emits:
+     * - `Received` event to log the sender's address and the amount received.
      */
-    receive() external payable { }
+    receive() external payable {
+        require(msg.sender == WETH, "1000");
+        emit Received({ from: msg.sender, amount: msg.value });
+    }
 
     // -- Administration --
 
@@ -460,7 +473,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     function _wrap() private {
         require(msg.value > 0, "2001");
         emit NativeCoinWrapped({ user: msg.sender, amount: msg.value });
-        IWETH(manager.WETH()).deposit{ value: msg.value }();
+        IWETH(WETH).deposit{ value: msg.value }();
     }
 
     /**
@@ -481,7 +494,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         uint256 _amount
     ) private {
         emit NativeCoinUnwrapped({ user: msg.sender, amount: _amount });
-        IWETH(manager.WETH()).withdraw(_amount);
+        IWETH(WETH).withdraw(_amount);
     }
 
     /**

@@ -102,6 +102,15 @@ interface IHoldingManager {
     event Withdrawal(address indexed holding, address indexed token, uint256 totalAmount, uint256 feeAmount);
 
     /**
+     * @notice Emitted when the contract receives ETH.
+     * @param from The address of the sender.
+     * @param amount The amount received.
+     */
+    event Received(address indexed from, uint256 amount);
+
+    // -- State variables --
+
+    /**
      * @notice Returns the holding for a user.
      * @param _user The address of the user.
      * @return The address of the holding.
@@ -139,6 +148,12 @@ interface IHoldingManager {
      * @return The manager contract.
      */
     function manager() external view returns (IManager);
+
+    /**
+     * @notice Returns the address of the WETH contract to save on `manager.WETH()` calls.
+     * @return The address of the WETH contract.
+     */
+    function WETH() external view returns (address);
 
     // -- User specific methods --
 
