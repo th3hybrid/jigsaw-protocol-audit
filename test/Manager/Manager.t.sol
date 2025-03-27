@@ -43,15 +43,15 @@ contract ManagerTest is BasicContractsFixture {
         init();
     }
 
-    function test_should_set_fee_address(address _user, address _newAddress) public {
+    function test_should_set_fee_address(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != manager.feeAddress());
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != manager.feeAddress());
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.setFeeAddress(_newAddress);
+        manager.setFeeAddress(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -59,20 +59,20 @@ contract ManagerTest is BasicContractsFixture {
         manager.setFeeAddress(address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit FeeAddressUpdated(manager.feeAddress(), _newAddress);
-        manager.setFeeAddress(_newAddress);
-        assertEq(manager.feeAddress(), _newAddress);
+        emit FeeAddressUpdated(manager.feeAddress(), newAddress);
+        manager.setFeeAddress(newAddress);
+        assertEq(manager.feeAddress(), newAddress);
 
         vm.expectRevert(bytes("3017"));
-        manager.setFeeAddress(_newAddress);
+        manager.setFeeAddress(newAddress);
     }
 
-    function test_should_set_liquidation_manager(address _user, address _newAddress, address _anotherAddress) public {
+    function test_should_set_liquidation_manager(address _user, address newAddress, address _anotherAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != manager.liquidationManager());
-        vm.assume(_anotherAddress != _newAddress);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != manager.liquidationManager());
+        vm.assume(_anotherAddress != newAddress);
         vm.assume(_anotherAddress != address(0));
 
         // imitate fresh state of the contract
@@ -80,7 +80,7 @@ contract ManagerTest is BasicContractsFixture {
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.setLiquidationManager(_newAddress);
+        manager.setLiquidationManager(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -88,20 +88,20 @@ contract ManagerTest is BasicContractsFixture {
         manager.setLiquidationManager(address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit LiquidationManagerUpdated(manager.liquidationManager(), _newAddress);
-        manager.setLiquidationManager(_newAddress);
-        assertEq(manager.liquidationManager(), _newAddress);
+        emit LiquidationManagerUpdated(manager.liquidationManager(), newAddress);
+        manager.setLiquidationManager(newAddress);
+        assertEq(manager.liquidationManager(), newAddress);
 
         vm.expectRevert(bytes("3017"));
         manager.setLiquidationManager(_anotherAddress);
     }
 
-    function test_should_set_strategy_manager(address _user, address _newAddress, address _anotherAddress) public {
+    function test_should_set_strategy_manager(address _user, address newAddress, address _anotherAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != manager.strategyManager());
-        vm.assume(_anotherAddress != _newAddress);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != manager.strategyManager());
+        vm.assume(_anotherAddress != newAddress);
         vm.assume(_anotherAddress != address(0));
 
         // imitate fresh state of the contract
@@ -109,7 +109,7 @@ contract ManagerTest is BasicContractsFixture {
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.setStrategyManager(_newAddress);
+        manager.setStrategyManager(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -117,23 +117,23 @@ contract ManagerTest is BasicContractsFixture {
         manager.setStrategyManager(address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit StrategyManagerUpdated(manager.strategyManager(), _newAddress);
-        manager.setStrategyManager(_newAddress);
-        assertEq(manager.strategyManager(), _newAddress);
+        emit StrategyManagerUpdated(manager.strategyManager(), newAddress);
+        manager.setStrategyManager(newAddress);
+        assertEq(manager.strategyManager(), newAddress);
 
         vm.expectRevert(bytes("3017"));
         manager.setStrategyManager(_anotherAddress);
     }
 
-    function test_should_set_swap_manager(address _user, address _newAddress) public {
+    function test_should_set_swap_manager(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != manager.swapManager());
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != manager.swapManager());
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.setSwapManager(_newAddress);
+        manager.setSwapManager(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -141,20 +141,20 @@ contract ManagerTest is BasicContractsFixture {
         manager.setSwapManager(address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit SwapManagerUpdated(manager.swapManager(), _newAddress);
-        manager.setSwapManager(_newAddress);
-        assertEq(manager.swapManager(), _newAddress);
+        emit SwapManagerUpdated(manager.swapManager(), newAddress);
+        manager.setSwapManager(newAddress);
+        assertEq(manager.swapManager(), newAddress);
 
         vm.expectRevert(bytes("3017"));
-        manager.setSwapManager(_newAddress);
+        manager.setSwapManager(newAddress);
     }
 
-    function test_should_set_holding_manager(address _user, address _newAddress, address _anotherAddress) public {
+    function test_should_set_holding_manager(address _user, address newAddress, address _anotherAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != manager.holdingManager());
-        vm.assume(_anotherAddress != _newAddress);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != manager.holdingManager());
+        vm.assume(_anotherAddress != newAddress);
         vm.assume(_anotherAddress != address(0));
 
         // imitate fresh state of the contract
@@ -165,20 +165,20 @@ contract ManagerTest is BasicContractsFixture {
         manager.setHoldingManager(address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit HoldingManagerUpdated(manager.holdingManager(), _newAddress);
-        manager.setHoldingManager(_newAddress);
-        assertEq(manager.holdingManager(), _newAddress);
+        emit HoldingManagerUpdated(manager.holdingManager(), newAddress);
+        manager.setHoldingManager(newAddress);
+        assertEq(manager.holdingManager(), newAddress);
 
         vm.expectRevert(bytes("3017"));
         manager.setHoldingManager(_anotherAddress);
     }
 
-    function test_should_set_stables_manager(address _user, address _newAddress, address _anotherAddress) public {
+    function test_should_set_stables_manager(address _user, address newAddress, address _anotherAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != manager.stablesManager());
-        vm.assume(_anotherAddress != _newAddress);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != manager.stablesManager());
+        vm.assume(_anotherAddress != newAddress);
         vm.assume(_anotherAddress != address(0));
 
         // imitate fresh state of the contract
@@ -186,7 +186,7 @@ contract ManagerTest is BasicContractsFixture {
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.setStablecoinManager(_newAddress);
+        manager.setStablecoinManager(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -194,9 +194,9 @@ contract ManagerTest is BasicContractsFixture {
         manager.setStablecoinManager(address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit StablecoinManagerUpdated(manager.stablesManager(), _newAddress);
-        manager.setStablecoinManager(_newAddress);
-        assertEq(manager.stablesManager(), _newAddress);
+        emit StablecoinManagerUpdated(manager.stablesManager(), newAddress);
+        manager.setStablecoinManager(newAddress);
+        assertEq(manager.stablesManager(), newAddress);
 
         vm.expectRevert(bytes("3017"));
         manager.setStablecoinManager(_anotherAddress);
@@ -221,8 +221,9 @@ contract ManagerTest is BasicContractsFixture {
         vm.expectRevert(bytes("3018"));
         manager.setPerformanceFee(OperationsLib.FEE_FACTOR + 1000);
 
-        vm.expectRevert(bytes("2001"));
+        // Should set 0 fee
         manager.setPerformanceFee(0);
+        assertEq(manager.performanceFee(), 0);
     }
 
     function test_should_set_withdrawal_fee(address _user, uint256 _amount) public {
@@ -248,15 +249,15 @@ contract ManagerTest is BasicContractsFixture {
         manager.setWithdrawalFee(newAmount);
     }
 
-    function test_should_set_receipt_token_factory(address _user, address _newAddress) public {
+    function test_should_set_receipt_token_factory(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != manager.receiptTokenFactory());
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != manager.receiptTokenFactory());
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.setReceiptTokenFactory(_newAddress);
+        manager.setReceiptTokenFactory(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -264,23 +265,23 @@ contract ManagerTest is BasicContractsFixture {
         manager.setReceiptTokenFactory(address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit ReceiptTokenFactoryUpdated(manager.receiptTokenFactory(), _newAddress);
-        manager.setReceiptTokenFactory(_newAddress);
-        assertEq(manager.receiptTokenFactory(), _newAddress);
+        emit ReceiptTokenFactoryUpdated(manager.receiptTokenFactory(), newAddress);
+        manager.setReceiptTokenFactory(newAddress);
+        assertEq(manager.receiptTokenFactory(), newAddress);
 
         vm.expectRevert(bytes("3017"));
-        manager.setReceiptTokenFactory(_newAddress);
+        manager.setReceiptTokenFactory(newAddress);
     }
 
-    function test_should_whitelist_contract(address _user, address _newAddress) public {
+    function test_should_whitelist_contract(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(manager.isContractWhitelisted(_newAddress) == false);
+        vm.assume(newAddress != address(0));
+        vm.assume(manager.isContractWhitelisted(newAddress) == false);
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.whitelistContract(_newAddress);
+        manager.whitelistContract(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -288,50 +289,50 @@ contract ManagerTest is BasicContractsFixture {
         manager.whitelistContract(address(0));
 
         vm.expectEmit(true, false, false, false);
-        emit ContractWhitelisted(_newAddress);
-        manager.whitelistContract(_newAddress);
-        assertTrue(manager.isContractWhitelisted(_newAddress));
+        emit ContractWhitelisted(newAddress);
+        manager.whitelistContract(newAddress);
+        assertTrue(manager.isContractWhitelisted(newAddress));
 
         vm.expectRevert(bytes("3019"));
-        manager.whitelistContract(_newAddress);
+        manager.whitelistContract(newAddress);
     }
 
-    function test_should_blacklist_contract(address _user, address _newAddress) public {
+    function test_should_blacklist_contract(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(manager.isContractWhitelisted(_newAddress) == false);
+        vm.assume(newAddress != address(0));
+        vm.assume(manager.isContractWhitelisted(newAddress) == false);
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.blacklistContract(_newAddress);
+        manager.blacklistContract(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
         vm.expectRevert(bytes("3000"));
         manager.blacklistContract(address(0));
 
-        manager.whitelistContract(_newAddress);
-        assertTrue(manager.isContractWhitelisted(_newAddress));
+        manager.whitelistContract(newAddress);
+        assertTrue(manager.isContractWhitelisted(newAddress));
 
         vm.expectEmit(true, false, false, false);
-        emit ContractBlacklisted(_newAddress);
-        manager.blacklistContract(_newAddress);
-        assertFalse(manager.isContractWhitelisted(_newAddress));
+        emit ContractBlacklisted(newAddress);
+        manager.blacklistContract(newAddress);
+        assertFalse(manager.isContractWhitelisted(newAddress));
 
         vm.expectRevert(bytes("1000"));
-        manager.blacklistContract(_newAddress);
+        manager.blacklistContract(newAddress);
     }
 
-    function test_should_whitelist_token(address _user, address _newAddress) public {
+    function test_should_whitelist_token(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(manager.isTokenWhitelisted(_newAddress) == false);
+        vm.assume(newAddress != address(0));
+        vm.assume(manager.isTokenWhitelisted(newAddress) == false);
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.whitelistToken(_newAddress);
+        manager.whitelistToken(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -339,51 +340,51 @@ contract ManagerTest is BasicContractsFixture {
         manager.whitelistToken(address(0));
 
         vm.expectEmit(true, false, false, false);
-        emit TokenWhitelisted(_newAddress);
-        manager.whitelistToken(_newAddress);
-        assertTrue(manager.isTokenWhitelisted(_newAddress));
+        emit TokenWhitelisted(newAddress);
+        manager.whitelistToken(newAddress);
+        assertTrue(manager.isTokenWhitelisted(newAddress));
 
         vm.expectRevert(bytes("3019"));
-        manager.whitelistToken(_newAddress);
+        manager.whitelistToken(newAddress);
     }
 
-    function test_should_remove_token(address _user, address _newAddress) public {
+    function test_should_remove_token(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(manager.isTokenWhitelisted(_newAddress) == false);
+        vm.assume(newAddress != address(0));
+        vm.assume(manager.isTokenWhitelisted(newAddress) == false);
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.removeToken(_newAddress);
+        manager.removeToken(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
         vm.expectRevert(bytes("3000"));
         manager.removeToken(address(0));
 
-        manager.whitelistToken(_newAddress);
-        assertTrue(manager.isTokenWhitelisted(_newAddress));
+        manager.whitelistToken(newAddress);
+        assertTrue(manager.isTokenWhitelisted(newAddress));
 
         vm.expectEmit(true, false, false, false);
-        emit TokenRemoved(_newAddress);
-        manager.removeToken(_newAddress);
-        assertFalse(manager.isTokenWhitelisted(_newAddress));
+        emit TokenRemoved(newAddress);
+        manager.removeToken(newAddress);
+        assertFalse(manager.isTokenWhitelisted(newAddress));
 
         vm.expectRevert(bytes("1000"));
-        manager.removeToken(_newAddress);
+        manager.removeToken(newAddress);
     }
 
-    function test_should_add_withdrawable_token(address _user, address _newAddress) public {
+    function test_should_add_withdrawable_token(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
+        vm.assume(newAddress != address(0));
         vm.assume(_user != address(strategyManager));
-        vm.assume(manager.isTokenWithdrawable(_newAddress) == false);
+        vm.assume(manager.isTokenWithdrawable(newAddress) == false);
 
         vm.prank(_user);
         vm.expectRevert(bytes("1000"));
-        manager.addWithdrawableToken(_newAddress);
+        manager.addWithdrawableToken(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -391,39 +392,39 @@ contract ManagerTest is BasicContractsFixture {
         manager.addWithdrawableToken(address(0));
 
         vm.expectEmit(true, false, false, false);
-        emit WithdrawableTokenAdded(_newAddress);
-        manager.addWithdrawableToken(_newAddress);
-        assertTrue(manager.isTokenWithdrawable(_newAddress));
+        emit WithdrawableTokenAdded(newAddress);
+        manager.addWithdrawableToken(newAddress);
+        assertTrue(manager.isTokenWithdrawable(newAddress));
 
         vm.expectRevert(bytes("3069"));
-        manager.addWithdrawableToken(_newAddress);
+        manager.addWithdrawableToken(newAddress);
     }
 
-    function test_should_remove_withdrawable_token(address _user, address _newAddress) public {
+    function test_should_remove_withdrawable_token(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(manager.isTokenWithdrawable(_newAddress) == false);
+        vm.assume(newAddress != address(0));
+        vm.assume(manager.isTokenWithdrawable(newAddress) == false);
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.removeWithdrawableToken(_newAddress);
+        manager.removeWithdrawableToken(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
         vm.expectRevert(bytes("3000"));
         manager.removeWithdrawableToken(address(0));
 
-        manager.addWithdrawableToken(_newAddress);
-        assertTrue(manager.isTokenWithdrawable(_newAddress));
+        manager.addWithdrawableToken(newAddress);
+        assertTrue(manager.isTokenWithdrawable(newAddress));
 
         vm.expectEmit(true, false, false, false);
-        emit WithdrawableTokenRemoved(_newAddress);
-        manager.removeWithdrawableToken(_newAddress);
-        assertFalse(manager.isTokenWithdrawable(_newAddress));
+        emit WithdrawableTokenRemoved(newAddress);
+        manager.removeWithdrawableToken(newAddress);
+        assertFalse(manager.isTokenWithdrawable(newAddress));
 
         vm.expectRevert(bytes("3070"));
-        manager.removeWithdrawableToken(_newAddress);
+        manager.removeWithdrawableToken(newAddress);
     }
 
     function test_requestNewJUsdOracle_when_alreadyRequested() public {
@@ -524,17 +525,17 @@ contract ManagerTest is BasicContractsFixture {
         Manager(address(manager)).renounceOwnership();
     }
 
-    function test_should_request_new_liquidation_manager(address _user, address _newAddress) public {
+    function test_should_requestnew_liquidation_manager(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldLiquidationManager = manager.liquidationManager();
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != oldLiquidationManager);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != oldLiquidationManager);
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.requestNewLiquidationManager(_newAddress);
+        manager.requestNewLiquidationManager(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -544,25 +545,25 @@ contract ManagerTest is BasicContractsFixture {
         vm.expectRevert(bytes("3017"));
         manager.requestNewLiquidationManager(oldLiquidationManager);
 
-        assertEq(manager._newLiquidationManager(), address(0));
-        assertEq(manager._newLiquidationManagerTimestamp(), 0);
+        assertEq(manager.newLiquidationManager(), address(0));
+        assertEq(manager.newLiquidationManagerTimestamp(), 0);
 
         vm.expectEmit(true, true, false, false);
-        emit NewLiquidationManagerRequested(oldLiquidationManager, _newAddress);
-        manager.requestNewLiquidationManager(_newAddress);
-        assertEq(manager._newLiquidationManager(), _newAddress);
-        assertEq(manager._newLiquidationManagerTimestamp(), block.timestamp);
+        emit NewLiquidationManagerRequested(oldLiquidationManager, newAddress);
+        manager.requestNewLiquidationManager(newAddress);
+        assertEq(manager.newLiquidationManager(), newAddress);
+        assertEq(manager.newLiquidationManagerTimestamp(), block.timestamp);
     }
 
-    function test_should_accept_new_liquidation_manager(address _user, address _newAddress) public {
+    function test_should_acceptnew_liquidation_manager(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldLiquidationManager = manager.liquidationManager();
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != oldLiquidationManager);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != oldLiquidationManager);
 
         vm.prank(OWNER, OWNER);
-        manager.requestNewLiquidationManager(_newAddress);
+        manager.requestNewLiquidationManager(newAddress);
 
         vm.prank(_user);
         vm.expectRevert();
@@ -573,41 +574,41 @@ contract ManagerTest is BasicContractsFixture {
 
         vm.startPrank(OWNER, OWNER);
         vm.expectEmit(true, true, false, false);
-        emit LiquidationManagerUpdated(oldLiquidationManager, _newAddress);
+        emit LiquidationManagerUpdated(oldLiquidationManager, newAddress);
         manager.acceptNewLiquidationManager();
-        assertEq(manager.liquidationManager(), _newAddress);
-        assertEq(manager._newLiquidationManager(), address(0));
-        assertEq(manager._newLiquidationManagerTimestamp(), 0);
+        assertEq(manager.liquidationManager(), newAddress);
+        assertEq(manager.newLiquidationManager(), address(0));
+        assertEq(manager.newLiquidationManagerTimestamp(), 0);
     }
 
-    function test_should_not_accept_new_liquidation_manager_due_to_timelock(address _user, address _newAddress) public {
+    function test_should_not_acceptnew_liquidation_manager_due_to_timelock(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldLiquidationManager = manager.liquidationManager();
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != oldLiquidationManager);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != oldLiquidationManager);
 
         vm.startPrank(OWNER, OWNER);
-        manager.requestNewLiquidationManager(_newAddress);
+        manager.requestNewLiquidationManager(newAddress);
 
         vm.expectRevert(bytes("3066"));
         manager.acceptNewLiquidationManager();
     }
 
-    function test_should_request_new_swap_manager(address _user, address _newAddress) public {
+    function test_should_requestnew_swap_manager(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldSwapManager = vm.randomAddress();
         vm.prank(OWNER);
         manager.setSwapManager(oldSwapManager);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != oldSwapManager);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != oldSwapManager);
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.requestNewSwapManager(_newAddress);
+        manager.requestNewSwapManager(newAddress);
 
         vm.startPrank(OWNER, OWNER);
 
@@ -617,57 +618,57 @@ contract ManagerTest is BasicContractsFixture {
         vm.expectRevert(bytes("3017"));
         manager.requestNewSwapManager(oldSwapManager);
 
-        assertEq(manager._newSwapManager(), address(0));
-        assertEq(manager._newSwapManagerTimestamp(), 0);
+        assertEq(manager.newSwapManager(), address(0));
+        assertEq(manager.newSwapManagerTimestamp(), 0);
 
         vm.expectEmit(true, true, false, false);
-        emit NewSwapManagerRequested(oldSwapManager, _newAddress);
-        manager.requestNewSwapManager(_newAddress);
-        assertEq(manager._newSwapManager(), _newAddress);
-        assertEq(manager._newSwapManagerTimestamp(), block.timestamp);
+        emit NewSwapManagerRequested(oldSwapManager, newAddress);
+        manager.requestNewSwapManager(newAddress);
+        assertEq(manager.newSwapManager(), newAddress);
+        assertEq(manager.newSwapManagerTimestamp(), block.timestamp);
     }
 
-    function test_should_accept_new_swap_manager(address _user, address _newAddress) public {
+    function test_should_acceptnew_swap_manager(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldSwapManager = vm.randomAddress();
         vm.prank(OWNER);
         manager.setSwapManager(oldSwapManager);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != oldSwapManager);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != oldSwapManager);
 
         vm.prank(OWNER, OWNER);
-        manager.requestNewSwapManager(_newAddress);
+        manager.requestNewSwapManager(newAddress);
 
         vm.prank(_user);
         vm.expectRevert();
-        manager.requestNewSwapManager(_newAddress);
+        manager.requestNewSwapManager(newAddress);
 
         // Timelock must expire to allow accept new LiquidationManager
         skip(manager.timelockAmount() + 1 seconds);
 
         vm.startPrank(OWNER, OWNER);
         vm.expectEmit(true, true, false, false);
-        emit SwapManagerUpdated(oldSwapManager, _newAddress);
+        emit SwapManagerUpdated(oldSwapManager, newAddress);
         manager.acceptNewSwapManager();
-        assertEq(manager.swapManager(), _newAddress);
-        assertEq(manager._newSwapManager(), address(0));
-        assertEq(manager._newSwapManagerTimestamp(), 0);
+        assertEq(manager.swapManager(), newAddress);
+        assertEq(manager.newSwapManager(), address(0));
+        assertEq(manager.newSwapManagerTimestamp(), 0);
     }
 
-    function test_should_not_accept_new_swap_manager_due_to_timelock(address _user, address _newAddress) public {
+    function test_should_not_acceptnew_swap_manager_due_to_timelock(address _user, address newAddress) public {
         assumeNotOwnerNotZero(_user);
 
         address oldSwapManager = vm.randomAddress();
         vm.prank(OWNER);
         manager.setSwapManager(oldSwapManager);
 
-        vm.assume(_newAddress != address(0));
-        vm.assume(_newAddress != oldSwapManager);
+        vm.assume(newAddress != address(0));
+        vm.assume(newAddress != oldSwapManager);
 
         vm.startPrank(OWNER, OWNER);
-        manager.requestNewSwapManager(_newAddress);
+        manager.requestNewSwapManager(newAddress);
 
         vm.expectRevert(bytes("3066"));
         manager.acceptNewSwapManager();
@@ -696,7 +697,9 @@ contract ManagerTest is BasicContractsFixture {
         assertEq(manager.minDebtAmount(), newAmount);
     }
 
-    function test_should_update_invoker(address _user) public {
+    function test_should_update_invoker(
+        address _user
+    ) public {
         assumeNotOwnerNotZero(_user);
 
         vm.prank(_user);
