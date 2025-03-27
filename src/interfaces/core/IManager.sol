@@ -307,6 +307,51 @@ interface IManager {
      */
     function timelockAmount() external view returns (uint256);
 
+    /**
+     * @notice Returns the old timelock value for delayed timelock update.
+     */
+    function oldTimelock() external view returns (uint256);
+
+    /**
+     * @notice Returns the new timelock value for delayed timelock update.
+     */
+    function newTimelock() external view returns (uint256);
+
+    /**
+     * @notice Returns the timestamp when the new timelock was requested.
+     */
+    function newTimelockTimestamp() external view returns (uint256);
+
+    /**
+     * @notice Returns the new oracle address for delayed oracle update.
+     */
+    function newOracle() external view returns (address);
+
+    /**
+     * @notice Returns the timestamp when the new oracle was requested.
+     */
+    function newOracleTimestamp() external view returns (uint256);
+
+    /**
+     * @notice Returns the new swap manager address for delayed swap manager update.
+     */
+    function newSwapManager() external view returns (address);
+
+    /**
+     * @notice Returns the timestamp when the new swap manager was requested.
+     */
+    function newSwapManagerTimestamp() external view returns (uint256);
+
+    /**
+     * @notice Returns the new liquidation manager address for delayed liquidation manager update.
+     */
+    function newLiquidationManager() external view returns (address);
+
+    /**
+     * @notice Returns the timestamp when the new liquidation manager was requested.
+     */
+    function newLiquidationManagerTimestamp() external view returns (uint256);
+
     // -- Setters --
 
     /**
