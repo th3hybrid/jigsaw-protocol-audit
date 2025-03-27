@@ -72,6 +72,18 @@ contract SwapManagerTest is Test {
         manager.setStrategyManager(address(strategyManager));
     }
 
+    // Tests swapManager constructor params
+    function test_swapManager_constructor() public {
+        vm.expectRevert(bytes("3000"));
+        new SwapManager(address(this), address(0), UniswapSwapRouter, address(manager));
+
+        vm.expectRevert(bytes("3000"));
+        new SwapManager(address(this), address(uniswapFactory), address(0), address(manager));
+
+        vm.expectRevert(bytes("3000"));
+        new SwapManager(address(this), address(uniswapFactory), UniswapSwapRouter, address(0));
+    }
+
     // Tests if initial state of the contract is correct
     function test_swapManager_initialState() public {
         assertEq(swapManager.swapRouter(), UniswapSwapRouter, "Initial state incorrect");
@@ -161,12 +173,12 @@ contract SwapManagerTest is Test {
         assertEq(
             expectedTokenOutBalance,
             IERC20Metadata(tokenOut).balanceOf(userHolding),
-            "Inccorect tokenOut balance after swap"
+            "Incorrect tokenOut balance after swap"
         );
         assertEq(
             IERC20Metadata(USDC).balanceOf(userHolding),
             tokenInBalanceBefore - amountIn,
-            "Inccorect tokenIn balance after swap"
+            "Incorrect tokenIn balance after swap"
         );
     }
 
@@ -201,12 +213,66 @@ contract SwapManagerTest is Test {
         assertEq(
             expectedTokenOutBalance,
             IERC20Metadata(tokenOut).balanceOf(userHolding),
-            "Inccorect tokenOut balance after swap"
+            "Incorrect tokenOut balance after swap"
         );
         assertEq(
             IERC20Metadata(USDC).balanceOf(userHolding),
             tokenInBalanceBefore - amountIn,
-            "Inccorect tokenIn balance after swap"
+            "Incorrect tokenIn balance after swap"
+        );
+    }
+
+    function test_swapExactOutputMultihop_not_valid_swap_path_token(
+        uint256 _amountOut
+    ) public {
+        (address pool,) = _createJUsdUsdcPool();
+        address tokenOut = address(jUsd);
+        vm.assume(_amountOut > 1e6 && _amountOut < IERC20Metadata(tokenOut).balanceOf(pool) / 10);
+
+        // address(USDC) wrong token
+        bytes memory swapPath = abi.encodePacked(address(USDC), uint24(100), USDC);
+        uint256 amountInMaximum = _amountOut * 10;
+        address user = vm.addr(uint256(keccak256(bytes("User address"))));
+
+        vm.prank(user, user);
+        address userHolding = holdingManager.createHolding();
+
+        uint256 expectedTokenOutBalance = IERC20Metadata(tokenOut).balanceOf(userHolding) + _amountOut;
+
+        _getUSDC(userHolding, amountInMaximum);
+        uint256 tokenInBalanceBefore = IERC20Metadata(USDC).balanceOf(userHolding);
+
+        vm.startPrank(manager.liquidationManager(), manager.liquidationManager());
+        vm.expectRevert(bytes("3077"));
+        uint256 amountIn = swapManager.swapExactOutputMultihop(
+            USDC, swapPath, userHolding, block.timestamp, _amountOut, amountInMaximum
+        );
+    }
+
+    function test_swapExactOutputMultihop_revert_swap_router(
+        uint256 _amountOut
+    ) public {
+        (address pool,) = _createJUsdUsdcPool();
+        address tokenOut = address(jUsd);
+        vm.assume(_amountOut > 1e6 && _amountOut < IERC20Metadata(tokenOut).balanceOf(pool) / 10);
+
+        // address(USDC) wrong token
+        bytes memory swapPath = abi.encodePacked(address(jUsd), uint24(100), USDC);
+        uint256 amountInMaximum = _amountOut * 10;
+        address user = vm.addr(uint256(keccak256(bytes("User address"))));
+
+        vm.prank(user, user);
+        address userHolding = holdingManager.createHolding();
+
+        uint256 expectedTokenOutBalance = IERC20Metadata(tokenOut).balanceOf(userHolding) + _amountOut;
+
+        _getUSDC(userHolding, amountInMaximum);
+        uint256 tokenInBalanceBefore = IERC20Metadata(USDC).balanceOf(userHolding);
+
+        vm.startPrank(manager.liquidationManager(), manager.liquidationManager());
+        vm.expectRevert(bytes("3084"));
+        uint256 amountIn = swapManager.swapExactOutputMultihop(
+            USDC, swapPath, userHolding, block.timestamp - 100, _amountOut, amountInMaximum
         );
     }
 
@@ -226,7 +292,7 @@ contract SwapManagerTest is Test {
         usdc.mint(_receiver, amount);
     }
 
-    // crestes Uniswap pool for jUsd and initiates it with volume of {uniswapPoolCap}
+    // creates Uniswap pool for jUsd and initiates it with volume of {uniswapPoolCap}
     function _createJUsdUsdcPool() internal returns (address pool, uint256 tokenId) {
         INonfungiblePositionManager nonfungiblePositionManager =
             INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);

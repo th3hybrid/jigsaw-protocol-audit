@@ -118,7 +118,7 @@ contract StakerTest is Test {
         staker.setRewardsDuration(_amount);
         vm.stopPrank();
 
-        assertEq(staker.rewardsDuration(), _amount, "Rewards duration set incrorect");
+        assertEq(staker.rewardsDuration(), _amount, "Rewards duration set incorrect");
     }
 
     // Tests if addRewards reverts correctly when caller is unauthorized
@@ -201,7 +201,7 @@ contract StakerTest is Test {
         assertEq(staker.rewardRate(), _amount / staker.rewardsDuration(), "Rewards added incorrectly");
     }
 
-    // Tests if totalSuply works correctly
+    // Tests if totalSupply works correctly
     function test_totalSupply(uint256 _amount, address _caller) public {
         vm.assume(_amount != 0 && _amount <= 1e34);
         vm.assume(_caller != address(0));

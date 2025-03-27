@@ -523,7 +523,7 @@ contract SelfLiquidationTest is Test {
         assertApproxEqRel(
             testData.userCollateralAmount - testData.requiredCollateral,
             IERC20(testData.collateral).balanceOf(testData.userHolding),
-            0.001e18, // 0.1 % approimation
+            0.001e18, // 0.1 % approximation
             "Holding collateral incorrect"
         );
     }
@@ -794,7 +794,7 @@ contract SelfLiquidationTest is Test {
         strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), testData.userCollateralAmount, 0, "");
         uint256 strategyBalanceBeforeSL = usdc.balanceOf(address(strategyWithoutRewardsMock));
 
-        // Increase holding's balance so strategies are ingnored
+        // Increase holding's balance so strategies are ignnored
         _getUSDC(testData.userHolding, testData.requiredCollateral * 2);
         testData.userCollateralAmount = IERC20(testData.collateral).balanceOf(testData.userHolding);
 
@@ -1009,7 +1009,7 @@ contract SelfLiquidationTest is Test {
         return collateralInStrategies;
     }
 
-    // crestes Uniswap pool for jUsd and initiates it with volume of {uniswapPoolCap}
+    // creates Uniswap pool for jUsd and initiates it with volume of {uniswapPoolCap}
     function _createJUsdUsdcPool() internal returns (address pool, uint256 tokenId) {
         address token0 = address(jUsd);
         address token1 = USDC;
