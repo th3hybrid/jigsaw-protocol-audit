@@ -142,27 +142,27 @@ contract Manager is IManager, Ownable2Step {
     /**
      * @notice Variables required for delayed timelock update.
      */
-    uint256 public _oldTimelock;
-    uint256 public _newTimelock;
-    uint256 public _newTimelockTimestamp;
+    uint256 public override oldTimelock;
+    uint256 public override newTimelock;
+    uint256 public override newTimelockTimestamp;
 
     /**
      * @notice Variables required for delayed oracle update.
      */
-    address public _newOracle;
-    uint256 public _newOracleTimestamp;
+    address public override newOracle;
+    uint256 public override newOracleTimestamp;
 
     /**
      * @notice Variables required for delayed swap manager update.
      */
-    address public _newSwapManager;
-    uint256 public _newSwapManagerTimestamp;
+    address public override newSwapManager;
+    uint256 public override newSwapManagerTimestamp;
 
     /**
      * @notice Variables required for delayed liquidation manager update.
      */
-    address public _newLiquidationManager;
-    uint256 public _newLiquidationManagerTimestamp;
+    address public override newLiquidationManager;
+    uint256 public override newLiquidationManagerTimestamp;
 
     /**
      * @notice Creates a new Manager Contract.
@@ -390,8 +390,8 @@ contract Manager is IManager, Ownable2Step {
      * - `_val` must be different from previous `liquidationManager` address.
      *
      * @notice Effects:
-     * - Updates the the `_newLiquidationManager` state variable.
-     * - Updates the the `_newLiquidationManagerTimestamp` state variable.
+     * - Updates the the `newLiquidationManager` state variable.
+     * - Updates the the `newLiquidationManagerTimestamp` state variable.
      *
      * @notice Emits:
      * - `LiquidationManagerUpdateRequested` event indicating successful liquidation manager change request.
@@ -405,8 +405,8 @@ contract Manager is IManager, Ownable2Step {
 
         emit NewLiquidationManagerRequested(liquidationManager, _val);
 
-        _newLiquidationManager = _val;
-        _newLiquidationManagerTimestamp = block.timestamp;
+        newLiquidationManager = _val;
+        newLiquidationManagerTimestamp = block.timestamp;
     }
 
     /**
@@ -418,21 +418,21 @@ contract Manager is IManager, Ownable2Step {
      *
      * @notice Effects:
      * - Updates the `liquidationManager` state variable.
-     * - Updates the the `_newLiquidationManager` state variable.
-     * - Updates the the `_newLiquidationManagerTimestamp` state variable.
+     * - Updates the the `newLiquidationManager` state variable.
+     * - Updates the the `newLiquidationManagerTimestamp` state variable.
      *
      * @notice Emits:
      * - `LiquidationManagerUpdated` event indicating the successful setting of the Liquidation Manager's address.
      */
     function acceptNewLiquidationManager() external override onlyOwner {
-        require(_newLiquidationManager != address(0), "3063");
-        require(_newLiquidationManagerTimestamp + timelockAmount <= block.timestamp, "3066");
+        require(newLiquidationManager != address(0), "3063");
+        require(newLiquidationManagerTimestamp + timelockAmount <= block.timestamp, "3066");
 
-        emit LiquidationManagerUpdated(liquidationManager, _newLiquidationManager);
+        emit LiquidationManagerUpdated(liquidationManager, newLiquidationManager);
 
-        liquidationManager = _newLiquidationManager;
-        _newLiquidationManager = address(0);
-        _newLiquidationManagerTimestamp = 0;
+        liquidationManager = newLiquidationManager;
+        newLiquidationManager = address(0);
+        newLiquidationManagerTimestamp = 0;
     }
 
     /**
@@ -510,8 +510,8 @@ contract Manager is IManager, Ownable2Step {
      * - `_val` must be different from previous `swapManager` address.
      *
      * @notice Effects:
-     * - Updates the the `_newSwapManager` state variable.
-     * - Updates the the `_newSwapManagerTimestamp` state variable.
+     * - Updates the the `newSwapManager` state variable.
+     * - Updates the the `newSwapManagerTimestamp` state variable.
      *
      * @notice Emits:
      * - `NewSwapManagerRequested` event indicating successful swap manager change request.
@@ -525,8 +525,8 @@ contract Manager is IManager, Ownable2Step {
 
         emit NewSwapManagerRequested(swapManager, _val);
 
-        _newSwapManager = _val;
-        _newSwapManagerTimestamp = block.timestamp;
+        newSwapManager = _val;
+        newSwapManagerTimestamp = block.timestamp;
     }
 
     /**
@@ -537,21 +537,21 @@ contract Manager is IManager, Ownable2Step {
      *
      * @notice Effects:
      * - Updates the `swapManager` state variable.
-     * - Resets `_newSwapManager` to address(0).
-     * - Resets `_newSwapManagerTimestamp` to 0.
+     * - Resets `newSwapManager` to address(0).
+     * - Resets `newSwapManagerTimestamp` to 0.
      *
      * @notice Emits:
      * - `SwapManagerUpdated` event indicating the successful setting of the Swap Manager's address.
      */
     function acceptNewSwapManager() external override onlyOwner {
-        require(_newSwapManager != address(0), "3063");
-        require(_newSwapManagerTimestamp + timelockAmount <= block.timestamp, "3066");
+        require(newSwapManager != address(0), "3063");
+        require(newSwapManagerTimestamp + timelockAmount <= block.timestamp, "3066");
 
-        emit SwapManagerUpdated(swapManager, _newSwapManager);
+        emit SwapManagerUpdated(swapManager, newSwapManager);
 
-        swapManager = _newSwapManager;
-        _newSwapManager = address(0);
-        _newSwapManagerTimestamp = 0;
+        swapManager = newSwapManager;
+        newSwapManager = address(0);
+        newSwapManagerTimestamp = 0;
     }
 
     /**
@@ -654,8 +654,8 @@ contract Manager is IManager, Ownable2Step {
      * - Contract must not be in active change.
      *
      * @notice Effects:
-     * - Updates the the `_newOracle` state variable.
-     * - Updates the the `_newOracleTimestamp` state variable.
+     * - Updates the the `newOracle` state variable.
+     * - Updates the the `newOracleTimestamp` state variable.
      *
      * @notice Emits:
      * - `NewOracleRequested` event indicating successful jUSD's oracle change request.
@@ -665,13 +665,13 @@ contract Manager is IManager, Ownable2Step {
     function requestNewJUsdOracle(
         address _oracle
     ) external override onlyOwner validAddress(_oracle) {
-        require(_newOracle == address(0), "3017");
+        require(newOracle == address(0), "3017");
         require(address(jUsdOracle) != _oracle, "3017");
 
         emit NewOracleRequested(_oracle);
 
-        _newOracle = _oracle;
-        _newOracleTimestamp = block.timestamp;
+        newOracle = _oracle;
+        newOracleTimestamp = block.timestamp;
     }
 
     /**
@@ -683,28 +683,28 @@ contract Manager is IManager, Ownable2Step {
      *
      * @notice Effects:
      * - Updates the the `jUsdOracle` state variable.
-     * - Updates the the `_newOracle` state variable.
-     * - Updates the the `_newOracleTimestamp` state variable.
+     * - Updates the the `newOracle` state variable.
+     * - Updates the the `newOracleTimestamp` state variable.
      *
      * @notice Emits:
      * - `OracleUpdated` event indicating successful jUSD's oracle change.
      */
     function acceptNewJUsdOracle() external override onlyOwner {
-        require(_newOracle != address(0), "3063");
-        require(_newOracleTimestamp + timelockAmount <= block.timestamp, "3066");
+        require(newOracle != address(0), "3063");
+        require(newOracleTimestamp + timelockAmount <= block.timestamp, "3066");
 
-        emit OracleUpdated(address(jUsdOracle), _newOracle);
+        emit OracleUpdated(address(jUsdOracle), newOracle);
 
-        jUsdOracle = IOracle(_newOracle);
-        _newOracle = address(0);
-        _newOracleTimestamp = 0;
+        jUsdOracle = IOracle(newOracle);
+        newOracle = address(0);
+        newOracleTimestamp = 0;
     }
 
     /**
      * @notice Updates the jUSD's oracle data.
      *
      * @notice Requirements:
-     * - `_newOracleData` must be different from previous `oracleData`.
+     * - `newOracleData` must be different from previous `oracleData`.
      *
      * @notice Effects:
      * - Updates the `oracleData` state variable.
@@ -712,14 +712,14 @@ contract Manager is IManager, Ownable2Step {
      * @notice Emits:
      * - `OracleDataUpdated` event indicating successful update of the oracle Data.
      *
-     * @param _newOracleData New data used for jUSD's oracle data.
+     * @param newOracleData New data used for jUSD's oracle data.
      */
     function setJUsdOracleData(
-        bytes calldata _newOracleData
+        bytes calldata newOracleData
     ) external override onlyOwner {
-        require(keccak256(oracleData) != keccak256(_newOracleData), "3017");
-        emit OracleDataUpdated(oracleData, _newOracleData);
-        oracleData = _newOracleData;
+        require(keccak256(oracleData) != keccak256(newOracleData), "3017");
+        emit OracleDataUpdated(oracleData, newOracleData);
+        oracleData = newOracleData;
     }
 
     /**
@@ -743,31 +743,31 @@ contract Manager is IManager, Ownable2Step {
      * @notice Registers timelock change request.
      *
      * @notice Requirements:
-     * - `_oldTimelock` must be set zero.
-     * - `_newVal` must be greater than zero.
+     * - `oldTimelock` must be set zero.
+     * - `newVal` must be greater than zero.
      *
      * @notice Effects:
-     * - Updates the the `_oldTimelock` state variable.
-     * - Updates the the `_newTimelock` state variable.
-     * - Updates the the `_newTimelockTimestamp` state variable.
+     * - Updates the the `oldTimelock` state variable.
+     * - Updates the the `newTimelock` state variable.
+     * - Updates the the `newTimelockTimestamp` state variable.
      *
      * @notice Emits:
      * - `TimelockAmountUpdateRequested` event indicating successful timelock change request.
      *
-     * @param _newVal The new timelock value in seconds.
+     * @param newVal The new timelock value in seconds.
      */
     function requestNewTimelock(
-        uint256 _newVal
+        uint256 newVal
     ) external override onlyOwner {
-        require(_oldTimelock == 0, "3017");
-        require(_newVal != 0, "2001");
+        require(oldTimelock == 0, "3017");
+        require(newVal != 0, "2001");
 
-        _newTimelock = _newVal;
-        _oldTimelock = timelockAmount;
+        newTimelock = newVal;
+        oldTimelock = timelockAmount;
 
-        emit TimelockAmountUpdateRequested(_oldTimelock, _newTimelock);
+        emit TimelockAmountUpdateRequested(oldTimelock, newTimelock);
 
-        _newTimelockTimestamp = block.timestamp;
+        newTimelockTimestamp = block.timestamp;
     }
 
     /**
@@ -775,28 +775,28 @@ contract Manager is IManager, Ownable2Step {
      *
      * @notice Requirements:
      * - Contract must be in active change.
-     * - `_newTimelock` must be greater than zero.
+     * - `newTimelock` must be greater than zero.
      * - The old timelock must expire.
      *
      * @notice Effects:
      * - Updates the the `timelockAmount` state variable.
-     * - Updates the the `_oldTimelock` state variable.
-     * - Updates the the `_newTimelock` state variable.
-     * - Updates the the `_newTimelockTimestamp` state variable.
+     * - Updates the the `oldTimelock` state variable.
+     * - Updates the the `newTimelock` state variable.
+     * - Updates the the `newTimelockTimestamp` state variable.
      *
      * @notice Emits:
      * - `TimelockAmountUpdated` event indicating successful timelock amount change.
      */
     function acceptNewTimelock() external override onlyOwner {
-        require(_newTimelock != 0, "2001");
-        require(_newTimelockTimestamp + _oldTimelock <= block.timestamp, "3066");
+        require(newTimelock != 0, "2001");
+        require(newTimelockTimestamp + oldTimelock <= block.timestamp, "3066");
 
-        emit TimelockAmountUpdated(_oldTimelock, _newTimelock);
+        emit TimelockAmountUpdated(oldTimelock, newTimelock);
 
-        timelockAmount = _newTimelock;
-        _oldTimelock = 0;
-        _newTimelock = 0;
-        _newTimelockTimestamp = 0;
+        timelockAmount = newTimelock;
+        oldTimelock = 0;
+        newTimelock = 0;
+        newTimelockTimestamp = 0;
     }
 
     /**
