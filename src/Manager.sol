@@ -572,7 +572,7 @@ contract Manager is IManager, Ownable2Step {
      */
     function setPerformanceFee(
         uint256 _val
-    ) external override onlyOwner validAmount(_val) {
+    ) external override onlyOwner {
         require(_val < OperationsLib.FEE_FACTOR, "3018");
         emit PerformanceFeeUpdated(performanceFee, _val);
         performanceFee = _val;
