@@ -205,7 +205,8 @@ contract ManagerTest is BasicContractsFixture {
     function test_should_set_performance_fee(address _user, uint256 _amount) public {
         assumeNotOwnerNotZero(_user);
 
-        uint256 newAmount = bound(_amount, 1, OperationsLib.FEE_FACTOR - 1);
+        uint256 maxFee = manager.MAX_PERFORMANCE_FEE();
+        uint256 newAmount = bound(_amount, 1, maxFee - 1);
 
         vm.prank(_user);
         vm.expectRevert();
@@ -219,7 +220,7 @@ contract ManagerTest is BasicContractsFixture {
         assertEq(manager.performanceFee(), newAmount);
 
         vm.expectRevert(bytes("3018"));
-        manager.setPerformanceFee(OperationsLib.FEE_FACTOR + 1000);
+        manager.setPerformanceFee(maxFee + 1000);
 
         // Should set 0 fee
         manager.setPerformanceFee(0);
@@ -229,7 +230,8 @@ contract ManagerTest is BasicContractsFixture {
     function test_should_set_withdrawal_fee(address _user, uint256 _amount) public {
         assumeNotOwnerNotZero(_user);
 
-        uint256 newAmount = bound(_amount, 1, OperationsLib.FEE_FACTOR - 1);
+        uint256 maxFee = manager.MAX_WITHDRAWAL_FEE();
+        uint256 newAmount = bound(_amount, 1, maxFee - 1);
 
         vm.prank(_user);
         vm.expectRevert();
@@ -243,7 +245,7 @@ contract ManagerTest is BasicContractsFixture {
         assertEq(manager.withdrawalFee(), newAmount);
 
         vm.expectRevert(bytes("3018"));
-        manager.setWithdrawalFee(OperationsLib.FEE_FACTOR + 1000);
+        manager.setWithdrawalFee(maxFee + 1000);
 
         vm.expectRevert(bytes("3017"));
         manager.setWithdrawalFee(newAmount);
