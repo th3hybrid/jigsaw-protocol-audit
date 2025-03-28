@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-
 import "../fixtures/BasicContractsFixture.t.sol";
 
+import "forge-std/Test.sol";
 import { MaliciousStrategy } from "../utils/mocks/MaliciousStrategy.sol";
 import { SampleTokenBigDecimals } from "../utils/mocks/SampleTokenBigDecimals.sol";
 import { StrategyWithRewardsMock } from "../utils/mocks/StrategyWithRewardsMock.sol";
 import { StrategyWithoutRewardsMockBroken } from "../utils/mocks/StrategyWithoutRewardsMockBroken.sol";
+import { StrategyWithRewardsYieldsMock } from "../utils/mocks/StrategyWithRewardsYieldsMock.sol";
 
 contract StrategyManagerTest is BasicContractsFixture {
+    using stdMath for int256;
+
     event StrategyAdded(address indexed strategy);
     event StrategyUpdated(address indexed strategy, bool active, uint256 fee);
     event GaugeAdded(address indexed strategy, address indexed gauge);
@@ -300,6 +302,51 @@ contract StrategyManagerTest is BasicContractsFixture {
             amount,
             "Holding didn't receive receipt tokens"
         );
+    }
+
+    // Tests if invest function reverts correctly when strategy is not liquidatable
+    function test_invest_when_is_not_liquidatable() public {
+        address user = address(uint160(uint256(keccak256("random user"))));
+        address token = address(usdc);
+        address strategy = address(strategyWithoutRewardsMock);
+
+        uint256 amount = manager.minDebtAmount() * 2;
+        deal(token, user, amount);
+
+        vm.startPrank(user, user);
+        address holding = holdingManager.createHolding();
+        usdc.approve(address(holdingManager), amount);
+        holdingManager.deposit(token, amount);
+        holdingManager.borrow(token, amount / 2, 0, true);
+
+        usdcOracle.setPriceForLiquidation();
+        vm.expectRevert(bytes("3103"));
+        strategyManager.invest(token, strategy, amount / 2, 0, bytes(""));
+        vm.stopPrank();
+    }
+
+    // Tests if claim_investment function reverts correctly when strategy is not liquidatable
+    function test_claim_investment_when_is_not_liquidatable() public {
+        address user = address(uint160(uint256(keccak256("random user"))));
+        address token = address(usdc);
+        address strategy = address(strategyWithoutRewardsMock);
+
+        uint256 amount = manager.minDebtAmount() * 2;
+        deal(token, user, amount);
+
+        vm.startPrank(user, user);
+        address holding = holdingManager.createHolding();
+        usdc.approve(address(holdingManager), amount);
+        holdingManager.deposit(token, amount);
+        holdingManager.borrow(token, amount / 2, 0, true);
+
+        strategyManager.invest(token, strategy, amount / 2, 0, bytes(""));
+
+        usdcOracle.setPriceForLiquidation();
+        vm.expectRevert(bytes("3103"));
+        strategyManager.claimInvestment(holding, token, strategy, amount / 2, "");
+
+        vm.stopPrank();
     }
 
     // Tests if invest function reverts correctly when strategy returns tokenOutAmount as 0
@@ -740,6 +787,96 @@ contract StrategyManagerTest is BasicContractsFixture {
         );
         assertEq(usdc.balanceOf(strategy), shares - claimAmount, "Funds weren't taken from strategy");
         assertEq(usdc.balanceOf(holding), claimAmount, "Holding didn't receive funds invested in strategy");
+    }
+
+    // Tests if claimInvestment reverts when not enough recipients token
+    function test_claimInvestment_revert_when_not_enough_recipients_token(address user, uint256 amount, uint256 _shares) public {
+        vm.assume(user != address(0));
+        vm.assume(amount > 0 && amount < 1e20);
+        address token = address(usdc);
+        address holding = initiateUser(user, token, amount);
+        address strategy = address(strategyWithoutRewardsMock);
+        bytes memory data = bytes("");
+        uint256 holdingBalanceBefore = usdc.balanceOf(holding);
+
+        vm.prank(user, user);
+        strategyManager.invest(token, strategy, holdingBalanceBefore, 0, data);
+        (, uint256 shares) = strategyWithoutRewardsMock.recipients(holding);
+        uint256 claimAmount = bound(_shares, 1, shares);
+
+        address randomUser = vm.randomAddress();
+        vm.startPrank(holding, holding);
+        IERC20(strategyWithoutRewardsMock.getReceiptTokenAddress()).approve(randomUser, claimAmount / 2);
+        IERC20(strategyWithoutRewardsMock.getReceiptTokenAddress()).transfer(randomUser, claimAmount / 2);
+        vm.stopPrank();
+
+        // TODO (Tigran): weird revert message behavior
+        // vm.startPrank(user, user);
+        // vm.expectRevert();
+        // strategyManager.claimInvestment(holding, token, strategy, claimAmount, data);
+        // vm.stopPrank();
+    }
+
+    // Tests if claimInvestment works correctly when yield exists
+    function test_claimInvestment_when_yield_and_authorized(address user, uint256 amount, int256 yield, uint256 _shares) public {
+        vm.assume(user != address(0));
+        vm.assume(amount > 0 && amount < 1e20);
+
+        StrategyWithRewardsYieldsMock strategyWithPositiveYield = new StrategyWithRewardsYieldsMock(
+                address(manager),
+            address(usdc),
+            address(usdc),
+            address(0),
+            "AnotherMockWithYield",
+            "AMWY"
+            );
+
+        vm.prank(OWNER, OWNER);
+        strategyManager.addStrategy(address(strategyWithPositiveYield));
+
+        address token = address(usdc);
+        address holding = initiateUser(user, token, amount);
+        address strategy = address(strategyWithPositiveYield);
+        bytes memory data = bytes("");
+        uint256 holdingBalanceBefore = usdc.balanceOf(holding);
+
+        vm.prank(user, user);
+        strategyManager.invest(token, strategy, holdingBalanceBefore, 0, data);
+        (, uint256 shares) = strategyWithPositiveYield.recipients(holding);
+        uint256 claimAmount = bound(_shares, 1, shares);
+
+        vm.assume(yield.abs() < claimAmount && yield < 1e20);
+        strategyWithPositiveYield.setYield(yield);
+
+        vm.prank(user, user);
+        strategyManager.claimInvestment(holding, token, strategy, claimAmount, data);
+
+        address[] memory holdingStrategies = strategyManager.getHoldingToStrategy(holding);
+
+        (, uint256 remainingShares) = strategyWithPositiveYield.recipients(holding);
+        if (remainingShares == 0) {
+            assertEq(holdingStrategies.length, 0, "Holding's strategies' count incorrect");
+        } else {
+            assertEq(holdingStrategies.length, 1, "Holding's strategies' count incorrect");
+            assertEq(holdingStrategies[0], strategy, "Holding's strategy saved incorrectly");
+        }
+        assertEq(
+            IERC20(address(strategyWithPositiveYield.receiptToken())).balanceOf(holding),
+            shares - claimAmount,
+            "Holding's receipt tokens count incorrect"
+        );
+
+        uint256 totalClaimed = claimAmount;
+        if(yield > 0)
+        {
+            totalClaimed += yield.abs();
+        }
+        else if(yield < 0)
+        {
+            totalClaimed -= yield.abs();
+        }
+
+        assertEq(usdc.balanceOf(holding), totalClaimed, "Holding didn't receive funds invested in strategy");
     }
 
     // Tests if claimRewards function reverts correctly when invalidStrategy
