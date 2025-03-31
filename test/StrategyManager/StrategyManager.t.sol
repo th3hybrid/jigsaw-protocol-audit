@@ -3,12 +3,11 @@ pragma solidity ^0.8.20;
 
 import "../fixtures/BasicContractsFixture.t.sol";
 
-import "forge-std/Test.sol";
 import { MaliciousStrategy } from "../utils/mocks/MaliciousStrategy.sol";
 import { SampleTokenBigDecimals } from "../utils/mocks/SampleTokenBigDecimals.sol";
 import { StrategyWithRewardsMock } from "../utils/mocks/StrategyWithRewardsMock.sol";
-import { StrategyWithoutRewardsMockBroken } from "../utils/mocks/StrategyWithoutRewardsMockBroken.sol";
 import { StrategyWithRewardsYieldsMock } from "../utils/mocks/StrategyWithRewardsYieldsMock.sol";
+import { StrategyWithoutRewardsMockBroken } from "../utils/mocks/StrategyWithoutRewardsMockBroken.sol";
 
 contract StrategyManagerTest is BasicContractsFixture {
     using stdMath for int256;
@@ -790,7 +789,11 @@ contract StrategyManagerTest is BasicContractsFixture {
     }
 
     // Tests if claimInvestment reverts when not enough recipients token
-    function test_claimInvestment_revert_when_not_enough_recipients_token(address user, uint256 amount, uint256 _shares) public {
+    function test_claimInvestment_revert_when_not_enough_recipients_token(
+        address user,
+        uint256 amount,
+        uint256 _shares
+    ) public {
         vm.assume(user != address(0));
         vm.assume(amount > 0 && amount < 1e20);
         address token = address(usdc);
@@ -802,34 +805,26 @@ contract StrategyManagerTest is BasicContractsFixture {
         vm.prank(user, user);
         strategyManager.invest(token, strategy, holdingBalanceBefore, 0, data);
         (, uint256 shares) = strategyWithoutRewardsMock.recipients(holding);
-        uint256 claimAmount = bound(_shares, 1, shares);
+        deal(address(strategyWithoutRewardsMock.receiptToken()), holding, 0);
 
-        address randomUser = vm.randomAddress();
-        vm.startPrank(holding, holding);
-        IERC20(strategyWithoutRewardsMock.getReceiptTokenAddress()).approve(randomUser, claimAmount / 2);
-        IERC20(strategyWithoutRewardsMock.getReceiptTokenAddress()).transfer(randomUser, claimAmount / 2);
-        vm.stopPrank();
-
-        // TODO (Tigran): weird revert message behavior
-        // vm.startPrank(user, user);
-        // vm.expectRevert();
-        // strategyManager.claimInvestment(holding, token, strategy, claimAmount, data);
-        // vm.stopPrank();
+        vm.startPrank(user, user);
+        vm.expectRevert();
+        strategyManager.claimInvestment(holding, token, strategy, shares, data);
     }
 
     // Tests if claimInvestment works correctly when yield exists
-    function test_claimInvestment_when_yield_and_authorized(address user, uint256 amount, int256 yield, uint256 _shares) public {
+    function test_claimInvestment_when_yield_and_authorized(
+        address user,
+        uint256 amount,
+        int256 yield,
+        uint256 _shares
+    ) public {
         vm.assume(user != address(0));
         vm.assume(amount > 0 && amount < 1e20);
 
         StrategyWithRewardsYieldsMock strategyWithPositiveYield = new StrategyWithRewardsYieldsMock(
-                address(manager),
-            address(usdc),
-            address(usdc),
-            address(0),
-            "AnotherMockWithYield",
-            "AMWY"
-            );
+            address(manager), address(usdc), address(usdc), address(0), "AnotherMockWithYield", "AMWY"
+        );
 
         vm.prank(OWNER, OWNER);
         strategyManager.addStrategy(address(strategyWithPositiveYield));
@@ -867,12 +862,9 @@ contract StrategyManagerTest is BasicContractsFixture {
         );
 
         uint256 totalClaimed = claimAmount;
-        if(yield > 0)
-        {
+        if (yield > 0) {
             totalClaimed += yield.abs();
-        }
-        else if(yield < 0)
-        {
+        } else if (yield < 0) {
             totalClaimed -= yield.abs();
         }
 
