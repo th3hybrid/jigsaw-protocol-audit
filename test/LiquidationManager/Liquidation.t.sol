@@ -284,6 +284,84 @@ contract LiquidationTestThis is Test {
         );
     }
 
+    // Tests liquidation when minCollateralReceive requirement is not satisfied
+    function test_liquidate_when_minCollateralReceive_notSatisfied() public {
+        uint256 _collateralAmount = 10_000e6;
+
+        TestTempData memory testData;
+
+        //initialize user
+        testData.userCollateralAmount = _collateralAmount;
+        testData.user = user;
+        SampleTokenSmallDecimals collateralContract = new SampleTokenSmallDecimals("SmallDec", "SD", 1e18 * 1e6);
+        manager.whitelistToken(address(collateralContract));
+        SampleOracle collateralOracle = new SampleOracle();
+        SharesRegistry collateralRegistry = new SharesRegistry(
+            msg.sender,
+            address(manager),
+            address(collateralContract),
+            address(collateralOracle),
+            bytes(""),
+            ISharesRegistry.RegistryConfig({
+                collateralizationRate: 50_000,
+                liquidationBuffer: 5e3,
+                liquidatorBonus: 8e3
+            })
+        );
+        registries[address(collateralContract)] = address(collateralRegistry);
+        stablesManager.registerOrUpdateShareRegistry(address(collateralRegistry), address(collateralContract), true);
+
+        // calculate mintAmount
+        uint256 mintAmount = testData.userCollateralAmount / 2;
+
+        //get tokens for user
+        deal(address(collateralContract), testData.user, testData.userCollateralAmount);
+
+        vm.startPrank(testData.user, testData.user);
+        // create holding for user
+        testData.userHolding = holdingManager.createHolding();
+        // make deposit to the holding
+        collateralContract.approve(address(holdingManager), testData.userCollateralAmount);
+        holdingManager.deposit(address(collateralContract), testData.userCollateralAmount);
+        //borrow
+        holdingManager.borrow(address(collateralContract), mintAmount, 0, true);
+        vm.stopPrank();
+
+        testData.userJUsd = jUsd.balanceOf(testData.user);
+
+        //initialize liquidator
+        testData.liquidator = liquidator;
+        testData.liquidatorCollateralAmount = _collateralAmount;
+
+        //get tokens for user
+        deal(address(collateralContract), testData.liquidator, testData.liquidatorCollateralAmount);
+
+        vm.startPrank(testData.liquidator, testData.liquidator);
+        // create holding for user
+        holdingManager.createHolding();
+        // make deposit to the holding
+        collateralContract.approve(address(holdingManager), testData.userCollateralAmount);
+        holdingManager.deposit(address(collateralContract), testData.userCollateralAmount);
+        //borrow
+        holdingManager.borrow(address(collateralContract), mintAmount, 0, true);
+        vm.stopPrank();
+
+        testData.liquidatorJUsd = jUsd.balanceOf(testData.liquidator);
+        testData.liquidatorCollateralAmountAfterInitiation = collateralContract.balanceOf(address(testData.liquidator));
+
+        //change the price of the collateral
+        collateralOracle.setPriceForLiquidation();
+
+        ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
+
+        //make liquidation call
+        vm.prank(testData.liquidator, testData.liquidator);
+        vm.expectRevert(bytes("3097"));
+        liquidationManager.liquidate(
+            address(testData.user), address(collateralContract), testData.userJUsd, type(uint256).max, liquidateCalldata
+        );
+    }
+
     // Tests liquidation when collateral is denominated in a token with small decimals
     // Checks various states and amounts after liquidation
     function test_liquidate_when_smallDecimals() public {
@@ -482,6 +560,124 @@ contract LiquidationTestThis is Test {
 
         vm.stopPrank();
     }
+
+    function test_liquidateBadDebt_when_inactiveRegistry() public {
+        address collateral = address(420);
+        ILiquidationManager.LiquidateCalldata memory liquidateCalldata =
+            ILiquidationManager.LiquidateCalldata({ strategies: new address[](0), strategiesData: new bytes[](0) });
+
+        vm.expectRevert(bytes("1200"));
+        liquidationManager.liquidateBadDebt({ _user: user, _collateral: collateral, _data: liquidateCalldata });
+    }
+
+    function test_liquidateBadDebt_when_NoHolding() public {
+        address collateral = address(usdc);
+        address _user = address(421);
+        ILiquidationManager.LiquidateCalldata memory liquidateCalldata =
+            ILiquidationManager.LiquidateCalldata({ strategies: new address[](0), strategiesData: new bytes[](0) });
+
+        vm.expectRevert(bytes("3002"));
+        liquidationManager.liquidateBadDebt({ _user: _user, _collateral: collateral, _data: liquidateCalldata });
+    }
+
+    function test_liquidateBadDebt_when_incorrectStrategiesLength() public {
+        address collateral = address(usdc);
+        uint256 collateralAmount = 100_000e6;
+        initiateWithUsdc(user, collateralAmount);
+
+        ILiquidationManager.LiquidateCalldata memory liquidateCalldata =
+            ILiquidationManager.LiquidateCalldata({ strategies: new address[](1), strategiesData: new bytes[](1) });
+
+        vm.expectRevert(bytes("3098"));
+        liquidationManager.liquidateBadDebt({ _user: user, _collateral: collateral, _data: liquidateCalldata });
+    }
+
+    function test_liquidateBadDebt_when_NotBadDebt() public {
+        address collateral = address(usdc);
+        uint256 collateralAmount = 100_000e6;
+        initiateWithUsdc(user, collateralAmount);
+
+        ILiquidationManager.LiquidateCalldata memory liquidateCalldata =
+            ILiquidationManager.LiquidateCalldata({ strategies: new address[](0), strategiesData: new bytes[](0) });
+
+        vm.expectRevert(bytes("3099"));
+        liquidationManager.liquidateBadDebt({ _user: user, _collateral: collateral, _data: liquidateCalldata });
+    }
+
+    function test_liquidateBadDebt_when_withoutStrategies() public {
+        address collateral = address(usdc);
+        uint256 collateralAmount = 100_000e6;
+        address userHolding = initiateWithUsdc(user, collateralAmount);
+
+        uint256 userJusdBefore = ISharesRegistry(registries[address(usdc)]).borrowed(userHolding);
+        uint256 userCollateralBefore = ISharesRegistry(registries[address(usdc)]).collateral(userHolding);
+
+        deal(address(jUsd), address(this), userJusdBefore);
+        deal(address(usdc), address(this), 0);
+
+        uint256 totalSupplyBefore = jUsd.totalSupply();
+
+        ILiquidationManager.LiquidateCalldata memory liquidateCalldata =
+            ILiquidationManager.LiquidateCalldata({ strategies: new address[](0), strategiesData: new bytes[](0) });
+
+        usdcOracle.setAVeryLowPrice();
+        liquidationManager.liquidateBadDebt({ _user: user, _collateral: collateral, _data: liquidateCalldata });
+
+        // 1. user's borrowed = 0
+        // 2. jUsd supply -= user's borrowed
+        // 3. user's collateral = 0
+        // 4. owner's jUsd -= user's borrowed
+        // 5. owner's collateral = user's collateral
+        assertEq(ISharesRegistry(registries[address(usdc)]).borrowed(userHolding), 0, "Borrowed amount is not 0");
+        assertEq(jUsd.totalSupply(), totalSupplyBefore - userJusdBefore, "jUsd supply is not correct");
+        assertEq(ISharesRegistry(registries[address(usdc)]).collateral(user), 0, "User's collateral is not 0");
+        assertEq(jUsd.balanceOf(address(this)), 0, "Owner's jUsd is not 0");
+        assertEq(usdc.balanceOf(address(this)), userCollateralBefore, "Owner's collateral is not correct");
+    }
+
+    function test_liquidateBadDebt_when_withStrategies() public {
+        address collateral = address(usdc);
+        uint256 collateralAmount = 100_000e6;
+        address userHolding = initiateWithUsdc(user, collateralAmount);
+
+        uint256 userJusdBefore = ISharesRegistry(registries[address(usdc)]).borrowed(userHolding);
+        uint256 userCollateralBefore = ISharesRegistry(registries[address(usdc)]).collateral(userHolding);
+
+        deal(address(jUsd), address(this), userJusdBefore);
+        deal(address(usdc), address(this), 0);
+
+        uint256 totalSupplyBefore = jUsd.totalSupply();
+
+        // make investment
+        vm.prank(user, user);
+        strategyManager.invest(address(usdc), address(strategyWithoutRewardsMock), userCollateralBefore, 0, "");
+
+        ILiquidationManager.LiquidateCalldata memory liquidateCalldata =
+            ILiquidationManager.LiquidateCalldata({ strategies: new address[](1), strategiesData: new bytes[](1) });
+        liquidateCalldata.strategies[0] = address(strategyWithoutRewardsMock);
+
+        usdcOracle.setAVeryLowPrice();
+        liquidationManager.liquidateBadDebt({ _user: user, _collateral: collateral, _data: liquidateCalldata });
+
+        (uint256 investedAmount, uint256 totalShares) = IStrategy(strategyWithoutRewardsMock).recipients(userHolding);
+
+        // 1. user's borrowed = 0
+        // 2. jUsd supply -= user's borrowed
+        // 3. user's collateral = 0
+        // 4. owner's jUsd -= user's borrowed
+        // 5. owner's collateral = user's collateral
+        // 6. invested amount in strategy = 0
+        // 7. total shares in strategy = 0
+        assertEq(ISharesRegistry(registries[address(usdc)]).borrowed(userHolding), 0, "Borrowed amount is not 0");
+        assertEq(jUsd.totalSupply(), totalSupplyBefore - userJusdBefore, "jUsd supply is not correct");
+        assertEq(ISharesRegistry(registries[address(usdc)]).collateral(user), 0, "User's collateral is not 0");
+        assertEq(jUsd.balanceOf(address(this)), 0, "Owner's jUsd is not 0");
+        assertEq(usdc.balanceOf(address(this)), userCollateralBefore, "Owner's collateral is not correct");
+        assertEq(investedAmount, 0, "Strategy's total investments is not 0");
+        assertEq(totalShares, 0, "Strategy's total shares is not 0");
+    }
+
+    function _prepareBadDebtLiquidation() public { }
 
     //Utility functions
 
