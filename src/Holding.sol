@@ -108,7 +108,7 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
      * @param _amount Withdrawal amount.
      */
     function approve(address _tokenAddress, address _destination, uint256 _amount) external override onlyAllowed {
-        OperationsLib.safeApprove({ token: _tokenAddress, to: _destination, value: _amount });
+        IERC20(_tokenAddress).forceApprove(_destination, _amount);
     }
 
     /**
