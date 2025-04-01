@@ -10,7 +10,7 @@ import { IManager } from "../../../src/interfaces/core/IManager.sol";
 import { IReceiptToken } from "../../../src/interfaces/core/IReceiptToken.sol";
 import { IReceiptTokenFactory } from "../../../src/interfaces/core/IReceiptTokenFactory.sol";
 import { IStrategy } from "../../../src/interfaces/core/IStrategy.sol";
-import { StrategyBase } from "../../../src/strategies/StrategyBase.sol";
+import { StrategyBase } from "./StrategyBase.sol";
 
 /// @title StrategyWithoutRewardsMockBroken
 /// @dev This contract simulates situation when during deposit {tokenOutAmount} is returned as 0,

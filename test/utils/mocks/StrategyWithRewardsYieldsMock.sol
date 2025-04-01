@@ -5,16 +5,18 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "forge-std/StdMath.sol";
 
-import {IHolding} from "../../../src/interfaces/core/IHolding.sol";
-import {IManager} from "../../../src/interfaces/core/IManager.sol";
+import { IHolding } from "../../../src/interfaces/core/IHolding.sol";
+import { IManager } from "../../../src/interfaces/core/IManager.sol";
 
-import {IReceiptToken} from "../../../src/interfaces/core/IReceiptToken.sol";
-import {IReceiptTokenFactory} from "../../../src/interfaces/core/IReceiptTokenFactory.sol";
-import {IStrategy} from "../../../src/interfaces/core/IStrategy.sol";
-import {StrategyBase} from "../../../src/strategies/StrategyBase.sol";
+import { IReceiptToken } from "../../../src/interfaces/core/IReceiptToken.sol";
+import { IReceiptTokenFactory } from "../../../src/interfaces/core/IReceiptTokenFactory.sol";
+import { IStrategy } from "../../../src/interfaces/core/IStrategy.sol";
+import { StrategyBase } from "./StrategyBase.sol";
 
 interface ITokenMock {
-    function getTokens(uint256 _val) external;
+    function getTokens(
+        uint256 _val
+    ) external;
 }
 
 contract StrategyWithRewardsYieldsMock is IStrategy, StrategyBase {
@@ -90,13 +92,10 @@ contract StrategyWithRewardsYieldsMock is IStrategy, StrategyBase {
         totalInvestments -= _shares;
         uint256 totalAmount = _shares;
 
-        if (yieldAmount > 0)
-        {
+        if (yieldAmount > 0) {
             ITokenMock(_asset).getTokens(uint256(yieldAmount));
             totalAmount += yieldAmount.abs();
-        }
-        else if (yieldAmount < 0)
-        {
+        } else if (yieldAmount < 0) {
             totalAmount -= yieldAmount.abs();
         }
 
@@ -119,7 +118,9 @@ contract StrategyWithRewardsYieldsMock is IStrategy, StrategyBase {
         tokens[0] = rewardToken;
     }
 
-    function setYield(int256 _amount) external {
+    function setYield(
+        int256 _amount
+    ) external {
         yieldAmount = _amount;
     }
 
