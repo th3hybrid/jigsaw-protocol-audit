@@ -30,10 +30,11 @@ import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
 import { SampleTokenSmallDecimals } from "../utils/mocks/SampleTokenSmallDecimals.sol";
 
 /// @title LiquidationTest
-/// @notice This contract encompasses tests and utility functions for conducting fuzzy testing of the `liquidate`
-/// function in the LiquidationManager Contract.
+/// @notice This contract encompasses tests and utility functions for conducting fuzzy testing of the `liquidate` and
+/// `liquidateBadDebt`
+/// functions in the LiquidationManager Contract.
 /// @notice for other tests of the LiquidationManager Contract see other files in this directory.
-contract LiquidationTestThis is Test {
+contract LiquidationTest is Test {
     using Math for uint256;
 
     HoldingManager public holdingManager;
