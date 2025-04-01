@@ -810,14 +810,12 @@ contract SelfLiquidationTest is Test {
         uint256 limit = testData.requiredCollateral
             + testData.requiredCollateral.mulDiv(swapParams.slippagePercentage, liquidationManager.LIQUIDATION_PRECISION());
         if (swapParams.amountInMaximum > limit) return;
-        liquidationManager.selfLiquidate(
+        (uint256 collateralUsed,) = liquidationManager.selfLiquidate(
             testData.collateral, testData.selfLiquidationAmount, swapParams, strategiesParams
         );
         vm.stopPrank();
 
-        uint256 expectedHoldingBalance = swapParams.amountInMaximum > testData.requiredCollateral
-            ? testData.userCollateralAmount - swapParams.amountInMaximum
-            : testData.userCollateralAmount - testData.requiredCollateral;
+        uint256 expectedHoldingBalance = testData.userCollateralAmount - collateralUsed;
 
         assertGe(
             IERC20(testData.collateral).balanceOf(manager.feeAddress()), feeBalanceBeforeSL, "Fee balance incorrect"

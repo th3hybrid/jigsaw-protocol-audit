@@ -384,7 +384,6 @@ contract ManagerTest is BasicContractsFixture {
         vm.assume(_user != address(strategyManager));
         vm.assume(manager.isTokenWithdrawable(newAddress) == false);
 
-        vm.prank(_user);
         vm.expectRevert(bytes("1000"));
         manager.addWithdrawableToken(newAddress);
 
