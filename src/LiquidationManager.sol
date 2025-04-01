@@ -231,8 +231,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         // Compute the remaining collateral.
         uint256 remainingCollateral = tempData.totalSelfLiquidatableCollateral - collateralUsedForSwap;
         // Compute the final fee amount (if any) to be paid for performing self-liquidation.
-        uint256 finalFeeCollateral =
-            remainingCollateral > tempData.totalFeeCollateral ? tempData.totalFeeCollateral : remainingCollateral;
+        uint256 finalFeeCollateral = collateralUsedForSwap.mulDiv(selfLiquidationFee, precision, Math.Rounding.Ceil);
 
         // Transfer fees to fee address.
         if (finalFeeCollateral != 0) {
