@@ -5,7 +5,6 @@ import {StdCheats} from "forge-std/StdCheats.sol";
 import {StdUtils} from "forge-std/StdUtils.sol";
 import {stdMath} from "forge-std/stdMath.sol";
 
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IERC20, IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {HoldingManager} from "../../../src/HoldingManager.sol";
@@ -14,7 +13,6 @@ import {StrategyManager} from "../../../src/StrategyManager.sol";
 import {StrategyWithRewardsYieldsMock} from "../../utils/mocks/StrategyWithRewardsYieldsMock.sol";
 
 contract StrategyManagerInvariantTestHandler is CommonBase, StdCheats, StdUtils {
-    using EnumerableSet for EnumerableSet.AddressSet;
     using stdMath for int256;
 
     HoldingManager internal holdingManager;
@@ -22,7 +20,9 @@ contract StrategyManagerInvariantTestHandler is CommonBase, StdCheats, StdUtils 
     SharesRegistry internal sharesRegistry;
     StrategyWithRewardsYieldsMock internal strategy;
 
-    address internal collateral;
+    uint256 private minInvestAmount = 1e18;
+
+    address internal collateralToken;
     mapping(address => uint256) internal collateralDeposited;
 
     mapping(address => address) internal userHolding;
@@ -39,32 +39,32 @@ contract StrategyManagerInvariantTestHandler is CommonBase, StdCheats, StdUtils 
         HoldingManager _holdingManager,
         StrategyManager _strategyManager,
         SharesRegistry _sharesRegistry,
-        address _collateral
+        address _collateralToken
     ) {
         strategy = _strategy;
         holdingManager = _holdingManager;
         strategyManager = _strategyManager;
         sharesRegistry = _sharesRegistry;
-        collateral = _collateral;
+        collateralToken = _collateralToken;
         createUserHoldings();
     }
 
     function user_invest(uint256 _mintAmount, uint256 user_idx) external {
-        _mintAmount = bound(_mintAmount, 1, 100_000e18);
+        _mintAmount = bound(_mintAmount, minInvestAmount, 100_000e18);
         address user = pickUpUser(user_idx);
 
-        IERC20Metadata collateralContract = IERC20Metadata(collateral);
+        IERC20Metadata collateralContract = IERC20Metadata(collateralToken);
 
         uint256 collateralAmount = _mintAmount * 2;
 
         //get tokens for user
-        deal(collateral, user, collateralAmount);
+        deal(collateralToken, user, collateralAmount);
 
         // make deposit to the holding
         vm.startPrank(user, user);
         collateralContract.approve(address(holdingManager), collateralAmount);
-        holdingManager.deposit(collateral, collateralAmount);
-        strategyManager.invest(collateral, address(strategy), _mintAmount, 0, bytes(""));
+        holdingManager.deposit(collateralToken, collateralAmount);
+        strategyManager.invest(collateralToken, address(strategy), _mintAmount, 0, bytes(""));
         vm.stopPrank();
 
         collateralDeposited[user] += collateralAmount;
@@ -76,24 +76,22 @@ contract StrategyManagerInvariantTestHandler is CommonBase, StdCheats, StdUtils 
         // make deposit to the holding
         vm.startPrank(user, user);
         (, uint256 shares) = strategy.recipients(userHolding[user]);
-        vm.assume(shares > 0);
+        vm.assume(shares > minInvestAmount);
 
-        _claimAmount = bound(_claimAmount, 1, shares);
-        strategyManager.claimInvestment(userHolding[user], collateral, address(strategy), _claimAmount, "");
-
+        _claimAmount = bound(_claimAmount, minInvestAmount, shares);
+        strategyManager.claimInvestment(userHolding[user], collateralToken, address(strategy), _claimAmount, "");
         vm.stopPrank();
-        collateralDeposited[user] -= _claimAmount;
 
         if(strategy.yieldAmount() > 0) {
-            collateralDeposited[user] -= strategy.yieldAmount().abs();
+            collateralDeposited[user] += strategy.yieldAmount().abs();
         }
         else {
-            collateralDeposited[user] += strategy.yieldAmount().abs();
+            collateralDeposited[user] -= strategy.yieldAmount().abs();
         }
     }
 
     function set_strategy_yield(int256 _amount) external {
-        vm.assume(_amount.abs() < 1 && _amount < 1e20);
+        vm.assume(_amount.abs() < minInvestAmount);
         strategy.setYield(_amount);
     }
 

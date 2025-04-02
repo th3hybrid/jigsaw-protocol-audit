@@ -43,10 +43,9 @@ contract StrategyManagerInvariantTest is Test, BasicContractsFixture {
 
     // Test that share registrie's deposited collateral amount is correct at all times
     function invariant_stablesManager_totalCollateralInRegistry() public view {
-        vm.assertApproxEqRel(
+        vm.assertEq(
             handler.getTotalCollateralFromRegistry(),
             handler.getTotalCollateral(),
-            1e18,
             "Total collateral amount in registry is incorrect"
         );
     }
