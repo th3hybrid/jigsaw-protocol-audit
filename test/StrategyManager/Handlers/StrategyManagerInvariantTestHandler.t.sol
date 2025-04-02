@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 import {CommonBase} from "forge-std/Base.sol";
 import {StdCheats} from "forge-std/StdCheats.sol";
 import {StdUtils} from "forge-std/StdUtils.sol";
-import {stdMath} from "forge-std/stdMath.sol";
+import {stdMath} from "forge-std/StdMath.sol";
 
 import {IERC20, IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -64,6 +64,7 @@ contract StrategyManagerInvariantTestHandler is CommonBase, StdCheats, StdUtils 
         vm.startPrank(user, user);
         collateralContract.approve(address(holdingManager), collateralAmount);
         holdingManager.deposit(collateralToken, collateralAmount);
+        // make invest to the strategy
         strategyManager.invest(collateralToken, address(strategy), _mintAmount, 0, bytes(""));
         vm.stopPrank();
 
@@ -73,15 +74,18 @@ contract StrategyManagerInvariantTestHandler is CommonBase, StdCheats, StdUtils 
     function user_claim_invested(uint256 _claimAmount, uint256 user_idx) external {
         address user = pickUpUser(user_idx);
 
-        // make deposit to the holding
         vm.startPrank(user, user);
         (, uint256 shares) = strategy.recipients(userHolding[user]);
-        vm.assume(shares > minInvestAmount);
 
+        // check if user has enough shares to claim
+        vm.assume(shares >= minInvestAmount);
         _claimAmount = bound(_claimAmount, minInvestAmount, shares);
+        
+        // claim investment
         strategyManager.claimInvestment(userHolding[user], collateralToken, address(strategy), _claimAmount, "");
         vm.stopPrank();
 
+        // if yieldAmount in strategy is positive, it expected to be added to the user's collateral, otherwise - subtracted
         if(strategy.yieldAmount() > 0) {
             collateralDeposited[user] += strategy.yieldAmount().abs();
         }
@@ -91,17 +95,20 @@ contract StrategyManagerInvariantTestHandler is CommonBase, StdCheats, StdUtils 
     }
 
     function set_strategy_yield(int256 _amount) external {
+        // set yield amount bellow minInvestAmount to avoid arithmetic overflow in withdraw
         vm.assume(_amount.abs() < minInvestAmount);
         strategy.setYield(_amount);
     }
 
     function getTotalCollateral() external view returns (uint256 totalCollateral) {
+        totalCollateral = 0;
         for (uint256 i = 0; i < USER_ADDRESSES.length; i++) {
             totalCollateral += collateralDeposited[USER_ADDRESSES[i]];
         }
     }
 
     function getTotalCollateralFromRegistry() external view returns (uint256 totalCollateralFromRegistry) {
+        totalCollateralFromRegistry = 0;
         for (uint256 i = 0; i < USER_ADDRESSES.length; i++) {
             totalCollateralFromRegistry += sharesRegistry.collateral(userHolding[USER_ADDRESSES[i]]);
         }

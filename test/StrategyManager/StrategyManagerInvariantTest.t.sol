@@ -9,8 +9,6 @@ import {StrategyManagerInvariantTestHandler} from "./Handlers/StrategyManagerInv
 /// @title StrategyManagerInvariantTest
 /// @author Hovooo (@hovooo)
 /// @notice This contract is designed to invariant test StrategyManager contract.
-/// @dev This invariant test allows both testing with and without reverts. To disable reverts, set the
-/// WITH_REVERTS variable to false.
 contract StrategyManagerInvariantTest is Test, BasicContractsFixture {
 
     StrategyManagerInvariantTestHandler private handler;
