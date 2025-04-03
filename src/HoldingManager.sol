@@ -228,8 +228,10 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         _unwrap(_amount);
         (uint256 userAmount, uint256 feeAmount) = _withdraw({ _token: WETH, _amount: _amount });
 
-        (bool feeSuccess,) = payable(manager.feeAddress()).call{ value: feeAmount }("");
-        require(feeSuccess, "3016");
+        if (feeAmount > 0) {
+            (bool feeSuccess,) = payable(manager.feeAddress()).call{ value: feeAmount }("");
+            require(feeSuccess, "3016");
+        }
 
         (bool success,) = payable(msg.sender).call{ value: userAmount }("");
         require(success, "3016");
