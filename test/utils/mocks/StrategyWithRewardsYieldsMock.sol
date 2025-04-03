@@ -90,17 +90,17 @@ contract StrategyWithRewardsYieldsMock is IStrategy, StrategyBase {
         recipients[_recipient].totalShares -= _shares;
         recipients[_recipient].investedAmount -= _shares;
         totalInvestments -= _shares;
-        uint256 totalAmount = _shares;
 
+        uint256 totalAmount = _shares;
         if (yieldAmount > 0) {
-            ITokenMock(_asset).getTokens(uint256(yieldAmount));
+            ITokenMock(_asset).getTokens(yieldAmount.abs());
             totalAmount += yieldAmount.abs();
         } else if (yieldAmount < 0) {
             totalAmount -= yieldAmount.abs();
         }
 
         IERC20(_asset).safeTransfer(_recipient, totalAmount);
-        return (totalAmount, _shares, yieldAmount, 0);
+        return (_shares, _shares, yieldAmount, 0);
     }
 
     function claimRewards(
