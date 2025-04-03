@@ -414,6 +414,17 @@ contract SharesRegistryTest is BasicContractsFixture {
         assertEq(registry.oracleData(), bytes("New Data"), "Wrong new oracle data");
     }
 
+    function test_only_stables_manager(address _holding) public {
+        vm.expectRevert(bytes("1000"));
+        registry.setBorrowed(_holding, 0);
+
+        vm.expectRevert(bytes("1000"));
+        registry.registerCollateral(_holding, 0);
+
+        vm.expectRevert(bytes("1000"));
+        registry.unregisterCollateral(_holding, 0);
+    }
+
     modifier onlyNotOwner(
         address _caller
     ) {
