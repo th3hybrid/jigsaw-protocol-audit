@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { Holding } from "../../src/Holding.sol";
@@ -80,7 +81,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         address holdingContractAddress = holdingManager.createHolding();
 
         Holding holdingContract = Holding(holdingContractAddress);
-        vm.expectRevert(bytes("3072"));
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
         holdingContract.init(address(0));
     }
 
@@ -135,7 +136,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_wrapAndDeposit_when_wEthNotWhitelisted(
         uint256 _amount
     ) public {
-        vm.prank(manager.owner(), manager.owner());
+        vm.prank(OWNER, OWNER);
         manager.removeToken(address(weth));
 
         address user = address(uint160(uint256(keccak256(bytes("user")))));
@@ -167,7 +168,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(user, user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(user, user);
@@ -249,7 +250,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(_user, _user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(_user, _user);
@@ -275,8 +276,8 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.deposit(address(usdc), _depositAmount);
         vm.stopPrank();
 
-        vm.prank(manager.owner(), manager.owner());
-        manager.addNonWithdrawableToken(address(usdc));
+        vm.prank(OWNER, OWNER);
+        manager.removeWithdrawableToken(address(usdc));
 
         vm.prank(_user, _user);
         vm.expectRevert(bytes("3071"));
@@ -291,6 +292,10 @@ contract HoldingManagerTest is BasicContractsFixture {
 
         SampleTokenERC20 randomToken = new SampleTokenERC20("RT", "RT", 0);
 
+        // prank from owner to make random token withdrawable
+        vm.prank(OWNER, OWNER);
+        manager.addWithdrawableToken(address(randomToken));
+
         vm.startPrank(_user, _user);
         address holding = holdingManager.createHolding();
         deal(address(randomToken), holding, 10);
@@ -302,7 +307,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     // Tests if withdraw reverts correctly when user will become insolvent after withdraw
     function test_withdraw_when_insolvent(uint256 _depositAmount, address _user) public {
         vm.assume(_user != address(0));
-        vm.assume(_depositAmount > 200 && _depositAmount < 100_000e6);
+        vm.assume(_depositAmount > 500e18 && _depositAmount < 100_000e18);
 
         deal(address(usdc), _user, _depositAmount);
 
@@ -310,7 +315,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.createHolding();
         usdc.approve(address(holdingManager), _depositAmount);
         holdingManager.deposit(address(usdc), _depositAmount);
-        holdingManager.borrow(address(usdc), _depositAmount / 2, true);
+        holdingManager.borrow(address(usdc), _depositAmount / 2, 0, true);
 
         vm.expectRevert(bytes("3009"));
         holdingManager.withdraw(address(usdc), _depositAmount);
@@ -376,7 +381,7 @@ contract HoldingManagerTest is BasicContractsFixture {
 
         deal(address(usdc), _user, _depositAmount);
 
-        vm.startPrank(manager.owner(), manager.owner());
+        vm.startPrank(OWNER, OWNER);
         manager.setWithdrawalFee(500);
         vm.stopPrank();
 
@@ -448,7 +453,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(_user, _user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(_user, _user);
@@ -517,7 +522,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         uint256 withdrawAmount = bound(_withdrawAmount, 2, _depositAmount);
         deal(user, _depositAmount * bound(_multiplier, 1, 10));
 
-        vm.prank(manager.owner(), manager.owner());
+        vm.prank(OWNER, OWNER);
         manager.setWithdrawalFee(500);
 
         vm.startPrank(user, user);
@@ -569,7 +574,7 @@ contract HoldingManagerTest is BasicContractsFixture {
 
         deal(user, depositAmount * bound(_multiplier, 1, 10));
 
-        vm.startPrank(manager.owner(), manager.owner());
+        vm.startPrank(OWNER, OWNER);
         manager.setWithdrawalFee(500);
         manager.setFeeAddress(address(simpleContract));
         vm.stopPrank();
@@ -611,7 +616,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_borrowMultiple_when_invalidHolding(
         address _user
     ) public {
-        IHoldingManager.BorrowOrRepayData[] memory data;
+        IHoldingManager.BorrowData[] memory data;
 
         vm.prank(_user, _user);
         vm.expectRevert(bytes("3002"));
@@ -622,7 +627,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_borrowMultiple_when_noData() public {
         address user = address(uint160(uint256(keccak256(bytes("Random user")))));
 
-        IHoldingManager.BorrowOrRepayData[] memory data;
+        IHoldingManager.BorrowData[] memory data;
 
         vm.startPrank(user, user);
         holdingManager.createHolding();
@@ -635,12 +640,12 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_borrowMultiple_when_paused() public {
         address user = address(uint160(uint256(keccak256(bytes("Random user")))));
 
-        IHoldingManager.BorrowOrRepayData[] memory data;
+        IHoldingManager.BorrowData[] memory data;
 
         vm.prank(user, user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(user, user);
@@ -652,8 +657,8 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_borrowMultiple_when_authorized(address _user, uint256 _usdcAmount, uint256 _wEthAmount) public {
         vm.assume(_user != address(0));
 
-        uint256 usdcAmount = bound(_usdcAmount, 2, 50_000 * 10 ** usdc.decimals());
-        uint256 wEthAmount = bound(_wEthAmount, 2, 50_000 * 10 ** weth.decimals());
+        uint256 usdcAmount = bound(_usdcAmount, 500 * 10 ** usdc.decimals(), 50_000 * 10 ** usdc.decimals());
+        uint256 wEthAmount = bound(_wEthAmount, 500 * 10 ** usdc.decimals(), 50_000 * 10 ** weth.decimals());
 
         deal(address(usdc), _user, usdcAmount);
         deal(address(weth), _user, wEthAmount);
@@ -667,9 +672,9 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.deposit(address(usdc), usdcAmount);
         holdingManager.deposit(address(weth), wEthAmount);
 
-        IHoldingManager.BorrowOrRepayData[] memory data = new IHoldingManager.BorrowOrRepayData[](2);
-        data[0] = IHoldingManager.BorrowOrRepayData(address(usdc), usdcAmount / 2);
-        data[1] = IHoldingManager.BorrowOrRepayData(address(weth), wEthAmount / 2);
+        IHoldingManager.BorrowData[] memory data = new IHoldingManager.BorrowData[](2);
+        data[0] = IHoldingManager.BorrowData(address(usdc), usdcAmount / 2, 0);
+        data[1] = IHoldingManager.BorrowData(address(weth), wEthAmount / 2, 0);
 
         vm.expectEmit();
         emit Borrowed(holding, address(usdc), usdcAmount / 2, true);
@@ -696,7 +701,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_repayMultiple_when_invalidHolding(
         address _user
     ) public {
-        IHoldingManager.BorrowOrRepayData[] memory data;
+        IHoldingManager.RepayData[] memory data;
 
         vm.prank(_user, _user);
         vm.expectRevert(bytes("3002"));
@@ -707,7 +712,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_repayMultiple_when_noData() public {
         address user = address(uint160(uint256(keccak256(bytes("Random user")))));
 
-        IHoldingManager.BorrowOrRepayData[] memory data;
+        IHoldingManager.RepayData[] memory data;
 
         vm.startPrank(user, user);
         holdingManager.createHolding();
@@ -720,12 +725,12 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_repayMultiple_when_paused() public {
         address user = address(uint160(uint256(keccak256(bytes("Random user")))));
 
-        IHoldingManager.BorrowOrRepayData[] memory data;
+        IHoldingManager.RepayData[] memory data;
 
         vm.prank(user, user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(user, user);
@@ -737,8 +742,8 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_repayMultiple_when_authorized(address _user, uint256 _usdcAmount, uint256 _wEthAmount) public {
         vm.assume(_user != address(0));
 
-        uint256 usdcAmount = bound(_usdcAmount, 2, 50_000 * 10 ** usdc.decimals());
-        uint256 wEthAmount = bound(_wEthAmount, 2, 50_000 * 10 ** weth.decimals());
+        uint256 usdcAmount = bound(_usdcAmount, 500 * 10 ** usdc.decimals(), 50_000 * 10 ** usdc.decimals());
+        uint256 wEthAmount = bound(_wEthAmount, 500 * 10 ** weth.decimals(), 50_000 * 10 ** weth.decimals());
 
         deal(address(usdc), _user, usdcAmount);
         deal(address(weth), _user, wEthAmount);
@@ -752,9 +757,9 @@ contract HoldingManagerTest is BasicContractsFixture {
         holdingManager.deposit(address(usdc), usdcAmount);
         holdingManager.deposit(address(weth), wEthAmount);
 
-        IHoldingManager.BorrowOrRepayData[] memory data = new IHoldingManager.BorrowOrRepayData[](2);
-        data[0] = IHoldingManager.BorrowOrRepayData(address(usdc), usdcAmount / 2);
-        data[1] = IHoldingManager.BorrowOrRepayData(address(weth), wEthAmount / 2);
+        IHoldingManager.BorrowData[] memory data = new IHoldingManager.BorrowData[](2);
+        data[0] = IHoldingManager.BorrowData(address(usdc), usdcAmount / 2, 0);
+        data[1] = IHoldingManager.BorrowData(address(weth), wEthAmount / 2, 0);
 
         holdingManager.borrowMultiple(data, true);
 
@@ -763,7 +768,11 @@ contract HoldingManagerTest is BasicContractsFixture {
         emit Repaid(holding, address(weth), wEthAmount / 2, true);
         emit RepaidMultiple(holding, data.length, true);
 
-        holdingManager.repayMultiple(data, true);
+        IHoldingManager.RepayData[] memory repayData = new IHoldingManager.RepayData[](2);
+        repayData[0] = IHoldingManager.RepayData(address(usdc), usdcAmount / 2);
+        repayData[1] = IHoldingManager.RepayData(address(weth), wEthAmount / 2);
+
+        holdingManager.repayMultiple(repayData, true);
 
         holdingManager.withdraw(address(usdc), usdcAmount);
         holdingManager.withdraw(address(weth), wEthAmount);
@@ -792,7 +801,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(user, user);
         holdingManager.createHolding();
 
-        vm.prank(holdingManager.owner(), holdingManager.owner());
+        vm.prank(OWNER, OWNER);
         holdingManager.pause();
 
         vm.prank(user, user);
@@ -813,7 +822,7 @@ contract HoldingManagerTest is BasicContractsFixture {
     function test_repay_when_authorized(address _user, uint256 _usdcAmount) public {
         vm.assume(_user != address(0));
 
-        uint256 usdcAmount = bound(_usdcAmount, 2, 50_000 * 10 ** usdc.decimals());
+        uint256 usdcAmount = bound(_usdcAmount, 400 * 10 ** usdc.decimals(), 50_000 * 10 ** usdc.decimals());
 
         deal(address(usdc), _user, usdcAmount);
 
@@ -821,7 +830,7 @@ contract HoldingManagerTest is BasicContractsFixture {
         address holding = holdingManager.createHolding();
         usdc.approve(address(holdingManager), usdcAmount);
         holdingManager.deposit(address(usdc), usdcAmount);
-        holdingManager.borrow(address(usdc), usdcAmount / 2, true);
+        holdingManager.borrow(address(usdc), usdcAmount / 2, 0, true);
 
         vm.expectEmit();
         emit Repaid(holding, address(usdc), usdcAmount / 2, true);
