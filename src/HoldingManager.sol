@@ -238,10 +238,11 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     /**
      * @notice Borrows jUSD stablecoin to the user or to the holding contract.
      *
-     * @dev This function will fail if the supplied `_amount` does not adhere to the collateralization ratio set in
-     * the registry for the specific collateral. For instance, if the collateralization ratio is 200%, the maximum
-     * `_amount` that can be used to borrow is half of the user's free collateral, otherwise the user's holding will
-     * become insolvent after borrowing.
+     * @dev The _amount does not account for the collateralization ratio and is meant to represent collateral's amount
+     * equivalent to jUSD's value the user wants to receive.
+     * @dev Ensure that the user will not become insolvent after borrowing before calling this function, as this
+     * function will revert ("3009") if the supplied `_amount` does not adhere to the collateralization ratio set in
+     * the registry for the specific collateral.
      *
      * @notice Requirements:
      * - `msg.sender` must have a valid holding.
@@ -254,7 +255,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
      * - `Borrowed` event indicating successful borrow operation.
      *
      * @param _token Collateral token.
-     * @param _amount The collateral amount used for borrowing.
+     * @param _amount The collateral amount equivalent for borrowed jUSD.
      * @param _mintDirectlyToUser If true, mints to user instead of holding.
      * @param _minJUsdAmountOut The minimum amount of jUSD that is expected to be received.
      *

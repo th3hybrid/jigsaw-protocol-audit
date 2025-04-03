@@ -197,7 +197,7 @@ interface IStablesManager {
      *
      * @param _holding The holding for which collateral is added.
      * @param _token Collateral token.
-     * @param _amount The collateral amount used for borrowing.
+     * @param _amount The collateral amount equivalent for borrowed jUSD.
      * @param _minJUsdAmountOut The minimum amount of jUSD that is expected to be received.
      * @param _mintDirectlyToUser If true, mints to user instead of holding.
      *
