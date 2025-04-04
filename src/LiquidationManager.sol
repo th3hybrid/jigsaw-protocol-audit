@@ -174,28 +174,22 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
             _getCollateralForJUsd(_collateral, tempData.jUsdAmountToBurn, tempData.exchangeRate);
 
         // Ensure that amountInMaximum is within acceptable range specified by user.
-        // Set totalSelfLiquidatableCollateral equal to amountInMaximum if it is within acceptable range.
         // See the interface for specs on `slippagePercentage`.
-        if (tempData.amountInMaximum > tempData.totalRequiredCollateral) {
-            // Ensure safe computation.
-            require(_swapParams.slippagePercentage <= precision, "3081");
-            if (
-                tempData.amountInMaximum
-                    <= tempData.totalRequiredCollateral
-                        + tempData.totalRequiredCollateral.mulDiv(_swapParams.slippagePercentage, precision)
-            ) {
-                tempData.totalRequiredCollateral = tempData.amountInMaximum;
-            } else {
-                // Revert if amountInMaximum is higher than allowed by user.
-                revert("3078");
-            }
+
+        // Ensure safe computation.
+        require(_swapParams.slippagePercentage <= precision, "3081");
+        if (
+            tempData.amountInMaximum
+                > tempData.totalRequiredCollateral
+                    + tempData.totalRequiredCollateral.mulDiv(_swapParams.slippagePercentage, precision)
+        ) {
+            revert("3078");
         }
 
         // Calculate the self-liquidation fee amount.
-        tempData.totalFeeCollateral =
-            tempData.totalRequiredCollateral.mulDiv(selfLiquidationFee, precision, Math.Rounding.Ceil);
+        tempData.totalFeeCollateral = tempData.amountInMaximum.mulDiv(selfLiquidationFee, precision, Math.Rounding.Ceil);
         // Calculate the total self-liquidatable collateral required to perform self-liquidation.
-        tempData.totalSelfLiquidatableCollateral = tempData.totalRequiredCollateral + tempData.totalFeeCollateral;
+        tempData.totalSelfLiquidatableCollateral = tempData.amountInMaximum + tempData.totalFeeCollateral;
 
         // Retrieve collateral from strategies if needed.
         if (tempData.strategies.length > 0) {
