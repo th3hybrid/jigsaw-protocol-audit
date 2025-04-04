@@ -325,33 +325,36 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         require(stablesManager.isLiquidatable({ _token: _collateral, _holding: holding }), "3073");
 
         // Calculate collateral required for the specified `_jUsdAmount`.
-        collateralUsed = _getCollateralForJUsd({
+        uint256 requiredCollateral = _getCollateralForJUsd({
             _collateral: _collateral,
             _jUsdAmount: _jUsdAmount,
             _exchangeRate: ISharesRegistry(registryAddress).getExchangeRate()
         });
-
-        // Update the required collateral amount if there's liquidator bonus.
-        collateralUsed += _user == msg.sender
-            ? 0
-            : collateralUsed.mulDiv(
-                ISharesRegistry(registryAddress).getConfig().liquidatorBonus, LIQUIDATION_PRECISION, Math.Rounding.Ceil
-            );
-
-        // Ensure the liquidator will receive at least as much collateral as expected when sending the tx.
-        require(collateralUsed >= _minCollateralReceive, "3097");
 
         // If strategies are provided, retrieve collateral from strategies if needed.
         if (_data.strategies.length > 0) {
             _retrieveCollateral({
                 _token: _collateral,
                 _holding: holding,
-                _amount: collateralUsed,
+                _amount: requiredCollateral,
                 _strategies: _data.strategies,
                 _strategiesData: _data.strategiesData,
                 useHoldingBalance: true
             });
         }
+
+        // Update the required collateral amount if there's liquidator bonus.
+        requiredCollateral += _user == msg.sender
+            ? 0
+            : requiredCollateral.mulDiv(
+                ISharesRegistry(registryAddress).getConfig().liquidatorBonus, LIQUIDATION_PRECISION, Math.Rounding.Ceil
+            );
+
+        // Check whether the holding actually has enough collateral to pay liquidator bonus.
+        collateralUsed = Math.min(IERC20(_collateral).balanceOf(holding), requiredCollateral);
+
+        // Ensure the liquidator will receive at least as much collateral as expected when sending the tx.
+        require(collateralUsed >= _minCollateralReceive, "3097");
 
         // Emit event indicating successful liquidation.
         emit Liquidated({ holding: holding, token: _collateral, amount: _jUsdAmount, collateralUsed: collateralUsed });
