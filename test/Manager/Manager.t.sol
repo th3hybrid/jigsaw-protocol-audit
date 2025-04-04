@@ -710,6 +710,13 @@ contract ManagerTest is BasicContractsFixture {
         assertEq(manager.minDebtAmount(), newAmount);
     }
 
+    function test_should_not_set_zero_performance_fee() public {
+        vm.startPrank(OWNER);
+        uint256 oldFee = manager.performanceFee();
+        vm.expectRevert(bytes("3017"));
+        manager.setPerformanceFee(oldFee);
+    }
+
     function test_should_update_invoker(
         address _user
     ) public {

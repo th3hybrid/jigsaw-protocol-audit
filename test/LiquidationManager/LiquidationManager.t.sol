@@ -6,12 +6,11 @@ import "forge-std/console.sol";
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
 import { LiquidationManager } from "../../src/LiquidationManager.sol";
 
-import { Manager } from "../../src/Manager.sol";
-
-import { ILiquidationManager } from "../../src/interfaces/core/ILiquidationManager.sol";
 import { IManager } from "../../src/interfaces/core/IManager.sol";
+import { Manager } from "../../src/Manager.sol";
 
 import { SampleOracle } from "../utils/mocks/SampleOracle.sol";
 import { SampleTokenERC20 } from "../utils/mocks/SampleTokenERC20.sol";
@@ -52,6 +51,9 @@ contract LiquidationManagerTest is Test {
         assertEq(liquidationManager.MAX_SELF_LIQUIDATION_FEE(), 10e3);
         assertEq(liquidationManager.LIQUIDATION_PRECISION(), 1e5);
         assertEq(liquidationManager.paused(), false);
+
+        vm.expectRevert(bytes("3065"));
+        new LiquidationManager(OWNER, address(0));
     }
 
     // Tests setting SL fee from non-Manager's address
@@ -112,5 +114,23 @@ contract LiquidationManagerTest is Test {
     function test_renounceOwnership() public {
         vm.expectRevert(bytes("1000"));
         liquidationManager.renounceOwnership();
+    }
+
+    //Tests if renouncing ownership reverts with error code 1000
+    function test_validAddress(address _user) public {
+        vm.startPrank(OWNER, OWNER);
+
+        ILiquidationManager.LiquidateCalldata memory liquidateCalldata;
+        vm.expectRevert(bytes("3000"));
+        liquidationManager.liquidateBadDebt(_user, address(0), liquidateCalldata);
+
+        ILiquidationManager.SwapParamsCalldata memory swapParams;
+        ILiquidationManager.StrategiesParamsCalldata memory strategiesParams;
+
+        vm.expectRevert(bytes("3000"));
+        liquidationManager.selfLiquidate(address(0), 100, swapParams, strategiesParams);
+
+        vm.expectRevert(bytes("3000"));
+        liquidationManager.liquidate(_user, address(0), 100, 0, liquidateCalldata);
     }
 }

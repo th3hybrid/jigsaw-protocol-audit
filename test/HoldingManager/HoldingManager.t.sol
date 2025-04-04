@@ -10,6 +10,7 @@ import { IERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/exte
 import { Holding } from "../../src/Holding.sol";
 
 import { IHoldingManager } from "../../src/interfaces/core/IHoldingManager.sol";
+import { HoldingManager } from "../../src/HoldingManager.sol";
 import { ISharesRegistry } from "../../src/interfaces/core/ISharesRegistry.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
@@ -44,6 +45,12 @@ contract HoldingManagerTest is BasicContractsFixture {
 
         vm.expectRevert(bytes("1000"));
         simpleContract.shouldCreateHolding(address(holdingManager));
+    }
+
+    function test_should_not_create_holding_manager() public {
+        vm.startPrank(OWNER);
+        vm.expectRevert(bytes("3065"));
+        new HoldingManager(OWNER, address(0));
     }
 
     function test_should_create_holding_from_whitelisted(
@@ -145,6 +152,20 @@ contract HoldingManagerTest is BasicContractsFixture {
         vm.prank(user, user);
         vm.expectRevert(bytes("3001"));
         holdingManager.wrapAndDeposit{ value: _amount }();
+    }
+
+    // Tests if deposit reverts correctly when token is not whitelisted in Manager contract
+    function test_deposit_when_tokenNotWhitelisted(
+        uint256 _amount
+    ) public {
+        address user = address(uint160(uint256(keccak256(bytes("user")))));
+
+        SampleTokenERC20 token = new SampleTokenERC20("NWT", "NWT", 0);
+        deal(address(token), user, _amount);
+
+        vm.prank(user, user);
+        vm.expectRevert(bytes("3001"));
+        holdingManager.deposit(address(token), _amount);
     }
 
     // Tests if wrapAndDeposit reverts correctly when caller doesn't have holding in the system
