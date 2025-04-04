@@ -312,7 +312,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
             manager.addWithdrawableToken(_token);
             emit RegistryAdded({ token: _token, registry: _registry });
         } else {
-            info.deployedAt = _registry;
+            info.deployedAt = shareRegistryInfo[_token].deployedAt;
             emit RegistryUpdated({ token: _token, registry: _registry });
         }
 
