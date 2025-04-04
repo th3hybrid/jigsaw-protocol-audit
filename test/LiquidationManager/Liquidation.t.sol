@@ -581,18 +581,6 @@ contract LiquidationTest is Test {
         liquidationManager.liquidateBadDebt({ _user: _user, _collateral: collateral, _data: liquidateCalldata });
     }
 
-    function test_liquidateBadDebt_when_incorrectStrategiesLength() public {
-        address collateral = address(usdc);
-        uint256 collateralAmount = 100_000e6;
-        initiateWithUsdc(user, collateralAmount);
-
-        ILiquidationManager.LiquidateCalldata memory liquidateCalldata =
-            ILiquidationManager.LiquidateCalldata({ strategies: new address[](1), strategiesData: new bytes[](1) });
-
-        vm.expectRevert(bytes("3098"));
-        liquidationManager.liquidateBadDebt({ _user: user, _collateral: collateral, _data: liquidateCalldata });
-    }
-
     function test_liquidateBadDebt_when_NotBadDebt() public {
         address collateral = address(usdc);
         uint256 collateralAmount = 100_000e6;

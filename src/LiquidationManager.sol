@@ -406,7 +406,6 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         // Perform sanity checks.
         require(isRegistryActive, "1200");
         require(holdingManager.isHolding(holding), "3002");
-        require(_data.strategies.length == _getStrategyManager().getHoldingToStrategyLength(holding), "3098");
 
         uint256 totalBorrowed = ISharesRegistry(registryAddress).borrowed(holding);
         uint256 totalCollateral = ISharesRegistry(registryAddress).collateral(holding);
