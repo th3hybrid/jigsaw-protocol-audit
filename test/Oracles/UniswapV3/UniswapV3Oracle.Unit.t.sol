@@ -10,6 +10,8 @@ import { IUniswapV3Oracle } from "src/oracles/uniswap/interfaces/IUniswapV3Oracl
 import { SampleOracle } from "../../utils/mocks/SampleOracle.sol";
 
 contract UniswapV3OracleUnitTest is Test {
+    error OwnableUnauthorizedAccount(address account);
+
     address internal constant OWNER = address(uint160(uint256(keccak256("owner"))));
     address internal constant jUSD = 0xdAC17F958D2ee523a2206206994597C13D831ec7; // pretend that USDT is jUSD
     address internal constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
@@ -144,6 +146,24 @@ contract UniswapV3OracleUnitTest is Test {
 
         vm.assertEq(success, true, "Peek failed");
         vm.assertEq(rate, 1_000_000_000_000_000_000, "Rate is wrong");
+    }
+
+    function test_uniswapV3Oracle_updateQuoteTokenOracle_not_auth() public {
+        vm.expectRevert(abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, address(this)));
+        uniswapOracle.updateQuoteTokenOracle(address(uniswapOracle));
+    }
+
+    function test_uniswapV3Oracle_updateQuoteTokenOracle_auth() public {
+        vm.prank(OWNER, OWNER);
+        uniswapOracle.updateQuoteTokenOracle(address(uniswapOracle));
+    }
+
+    function test_uniswapV3Oracle_updateQuoteTokenOracle_same_oracle() public {
+        vm.startPrank(OWNER, OWNER);
+        uniswapOracle.updateQuoteTokenOracle(address(uniswapOracle));
+
+        vm.expectRevert(IUniswapV3Oracle.InvalidAddress.selector);
+        uniswapOracle.updateQuoteTokenOracle(address(uniswapOracle));
     }
 
     function test_renounceOwnership() public {
