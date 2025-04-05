@@ -312,7 +312,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
             manager.addWithdrawableToken(_token);
             emit RegistryAdded({ token: _token, registry: _registry });
         } else {
-            info.deployedAt = _registry;
+            info.deployedAt = shareRegistryInfo[_token].deployedAt;
             emit RegistryUpdated({ token: _token, registry: _registry });
         }
 
@@ -363,7 +363,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         if (registry.borrowed(_holding) == 0) return true;
 
-        return _getRatio({ _holding: _holding, registry: registry, rate: registry.getConfig().collateralizationRate })
+        return getRatio({ _holding: _holding, registry: registry, rate: registry.getConfig().collateralizationRate })
             >= registry.borrowed(_holding).mulDiv(manager.getJUsdExchangeRate(), manager.EXCHANGE_RATE_PRECISION());
     }
 
@@ -391,8 +391,35 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         uint256 threshold = registryConfig.collateralizationRate + registryConfig.liquidationBuffer;
 
         // Returns true when the ratio is below the liquidation threshold
-        return _getRatio({ _holding: _holding, registry: registry, rate: threshold })
+        return getRatio({ _holding: _holding, registry: registry, rate: threshold })
             <= registry.borrowed(_holding).mulDiv(manager.getJUsdExchangeRate(), manager.EXCHANGE_RATE_PRECISION());
+    }
+
+    /**
+     * @notice Computes the solvency ratio.
+     *
+     * @dev Solvency ratio is calculated based on the used collateral type, its collateralization and exchange rates,
+     * and `_holding`'s borrowed amount.
+     *
+     * @param _holding The holding address to check for.
+     * @param registry The Shares Registry Contract for the token.
+     * @param rate The rate to compute ratio for (either collateralization rate for `isSolvent` or liquidation
+     * threshold for `isLiquidatable`).
+     *
+     * @return The calculated solvency ratio.
+     */
+    function getRatio(address _holding, ISharesRegistry registry, uint256 rate) public view returns (uint256) {
+        // Get collateral's exchange rate.
+        uint256 exchangeRate = registry.getExchangeRate();
+        // Get holding's available collateral amount.
+        uint256 colAmount = registry.collateral(_holding);
+        // Calculate the final divider for precise calculations.
+        uint256 precision = manager.EXCHANGE_RATE_PRECISION() * manager.PRECISION();
+
+        // Calculate the solvency ratio.
+        uint256 result = colAmount * rate * exchangeRate / precision;
+        // Transform to 18 decimals if needed.
+        return _transformTo18Decimals({ _amount: result, _decimals: IERC20Metadata(registry.token()).decimals() });
     }
 
     // -- Private methods --
@@ -410,33 +437,6 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         if (_decimals > 18) return _amount / (10 ** (_decimals - 18));
 
         return _amount;
-    }
-
-    /**
-     * @notice Computes the solvency ratio.
-     *
-     * @dev Solvency ratio is calculated based on the used collateral type, its collateralization and exchange rates,
-     * and `_holding`'s borrowed amount.
-     *
-     * @param _holding The holding address to check for.
-     * @param registry The Shares Registry Contract for the token.
-     * @param rate The rate to compute ratio for (either collateralization rate for `isSolvent` or liquidation
-     * threshold for `isLiquidatable`).
-     *
-     * @return The calculated solvency ratio.
-     */
-    function _getRatio(address _holding, ISharesRegistry registry, uint256 rate) private view returns (uint256) {
-        // Get collateral's exchange rate.
-        uint256 exchangeRate = registry.getExchangeRate();
-        // Get holding's available collateral amount.
-        uint256 colAmount = registry.collateral(_holding);
-        // Calculate the final divider for precise calculations.
-        uint256 precision = manager.EXCHANGE_RATE_PRECISION() * manager.PRECISION();
-
-        // Calculate the solvency ratio.
-        uint256 result = colAmount * rate * exchangeRate / precision;
-        // Transform to 18 decimals if needed.
-        return _transformTo18Decimals({ _amount: result, _decimals: IERC20Metadata(registry.token()).decimals() });
     }
 
     /**

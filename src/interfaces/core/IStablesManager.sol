@@ -280,4 +280,19 @@ interface IStablesManager {
      * @return flag indicating whether `holding` is liquidatable.
      */
     function isLiquidatable(address _token, address _holding) external view returns (bool);
+
+    /**
+     * @notice Computes the solvency ratio.
+     *
+     * @dev Solvency ratio is calculated based on the used collateral type, its collateralization and exchange rates,
+     * and `_holding`'s borrowed amount.
+     *
+     * @param _holding The holding address to check for.
+     * @param registry The Shares Registry Contract for the token.
+     * @param rate The rate to compute ratio for (either collateralization rate for `isSolvent` or liquidation
+     * threshold for `isLiquidatable`).
+     *
+     * @return The calculated solvency ratio.
+     */
+    function getRatio(address _holding, ISharesRegistry registry, uint256 rate) external view returns (uint256);
 }

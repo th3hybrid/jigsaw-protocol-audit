@@ -174,28 +174,22 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
             _getCollateralForJUsd(_collateral, tempData.jUsdAmountToBurn, tempData.exchangeRate);
 
         // Ensure that amountInMaximum is within acceptable range specified by user.
-        // Set totalSelfLiquidatableCollateral equal to amountInMaximum if it is within acceptable range.
         // See the interface for specs on `slippagePercentage`.
-        if (tempData.amountInMaximum > tempData.totalRequiredCollateral) {
-            // Ensure safe computation.
-            require(_swapParams.slippagePercentage <= precision, "3081");
-            if (
-                tempData.amountInMaximum
-                    <= tempData.totalRequiredCollateral
-                        + tempData.totalRequiredCollateral.mulDiv(_swapParams.slippagePercentage, precision)
-            ) {
-                tempData.totalRequiredCollateral = tempData.amountInMaximum;
-            } else {
-                // Revert if amountInMaximum is higher than allowed by user.
-                revert("3078");
-            }
+
+        // Ensure safe computation.
+        require(_swapParams.slippagePercentage <= precision, "3081");
+        if (
+            tempData.amountInMaximum
+                > tempData.totalRequiredCollateral
+                    + tempData.totalRequiredCollateral.mulDiv(_swapParams.slippagePercentage, precision)
+        ) {
+            revert("3078");
         }
 
         // Calculate the self-liquidation fee amount.
-        tempData.totalFeeCollateral =
-            tempData.totalRequiredCollateral.mulDiv(selfLiquidationFee, precision, Math.Rounding.Ceil);
+        tempData.totalFeeCollateral = tempData.amountInMaximum.mulDiv(selfLiquidationFee, precision, Math.Rounding.Ceil);
         // Calculate the total self-liquidatable collateral required to perform self-liquidation.
-        tempData.totalSelfLiquidatableCollateral = tempData.totalRequiredCollateral + tempData.totalFeeCollateral;
+        tempData.totalSelfLiquidatableCollateral = tempData.amountInMaximum + tempData.totalFeeCollateral;
 
         // Retrieve collateral from strategies if needed.
         if (tempData.strategies.length > 0) {
@@ -338,9 +332,6 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
                 ISharesRegistry(registryAddress).getConfig().liquidatorBonus, LIQUIDATION_PRECISION, Math.Rounding.Ceil
             );
 
-        // Ensure the liquidator will receive at least as much collateral as expected when sending the tx.
-        require(collateralUsed >= _minCollateralReceive, "3097");
-
         // If strategies are provided, retrieve collateral from strategies if needed.
         if (_data.strategies.length > 0) {
             _retrieveCollateral({
@@ -352,6 +343,12 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
                 useHoldingBalance: true
             });
         }
+
+        // Check whether the holding actually has enough collateral to pay liquidator bonus.
+        collateralUsed = Math.min(IERC20(_collateral).balanceOf(holding), collateralUsed);
+
+        // Ensure the liquidator will receive at least as much collateral as expected when sending the tx.
+        require(collateralUsed >= _minCollateralReceive, "3097");
 
         // Emit event indicating successful liquidation.
         emit Liquidated({ holding: holding, token: _collateral, amount: _jUsdAmount, collateralUsed: collateralUsed });
@@ -403,7 +400,6 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         // Perform sanity checks.
         require(isRegistryActive, "1200");
         require(holdingManager.isHolding(holding), "3002");
-        require(_data.strategies.length == _getStrategyManager().getHoldingToStrategyLength(holding), "3098");
 
         uint256 totalBorrowed = ISharesRegistry(registryAddress).borrowed(holding);
         uint256 totalCollateral = ISharesRegistry(registryAddress).collateral(holding);
