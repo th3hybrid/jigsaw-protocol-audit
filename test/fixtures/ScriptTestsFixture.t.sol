@@ -7,8 +7,8 @@ import { console } from "forge-std/console.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { DeployGenesisOracle } from "../../script/deployment/00_DeployGenesisOracle.s.sol";
-import { DeployManager } from "../../script/deployment/01_DeployManager.s.sol";
+import { DeployGenesisOracle } from "../../script/deployment/01_DeployGenesisOracle.s.sol";
+import { DeployManager } from "../../script/deployment/02_DeployManager.s.sol";
 import { DeployJUSD } from "../../script/deployment/03_DeployJUSD.s.sol";
 import { DeployManagers } from "../../script/deployment/04_DeployManagers.s.sol";
 import { DeployReceiptToken } from "../../script/deployment/05_DeployReceiptToken.s.sol";
@@ -44,7 +44,7 @@ contract ScriptTestsFixture is Test {
     string internal commonConfigPath = "./deployment-config/00_CommonConfig.json";
     string internal managerConfigPath = "./deployment-config/01_ManagerConfig.json";
     string internal managersConfigPath = "./deployment-config/03_ManagersConfig.json";
-    string internal uniswapV3OracleConfigPath = "./deployment-config/05_UniswapV3OracleConfig.json";
+    string internal uniswapV3OracleConfigPath = "./deployment-config/04_UniswapV3OracleConfig.json";
 
     address internal INITIAL_OWNER = vm.addr(vm.envUint("DEPLOYER_PRIVATE_KEY"));
     address internal USDC;
