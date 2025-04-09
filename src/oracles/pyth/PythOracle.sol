@@ -49,7 +49,18 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
     /**
      * @notice The standard decimal precision (18) used for price normalization across the protocol.
      */
-    uint256 private constant ALLOWED_DECIMALS = 18;
+    uint256 public constant override ALLOWED_DECIMALS = 18;
+
+    /**
+     * @notice The minimum confidence percentage.
+     * @dev Uses 2 decimal precision, where 1% is represented as 100.
+     */
+    uint256 public override minConfidencePercentage;
+
+    /**
+     * @notice The precision to be used for the confidence percentage to avoid precision loss.
+     */
+    uint256 public constant override CONFIDENCE_PRECISION = 1e4;
 
     // -- Constructor --
 
@@ -86,6 +97,7 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
         pyth = _pyth;
         priceId = _priceId;
         age = _age;
+        minConfidencePercentage = 300;
     }
 
     // -- Administration --
@@ -106,6 +118,24 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
         age = _newAge;
     }
 
+    /**
+     * @notice Updates the confidence percentage to a new value.
+     * @dev Only the contract owner can call this function.
+     * @param _newConfidence The new confidence percentage to be set.
+     */
+    function updateConfidencePercentage(
+        uint256 _newConfidence
+    ) external override onlyOwner {
+        if (_newConfidence == 0) revert InvalidConfidencePercentage();
+        if (_newConfidence == minConfidencePercentage) revert InvalidConfidencePercentage();
+        if (_newConfidence > CONFIDENCE_PRECISION) revert InvalidConfidencePercentage();
+
+        // Emit the event before modifying the state to provide a reliable record of the oracle's confidence percentage
+        // update operation.
+        emit ConfidencePercentageUpdated({ oldValue: minConfidencePercentage, newValue: _newConfidence });
+        minConfidencePercentage = _newConfidence;
+    }
+
     // -- Getters --
 
     /**
@@ -123,7 +153,10 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
     ) external view returns (bool success, uint256 rate) {
         try IPyth(pyth).getPriceNoOlderThan({ id: priceId, age: age }) returns (PythStructs.Price memory price) {
             // Ensure the fetched price is not negative
-            if (price.price < 0) revert NegativeOraclePrice();
+            if (price.price <= 0) revert InvalidOraclePrice();
+
+            // Save the price as unsigned integer to save gas on multiple type conversions
+            uint64 uPrice = uint64(price.price);
 
             // Disallow excessively large prices by rejecting positive exponents
             if (price.expo > 0) revert ExpoTooBig();
@@ -134,9 +167,17 @@ contract PythOracle is IPythOracle, Initializable, Ownable2StepUpgradeable {
             // Prevent underflow when normalizing the price to ALLOWED_DECIMALS
             if (invertedExpo > ALLOWED_DECIMALS) revert ExpoTooSmall();
 
+            // Disallow excessively large confidence percentages to ensure underflow does not occur
+            if (price.conf > uPrice) revert InvalidConfidence();
+
+            // Consider whether the price spread is too high
+            bool isConfident = price.conf * CONFIDENCE_PRECISION <= minConfidencePercentage * uPrice;
+
+            // Calculate the actual price based on the confidence
+            uint256 priceWithConfidence = isConfident ? uPrice : uPrice - price.conf;
+
             // Normalize the price to ALLOWED_DECIMALS (e.g., 18 decimals)
-            // Formula: price * 10^(ALLOWED_DECIMALS - expo)
-            rate = uint256(int256(price.price)) * 10 ** (ALLOWED_DECIMALS - invertedExpo);
+            rate = priceWithConfidence * 10 ** (ALLOWED_DECIMALS - invertedExpo);
             success = true;
         } catch {
             // Handle any failure in fetching the price by returning false and a zero rate

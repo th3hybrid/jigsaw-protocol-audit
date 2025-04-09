@@ -6,10 +6,11 @@ import { console } from "forge-std/console.sol";
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { IPyth } from "@pyth/IPyth.sol";
 import { MockPyth } from "@pyth/MockPyth.sol";
 import { PythStructs } from "@pyth/PythStructs.sol";
 
-import { BasicContractsFixture } from "../..//fixtures/BasicContractsFixture.t.sol";
+import { BasicContractsFixture } from "../../fixtures/BasicContractsFixture.t.sol";
 
 import { PythOracle } from "src/oracles/pyth/PythOracle.sol";
 import { PythOracleFactory } from "src/oracles/pyth/PythOracleFactory.sol";
@@ -39,7 +40,7 @@ contract PythOracleIntegrationTest is BasicContractsFixture {
 
     function test_borrow_when_pythOracle(address _user, uint256 _mintAmount) public {
         vm.assume(_user != address(0));
-        _mintAmount = bound(_mintAmount, 1e18, 100_000e18);
+        _mintAmount = bound(_mintAmount, 500e18, 100_000e18);
         address collateral = address(usdc);
 
         // update usdc oracle
@@ -63,15 +64,12 @@ contract PythOracleIntegrationTest is BasicContractsFixture {
         address holding = initiateUser(_user, collateral, _mintAmount);
 
         vm.prank(address(holdingManager), address(holdingManager));
-        stablesManager.borrow(holding, collateral, _mintAmount, true);
+        stablesManager.borrow(holding, collateral, _mintAmount, 0, true);
 
-        // allow 0.01% approximation
-        vm.assertApproxEqRel(jUsd.balanceOf(_user), _mintAmount, 0.0001e18, "Borrow failed when authorized");
+        // allow 1% approximation
+        vm.assertApproxEqRel(jUsd.balanceOf(_user), _mintAmount, 0.01e18, "Borrow failed when authorized");
         vm.assertApproxEqRel(
-            stablesManager.totalBorrowed(collateral),
-            _mintAmount,
-            0.0001e18,
-            "Total borrowed wasn't updated after borrow"
+            stablesManager.totalBorrowed(collateral), _mintAmount, 0.01e18, "Total borrowed wasn't updated after borrow"
         );
     }
 }

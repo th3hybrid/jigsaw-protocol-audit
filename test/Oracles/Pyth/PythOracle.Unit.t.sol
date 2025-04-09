@@ -61,11 +61,14 @@ contract PythOracleUnitTest is Test {
         vm.assertEq(pythOracleFactory.owner(), OWNER, "Owner in factory set wrong");
 
         // Check pythOracle initialization
-        vm.assertEq(pythOracle.owner(), OWNER, "Owner in oracle set wrong");
         vm.assertEq(pythOracle.underlying(), WETH, "underlying in oracle set wrong");
         vm.assertEq(pythOracle.pyth(), PYTH, "PYTH in oracle set wrong");
         vm.assertEq(pythOracle.priceId(), PRICE_ID, "PRICE_ID in oracle set wrong");
         vm.assertEq(pythOracle.age(), AGE, "AGE in oracle set wrong");
+        vm.assertEq(pythOracle.ALLOWED_DECIMALS(), 18, "ALLOWED_DECIMALS in oracle set wrong");
+        vm.assertEq(pythOracle.minConfidencePercentage(), 300, "minConfidencePercentage in oracle set wrong");
+        vm.assertEq(pythOracle.CONFIDENCE_PRECISION(), 1e4, "CONFIDENCE_PRECISION in oracle set wrong");
+        vm.assertEq(pythOracle.owner(), OWNER, "Owner in oracle set wrong");
         vm.assertEq(pythOracle.name(), IERC20Metadata(WETH).name(), "Name in oracle set wrong");
         vm.assertEq(pythOracle.symbol(), IERC20Metadata(WETH).symbol(), "Symbol in oracle set wrong");
     }
@@ -109,7 +112,7 @@ contract PythOracleUnitTest is Test {
         _updateMockPythPrice(int64(-1), int32(-8));
 
         // Expect the next call to revert with the correct error
-        vm.expectRevert(IPythOracle.NegativeOraclePrice.selector);
+        vm.expectRevert(IPythOracle.InvalidOraclePrice.selector);
         pythOracle.peek("");
     }
 
@@ -149,6 +152,47 @@ contract PythOracleUnitTest is Test {
         pythOracle.peek("");
     }
 
+    function test_pyth_peek_when_notConfident() public {
+        pythOracle = PythOracle(
+            mockPythOracleFactory.createPythOracle({
+                _initialOwner: OWNER,
+                _underlying: WETH,
+                _priceId: PRICE_ID,
+                _age: AGE
+            })
+        );
+
+        uint256 newPrice = 100_000_000;
+        uint256 newConfidence = 10_000_000;
+
+        // Set pyth price with a small expo
+        _updateMockPythPrice(int64(int256(newPrice)), uint64(newConfidence), int32(-8));
+
+        // Expect the next call to revert with the correct error
+        (bool success, uint256 rate) = pythOracle.peek("");
+
+        vm.assertEq(success, true, "Peek failed");
+        vm.assertEq(rate, (newPrice - newConfidence) * 10 ** (18 - 8), "Rate is wrong");
+    }
+
+    function test_pyth_peek_when_confidenceTooHigh() public {
+        pythOracle = PythOracle(
+            mockPythOracleFactory.createPythOracle({
+                _initialOwner: OWNER,
+                _underlying: WETH,
+                _priceId: PRICE_ID,
+                _age: AGE
+            })
+        );
+
+        // Set pyth price with a small expo
+        _updateMockPythPrice(int64(100_000_000), uint64(1_000_000_000_000_000_000), int32(-8));
+
+        // Expect the next call to revert with the correct error
+        vm.expectRevert(IPythOracle.InvalidConfidence.selector);
+        pythOracle.peek("");
+    }
+
     function test_pyth_updateAge(
         uint256 _newAge
     ) public withRegularOracle {
@@ -173,6 +217,36 @@ contract PythOracleUnitTest is Test {
         vm.stopPrank();
     }
 
+    function test_pyth_updateConfidencePercentage(
+        uint256 _newConfidence
+    ) public withRegularOracle {
+        _newConfidence = bound(_newConfidence, 1, pythOracle.CONFIDENCE_PRECISION());
+
+        vm.expectRevert(abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, address(this)));
+        pythOracle.updateConfidencePercentage(0);
+
+        vm.startPrank(OWNER, OWNER);
+        vm.expectRevert(IPythOracle.InvalidConfidencePercentage.selector);
+        pythOracle.updateConfidencePercentage(0);
+
+        uint256 oldConfidence = pythOracle.minConfidencePercentage();
+        vm.expectRevert(IPythOracle.InvalidConfidencePercentage.selector);
+        pythOracle.updateConfidencePercentage(oldConfidence);
+
+        vm.startPrank(OWNER, OWNER);
+        vm.expectRevert(IPythOracle.InvalidConfidencePercentage.selector);
+        pythOracle.updateConfidencePercentage(1e4 + 1);
+
+        vm.assume(_newConfidence != oldConfidence);
+
+        vm.expectEmit();
+        emit IPythOracle.ConfidencePercentageUpdated({ oldValue: oldConfidence, newValue: _newConfidence });
+        pythOracle.updateConfidencePercentage(_newConfidence);
+
+        vm.assertEq(pythOracle.minConfidencePercentage(), _newConfidence, "Confidence percentage wrong after update");
+        vm.stopPrank();
+    }
+
     function test_pyth_renounceOwnership() public withRegularOracle {
         vm.expectRevert(bytes("1000"));
         pythOracle.renounceOwnership();
@@ -185,6 +259,20 @@ contract PythOracleUnitTest is Test {
                 PRICE_ID,
                 PythStructs.Price(_price, uint64(1), _expo, vm.getBlockTimestamp()),
                 PythStructs.Price(_price, uint64(1), _expo, vm.getBlockTimestamp())
+            ),
+            0
+        );
+
+        mockPyth.updatePriceFeeds(priceUpdateData);
+    }
+
+    function _updateMockPythPrice(int64 _price, uint64 _confidence, int32 _expo) private {
+        bytes[] memory priceUpdateData = new bytes[](1);
+        priceUpdateData[0] = abi.encode(
+            PythStructs.PriceFeed(
+                PRICE_ID,
+                PythStructs.Price(_price, _confidence, _expo, vm.getBlockTimestamp()),
+                PythStructs.Price(_price, _confidence, _expo, vm.getBlockTimestamp())
             ),
             0
         );
