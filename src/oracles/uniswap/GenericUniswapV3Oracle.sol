@@ -22,7 +22,7 @@ import { IOracle, IUniswapV3Oracle } from "./interfaces/IUniswapV3Oracle.sol";
  *
  * @custom:security-contact support@jigsaw.finance
  */
-contract UniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
+contract GenericUniswapV3Oracle is IUniswapV3Oracle, Ownable2Step {
     // -- State variables --
 
     /**
