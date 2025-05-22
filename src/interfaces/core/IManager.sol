@@ -29,7 +29,7 @@ interface IManager {
     event TokenWhitelisted(address indexed token);
 
     /**
-     * @notice Emitted when a new token is removed from the whitelist.
+     * @notice Emitted when a new token is removed from the whitelist.//@audit token has to be there to be removable
      * @param token The address of the token that is removed from the whitelist.
      */
     event TokenRemoved(address indexed token);
@@ -461,7 +461,7 @@ interface IManager {
      * @notice Unregisters the `_token` as withdrawable.
      *
      * @notice Requirements:
-     * - `_token` must be withdrawable.
+     * - `_token` must be withdrawable.//@audit can be called by who?
      *
      * @notice Effects:
      * - Updates the `isTokenWithdrawable` mapping.
@@ -479,7 +479,7 @@ interface IManager {
      * @notice Sets invoker as allowed or forbidden.
      *
      * @notice Effects:
-     * - Updates the `allowedInvokers` mapping.
+     * - Updates the `allowedInvokers` mapping.//@audit who calls it?
      *
      * @notice Emits:
      * - `InvokerUpdated` event indicating successful invoker update operation.
@@ -493,7 +493,7 @@ interface IManager {
      * @notice Sets the Holding Manager Contract's address.
      *
      * @notice Requirements:
-     * - `_val` must be different from previous `holdingManager` address.
+     * - `_val` must be different from previous `holdingManager` address.//@audit who calls it?
      *
      * @notice Effects:
      * - Updates the `holdingManager` state variable.
@@ -556,7 +556,7 @@ interface IManager {
      * @notice Effects:
      * - Updates the `liquidationManager` state variable.
      * - Updates the the `_newLiquidationManager` state variable.
-     * - Updates the the `_newLiquidationManagerTimestamp` state variable.
+     * - Updates the the `_newLiquidationManagerTimestamp` state variable.//@audit discrepancies between request and accept timestamp
      *
      * @notice Emits:
      * - `LiquidationManagerUpdated` event indicating the successful setting of the Liquidation Manager's address.

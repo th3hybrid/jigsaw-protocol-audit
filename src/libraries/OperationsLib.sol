@@ -25,3 +25,4 @@ library OperationsLib {
         return (amount * fee) / FEE_FACTOR + (amount * fee % FEE_FACTOR == 0 ? 0 : 1);
     }
 }
+
