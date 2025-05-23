@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-import { ILiquidationManager } from "./interfaces/core/ILiquidationManager.sol";
-import { IManager } from "./interfaces/core/IManager.sol";
-import { IOracle } from "./interfaces/oracle/IOracle.sol";
-import { OperationsLib } from "./libraries/OperationsLib.sol";
+import {ILiquidationManager} from "./interfaces/core/ILiquidationManager.sol";
+import {IManager} from "./interfaces/core/IManager.sol";
+import {IOracle} from "./interfaces/oracle/IOracle.sol";
+import {OperationsLib} from "./libraries/OperationsLib.sol";
 
 /**
  * @title Manager
@@ -26,17 +26,23 @@ contract Manager is IManager, Ownable2Step {
     /**
      * @notice Returns true/false for contracts' whitelist status.
      */
-    mapping(address caller => bool whitelisted) public override isContractWhitelisted;
+    mapping(address caller => bool whitelisted)
+        public
+        override isContractWhitelisted;
 
     /**
      * @notice Returns true if token is whitelisted.
      */
-    mapping(address token => bool whitelisted) public override isTokenWhitelisted;
+    mapping(address token => bool whitelisted)
+        public
+        override isTokenWhitelisted;
 
     /**
-     * @notice Returns true if the token cannot be withdrawn from a holding.
+     * @notice Returns true if the token cannot be withdrawn from a holding.//@audit cannot?
      */
-    mapping(address token => bool withdrawable) public override isTokenWithdrawable;
+    mapping(address token => bool withdrawable)
+        public
+        override isTokenWithdrawable;
 
     /**
      * @notice Returns true if caller is allowed invoker.
@@ -343,7 +349,10 @@ contract Manager is IManager, Ownable2Step {
      * @param _component Invoker's address.
      * @param _allowed True/false.
      */
-    function updateInvoker(address _component, bool _allowed) external override onlyOwner validAddress(_component) {
+    function updateInvoker(
+        address _component,
+        bool _allowed
+    ) external override onlyOwner validAddress(_component) {
         allowedInvokers[_component] = _allowed;
         emit InvokerUpdated(_component, _allowed);
     }
@@ -438,9 +447,15 @@ contract Manager is IManager, Ownable2Step {
      */
     function acceptNewLiquidationManager() external override onlyOwner {
         require(newLiquidationManager != address(0), "3063");
-        require(newLiquidationManagerTimestamp + timelockAmount <= block.timestamp, "3066");
+        require(
+            newLiquidationManagerTimestamp + timelockAmount <= block.timestamp,
+            "3066"
+        );
 
-        emit LiquidationManagerUpdated(liquidationManager, newLiquidationManager);
+        emit LiquidationManagerUpdated(
+            liquidationManager,
+            newLiquidationManager
+        );
 
         liquidationManager = newLiquidationManager;
         newLiquidationManager = address(0);
@@ -557,7 +572,10 @@ contract Manager is IManager, Ownable2Step {
      */
     function acceptNewSwapManager() external override onlyOwner {
         require(newSwapManager != address(0), "3063");
-        require(newSwapManagerTimestamp + timelockAmount <= block.timestamp, "3066");
+        require(
+            newSwapManagerTimestamp + timelockAmount <= block.timestamp,
+            "3066"
+        );
 
         emit SwapManagerUpdated(swapManager, newSwapManager);
 
@@ -582,9 +600,7 @@ contract Manager is IManager, Ownable2Step {
      *
      * @param _val The new performance fee value.
      */
-    function setPerformanceFee(
-        uint256 _val
-    ) external override onlyOwner {
+    function setPerformanceFee(uint256 _val) external override onlyOwner {
         require(performanceFee != _val, "3017");
         require(_val < MAX_PERFORMANCE_FEE, "3018");
         emit PerformanceFeeUpdated(performanceFee, _val);
@@ -607,9 +623,7 @@ contract Manager is IManager, Ownable2Step {
      *
      * @param _val The new withdrawal fee value.
      */
-    function setWithdrawalFee(
-        uint256 _val
-    ) external override onlyOwner {
+    function setWithdrawalFee(uint256 _val) external override onlyOwner {
         require(withdrawalFee != _val, "3017");
         require(_val <= MAX_WITHDRAWAL_FEE, "3018");
         emit WithdrawalFeeUpdated(withdrawalFee, _val);
@@ -769,9 +783,7 @@ contract Manager is IManager, Ownable2Step {
      *
      * @param newVal The new timelock value in seconds.
      */
-    function requestNewTimelock(
-        uint256 newVal
-    ) external override onlyOwner {
+    function requestNewTimelock(uint256 newVal) external override onlyOwner {
         require(oldTimelock == 0, "3017");
         require(newVal != 0, "2001");
 
@@ -843,9 +855,7 @@ contract Manager is IManager, Ownable2Step {
      * @dev Modifier to check if the address is valid (not zero address).
      * @param _address being checked.
      */
-    modifier validAddress(
-        address _address
-    ) {
+    modifier validAddress(address _address) {
         require(_address != address(0), "3000");
         _;
     }

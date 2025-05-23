@@ -62,6 +62,7 @@ contract ReceiptToken is IReceiptToken, ERC20Upgradeable, OwnableUpgradeable, Re
         __Ownable_init(__owner);
         // Initialize ERC20Upgradeable contract.
         __ERC20_init(__name, __symbol);
+        //@audit reentrancy guard not initialized?
     }
 
     /**

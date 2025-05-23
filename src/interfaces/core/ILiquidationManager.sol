@@ -66,7 +66,7 @@ interface ILiquidationManager {
 
     /**
      * @notice The max % amount the protocol gets when a self-liquidation operation happens.
-     * @dev Uses 3 decimal precision, where 1% is represented as 1000.
+     * @dev Uses 3 decimal precision, where 1% is represented as 1000.//@audit differences in precision
      * @dev 8% is the default self-liquidation fee.
      */
     function selfLiquidationFee() external view returns (uint256);

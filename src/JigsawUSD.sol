@@ -38,9 +38,9 @@ contract JigsawUSD is IJigsawUSD, ERC20, Ownable2Step, ERC20Permit {
         address _initialOwner,
         address _manager
     ) Ownable(_initialOwner) ERC20("Jigsaw USD", "jUSD") ERC20Permit("Jigsaw USD") {
-        require(_manager != address(0), "3065");
+        require(_manager != address(0), "3065"); 
         manager = IManager(_manager);
-        mintLimit = 15e6 * (10 ** decimals()); // initial 15M limit
+        mintLimit = 15e6 * (10 ** decimals()); // initial 15M limit //@audit 18 decimals stable?
     }
 
     // -- Owner specific methods --
