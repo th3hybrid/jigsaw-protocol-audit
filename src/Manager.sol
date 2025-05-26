@@ -139,18 +139,18 @@ contract Manager is IManager, Ownable2Step {
      * @notice Minimum allowed jUSD debt amount for a holding to ensure successful liquidation.
      * @dev 200 jUSD is the initial minimum allowed debt amount for a holding to ensure successful liquidation.
      */
-    uint256 public override minDebtAmount = 200e18;
+    uint256 public override minDebtAmount = 200e18; //@audit looks like jUSD is 18 decimals
 
     /**
      * @notice Returns the collateral rate precision.
      * @dev Should be less than exchange rate precision due to optimization in math.
      */
-    uint256 public constant override PRECISION = 1e5;
+    uint256 public constant override PRECISION = 1e5; //@audit what?
 
     /**
      * @notice Returns the exchange rate precision.
      */
-    uint256 public constant override EXCHANGE_RATE_PRECISION = 1e18;
+    uint256 public constant override EXCHANGE_RATE_PRECISION = 1e18; //@audit what?
 
     /**
      * @notice Timelock amount in seconds for changing the oracle data.
@@ -332,7 +332,7 @@ contract Manager is IManager, Ownable2Step {
     function removeWithdrawableToken(
         address _token
     ) external override onlyOwner validAddress(_token) {
-        require(isTokenWithdrawable[_token], "3070");
+        require(isTokenWithdrawable[_token], "3070"); //@audit only owner can remove withdrawable?
         isTokenWithdrawable[_token] = false;
         emit WithdrawableTokenRemoved(_token);
     }
