@@ -98,12 +98,12 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     function createHolding() external override nonReentrant whenNotPaused returns (address) {
         require(userHolding[msg.sender] == address(0), "1101");
 
-        if (msg.sender != tx.origin) {
+        if (msg.sender != tx.origin) {//@audit issue?
             require(manager.isContractWhitelisted(msg.sender), "1000");
         }
 
         // Instead of deploying the contract, it is cloned to save on gas.
-        address newHoldingAddress = Clones.clone(holdingImplementationReference);
+        address newHoldingAddress = Clones.clone(holdingImplementationReference);//@audit does this clone the state of implementation?
         emit HoldingCreated({ user: msg.sender, holdingAddress: newHoldingAddress });
 
         isHolding[newHoldingAddress] = true;
@@ -161,7 +161,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         whenNotPaused
     {
         _wrap();
-        _deposit({ _from: address(this), _token: WETH, _amount: msg.value });
+        _deposit({ _from: address(this), _token: WETH, _amount: msg.value });//@audit are we assuming here?
     }
 
     /**
@@ -186,7 +186,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
     )
         external
         override
-        validAddress(_token)
+        validAddress(_token)//@audit just checking address,not if token is valid?
         validAmount(_amount)
         validHolding(userHolding[msg.sender])
         nonReentrant
@@ -225,7 +225,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         uint256 _amount
     ) external override validAmount(_amount) validHolding(userHolding[msg.sender]) nonReentrant whenNotPaused {
         IHolding(userHolding[msg.sender]).transfer({ _token: WETH, _to: address(this), _amount: _amount });
-        _unwrap(_amount);
+        _unwrap(_amount);//@audit why are we unwrapping here?
         (uint256 userAmount, uint256 feeAmount) = _withdraw({ _token: WETH, _amount: _amount });
 
         if (feeAmount > 0) {
@@ -269,7 +269,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         uint256 _minJUsdAmountOut,
         bool _mintDirectlyToUser
     ) external override nonReentrant whenNotPaused validHolding(userHolding[msg.sender]) returns (uint256 jUsdMinted) {
-        address holding = userHolding[msg.sender];
+        address holding = userHolding[msg.sender];//@audit validate token and amount?
 
         jUsdMinted = _getStablesManager().borrow({
             _holding: holding,
@@ -277,7 +277,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
             _amount: _amount,
             _minJUsdAmountOut: _minJUsdAmountOut,
             _mintDirectlyToUser: _mintDirectlyToUser
-        });
+        });//@audit who takes collateral from the user?
 
         emit Borrowed({ holding: holding, token: _token, jUsdMinted: jUsdMinted, mintToUser: _mintDirectlyToUser });
     }
@@ -426,6 +426,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         require(msg.sender == WETH, "1000");
         emit Received({ from: msg.sender, amount: msg.value });
     }
+    //@audit how about with data,it calls fallback and ultimately sends ether in 
 
     // -- Administration --
 
@@ -473,7 +474,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
      * @notice Emits:
      * - `NativeCoinWrapped` event indicating successful native coin's wrapping.
      */
-    function _wrap() private {
+    function _wrap() private {//@audit does this inherit msg.value
         require(msg.value > 0, "2001");
         emit NativeCoinWrapped({ user: msg.sender, amount: msg.value });
         IWETH(WETH).deposit{ value: msg.value }();
@@ -497,7 +498,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         uint256 _amount
     ) private {
         emit NativeCoinUnwrapped({ user: msg.sender, amount: _amount });
-        IWETH(WETH).withdraw(_amount);
+        IWETH(WETH).withdraw(_amount);//@audit is there approval needed?
     }
 
     /**
@@ -553,7 +554,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         require(manager.isTokenWithdrawable(_token), "3071");
         address holding = userHolding[msg.sender];
 
-        // Perform the check to see if this is an airdropped token or user actually has collateral for it
+        // Perform the check to see if this is an airdropped token or user actually has collateral for it //@audit this means?
         (, address _tokenRegistry) = _getStablesManager().shareRegistryInfo(_token);
         if (_tokenRegistry != address(0) && ISharesRegistry(_tokenRegistry).collateral(holding) > 0) {
             _getStablesManager().removeCollateral({ _holding: holding, _token: _token, _amount: _amount });

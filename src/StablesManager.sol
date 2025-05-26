@@ -126,7 +126,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         emit RemovedCollateral({ holding: _holding, token: _token, amount: _amount });
         _getRegistry(_token).unregisterCollateral({ _holding: _holding, _share: _amount });
-        require(isSolvent({ _token: _token, _holding: _holding }), "3009");
+        require(isSolvent({ _token: _token, _holding: _holding }), "3009");//@audit what is this?
     }
 
     /**

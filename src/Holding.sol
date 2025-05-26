@@ -107,8 +107,8 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
      * @param _destination Destination address of the approval.
      * @param _amount Withdrawal amount.
      */
-    function approve(address _tokenAddress, address _destination, uint256 _amount) external override onlyAllowed {
-        IERC20(_tokenAddress).forceApprove(_destination, _amount);
+    function approve(address _tokenAddress, address _destination, uint256 _amount) external override onlyAllowed {//@audit need to check the limit of onlyAllowed
+        IERC20(_tokenAddress).forceApprove(_destination, _amount);//@audit can the force approve be removed in case strategy is compromised?
     }
 
     /**
@@ -143,10 +143,10 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
      * @return success Indicates if the call was successful.
      * @return result The result returned by the call.
      */
-    function genericCall(
+    function genericCall(//@audit can ether sent be stuck in contract?
         address _contract,
         bytes calldata _call
-    ) external payable override nonReentrant onlyAllowed returns (bool success, bytes memory result) {
+    ) external payable override nonReentrant onlyAllowed returns (bool success, bytes memory result) {//@audit onlyAllowed?
         (success, result) = _contract.call{ value: msg.value }(_call);
     }
 
@@ -177,7 +177,7 @@ contract Holding is IHolding, Initializable, ReentrancyGuard {
 
     // -- Modifiers
 
-    modifier onlyAllowed() {
+    modifier onlyAllowed() {//@audit what is going on here?
         (,, bool isStrategyWhitelisted) = IStrategyManagerMin(manager.strategyManager()).strategyInfo(msg.sender);
 
         require(

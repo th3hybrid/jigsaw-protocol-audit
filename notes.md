@@ -1,14 +1,17 @@
 ## Contracts
 
-src/Holding.sol
-src/HoldingManager.sol
+src/Holding.sol - basically a contract that will hold ether/ERC20 tokens for its designated manager,can approve,transfer and can use generic calls to send ether or to strategies(i guess) - it is initializable
+
+src/HoldingManager.sol - used to manage holding by cloning/creating for each user(one per user),deposit into a holding with ERC20 tokens/WETH(adding collateral) by wrapping and withdraw from holding with ERC20 tokens/WETH(remove collateral) by unwrapping.can also borrow multiple tokens and repay loans but they are routed to stablesManager
+
+
 - src/JigsawUSD.sol - normal ERC20 with mint limit and can only be minted/burned from by stablesManager
 src/LiquidationManager.sol
 src/Manager.sol
 src/ReceiptToken.sol
 src/ReceiptTokenFactory.sol
 src/SharesRegistry.sol
-src/StablesManager.sol
+src/StablesManager.sol - 
 src/StrategyManager.sol
 src/SwapManager.sol
 
