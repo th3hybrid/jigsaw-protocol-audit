@@ -152,7 +152,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         require(shareRegistryInfo[_token].active, "1201");
 
         emit RemovedCollateral({ holding: _holding, token: _token, amount: _amount });
-        _getRegistry(_token).unregisterCollateral({ _holding: _holding, _share: _amount });
+        _getRegistry(_token).unregisterCollateral({ _holding: _holding, _share: _amount });//@audit what is the impact of this on solvency if no checks? 
     }
 
     /**
@@ -190,6 +190,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
     ) external override onlyAllowed whenNotPaused returns (uint256 jUsdMintAmount) {
         require(_amount > 0, "3010");
         require(shareRegistryInfo[_token].active, "1201");
+        //@audit is it implementing checks for the collateral?
 
         BorrowTempData memory tempData = BorrowTempData({
             registry: ISharesRegistry(shareRegistryInfo[_token].deployedAt),
@@ -203,10 +204,10 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         // Get the USD value for the provided collateral amount.
         tempData.amountValue =
-            tempData.amount.mulDiv(tempData.registry.getExchangeRate(), tempData.exchangeRatePrecision);
+            tempData.amount.mulDiv(tempData.registry.getExchangeRate(), tempData.exchangeRatePrecision);//@audit what is exchange rate precision used for?
 
         // Get the jUSD amount based on the provided collateral's USD value.
-        jUsdMintAmount = tempData.amountValue.mulDiv(tempData.exchangeRatePrecision, manager.getJUsdExchangeRate());
+        jUsdMintAmount = tempData.amountValue.mulDiv(tempData.exchangeRatePrecision, manager.getJUsdExchangeRate());//@audit ???
 
         // Ensure the amount of jUSD minted is greater than the minimum amount specified by the user.
         require(jUsdMintAmount >= _minJUsdAmountOut, "2100");
@@ -266,8 +267,8 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         ISharesRegistry registry = ISharesRegistry(shareRegistryInfo[_token].deployedAt);
         require(registry.borrowed(_holding) > 0, "3011");
         require(registry.borrowed(_holding) >= _amount, "2003");
-        require(_amount > 0, "3012");
-        require(_burnFrom != address(0), "3000");
+        require(_amount > 0, "3012");//@audit should there be a minimum amount to repay?
+        require(_burnFrom != address(0), "3000");//@audit can burnFrom be provided by user?
 
         // Update internal values.
         totalBorrowed[_token] -= _amount;
@@ -312,7 +313,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
             manager.addWithdrawableToken(_token);
             emit RegistryAdded({ token: _token, registry: _registry });
         } else {
-            info.deployedAt = shareRegistryInfo[_token].deployedAt;
+            info.deployedAt = shareRegistryInfo[_token].deployedAt;//@audit  cannot change deployedAt address?
             emit RegistryUpdated({ token: _token, registry: _registry });
         }
 

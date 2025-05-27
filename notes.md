@@ -10,7 +10,7 @@ src/LiquidationManager.sol
 src/Manager.sol
 src/ReceiptToken.sol
 src/ReceiptTokenFactory.sol
-src/SharesRegistry.sol
+src/SharesRegistry.sol - it is deployed for a specific token and is used keep share records of a holding for that token,sets borrowed amount and registers/unregisters collateral,it has a registry config that contains collateralization rate,liquidation buffer and liquidator bonus which can be updated.can also request and set a new oracle and new oracleData for jusd exchange rate and timelock
 src/StablesManager.sol - 
 src/StrategyManager.sol
 src/SwapManager.sol
