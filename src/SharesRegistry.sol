@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { IManager } from "./interfaces/core/IManager.sol";
-import { ISharesRegistry } from "./interfaces/core/ISharesRegistry.sol";
-import { IStablesManager } from "./interfaces/core/IStablesManager.sol";
-import { IOracle } from "./interfaces/oracle/IOracle.sol";
+import {IManager} from "./interfaces/core/IManager.sol";
+import {ISharesRegistry} from "./interfaces/core/ISharesRegistry.sol";
+import {IStablesManager} from "./interfaces/core/IStablesManager.sol";
+import {IOracle} from "./interfaces/oracle/IOracle.sol";
 
 /**
  * @title SharesRegistry
@@ -50,13 +50,13 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @notice Minimal collateralization rate acceptable for registry to avoid computational errors.
      * @dev 20e3 means 20% LTV.
      */
-    uint16 private immutable minCR = 20e3;
+    uint16 private immutable minCR = 20e3; //@audit wrong- not using 2 decimals?
 
     /**
      * @notice Maximum liquidation buffer acceptable for registry to avoid computational errors.
      * @dev 20e3 means 20% buffer.
      */
-    uint16 private immutable maxLiquidationBuffer = 20e3;
+    uint16 private immutable maxLiquidationBuffer = 20e3; //@audit wrong- not using 2 decimals?
 
     /**
      * @notice Oracle contract associated with this share registry.
@@ -132,13 +132,20 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @param _holding The address of the user's holding.
      * @param _newVal The new borrowed amount.
      */
-    function setBorrowed(address _holding, uint256 _newVal) external override onlyStableManager {
+    function setBorrowed(
+        address _holding,
+        uint256 _newVal
+    ) external override onlyStableManager {
         // Ensure the `holding` holds allowed minimum jUSD debt amount
         require(_newVal == 0 || _newVal >= manager.minDebtAmount(), "3102");
         // Emit event indicating successful update
-        emit BorrowedSet({ _holding: _holding, oldVal: borrowed[_holding], newVal: _newVal });
+        emit BorrowedSet({
+            _holding: _holding,
+            oldVal: borrowed[_holding],
+            newVal: _newVal
+        });
         // Update the borrowed amount for the holding
-        borrowed[_holding] = _newVal;
+        borrowed[_holding] = _newVal;//@audit can only be reset
     }
 
     /**
@@ -156,9 +163,12 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @param _holding The address of the user's holding.
      * @param _share The new collateral shares.
      */
-    function registerCollateral(address _holding, uint256 _share) external override onlyStableManager {
+    function registerCollateral(
+        address _holding,
+        uint256 _share
+    ) external override onlyStableManager {
         collateral[_holding] += _share;
-        emit CollateralAdded({ user: _holding, share: _share });
+        emit CollateralAdded({user: _holding, share: _share});
     }
 
     /**
@@ -176,7 +186,10 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @param _holding The address of the user's holding.
      * @param _share The new collateral shares.
      */
-    function unregisterCollateral(address _holding, uint256 _share) external override onlyStableManager {
+    function unregisterCollateral(
+        address _holding,
+        uint256 _share
+    ) external override onlyStableManager {
         if (_share > collateral[_holding]) {
             _share = collateral[_holding];
         }
@@ -221,10 +234,9 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      *
      * @param _oracle The new oracle address.
      */
-    function requestNewOracle(
-        address _oracle
-    ) external override onlyOwner {
-        if (_newOracleTimestamp + timelockAmount > block.timestamp) require(!_isOracleActiveChange, "3093");
+    function requestNewOracle(address _oracle) external override onlyOwner {
+        if (_newOracleTimestamp + timelockAmount > block.timestamp)
+            require(!_isOracleActiveChange, "3093");
         require(!_isTimelockActiveChange, "3095");
         require(_oracle != address(0), "3000");
 
@@ -251,7 +263,10 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      */
     function setOracle() external override onlyOwner {
         require(_isOracleActiveChange, "3094");
-        require(_newOracleTimestamp + timelockAmount <= block.timestamp, "3066");
+        require(
+            _newOracleTimestamp + timelockAmount <= block.timestamp,
+            "3066"
+        );
 
         oracle = IOracle(_newOracle);
         _isOracleActiveChange = false;
@@ -280,7 +295,8 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     function requestNewOracleData(
         bytes calldata _data
     ) external override onlyOwner {
-        if (_newOracleDataTimestamp + timelockAmount > block.timestamp) require(!_isOracleDataActiveChange, "3096");
+        if (_newOracleDataTimestamp + timelockAmount > block.timestamp)
+            require(!_isOracleDataActiveChange, "3096");
         require(!_isTimelockActiveChange, "3095");
 
         _isOracleDataActiveChange = true;
@@ -306,7 +322,10 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      */
     function setOracleData() external override onlyOwner {
         require(_isOracleDataActiveChange, "3094");
-        require(_newOracleDataTimestamp + timelockAmount <= block.timestamp, "3066");
+        require(
+            _newOracleDataTimestamp + timelockAmount <= block.timestamp,
+            "3066"
+        );
 
         oracleData = _newOracleData;
         _isOracleDataActiveChange = false;
@@ -337,7 +356,8 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     function requestTimelockAmountChange(
         uint256 _newVal
     ) external override onlyOwner {
-        if (_newTimelockTimestamp + _oldTimelock > block.timestamp) require(!_isTimelockActiveChange, "3095");
+        if (_newTimelockTimestamp + _oldTimelock > block.timestamp)
+            require(!_isTimelockActiveChange, "3095");
         require(!_isOracleActiveChange, "3093");
         require(!_isOracleDataActiveChange, "3096");
         require(_newVal != 0, "2001");
@@ -367,7 +387,10 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      */
     function acceptTimelockAmountChange() external override onlyOwner {
         require(_isTimelockActiveChange, "3094");
-        require(_newTimelockTimestamp + _oldTimelock <= block.timestamp, "3066");
+        require(
+            _newTimelockTimestamp + _oldTimelock <= block.timestamp,
+            "3066"
+        );
 
         timelockAmount = _newTimelock;
         emit TimelockAmountUpdated(_oldTimelock, _newTimelock);
@@ -400,7 +423,12 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @notice Returns the configuration parameters for the registry.
      * @return The RegistryConfig struct containing the parameters.
      */
-    function getConfig() external view override returns (RegistryConfig memory) {
+    function getConfig()
+        external
+        view
+        override
+        returns (RegistryConfig memory)
+    {
         return config;
     }
 
@@ -410,15 +438,19 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
      * @notice Updates the configuration parameters for the registry.
      * @param _config The new configuration parameters.
      */
-    function _updateConfig(
-        RegistryConfig memory _config
-    ) private {
-        uint256 precision = manager.PRECISION();
+    function _updateConfig(RegistryConfig memory _config) private {
+        uint256 precision = manager.PRECISION(); //@audit uses three decimals?
 
-        require(_config.collateralizationRate >= minCR && _config.collateralizationRate <= precision, "3066");
+        require(
+            _config.collateralizationRate >= minCR &&
+                _config.collateralizationRate <= precision,
+            "3066"
+        );
         require(_config.liquidationBuffer <= maxLiquidationBuffer, "3100");
 
-        uint256 maxLiquidatorBonus = precision - _config.collateralizationRate - _config.liquidationBuffer;
+        uint256 maxLiquidatorBonus = precision -
+            _config.collateralizationRate -
+            _config.liquidationBuffer;
         require(_config.liquidatorBonus <= maxLiquidatorBonus, "3101");
 
         emit ConfigUpdated(token, config, _config);

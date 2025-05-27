@@ -213,7 +213,7 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         emit Borrowed({ holding: _holding, jUsdMinted: jUsdMintAmount, mintToUser: _mintDirectlyToUser });
 
-        // Update internal values.
+        // Update internal values.[l.]
         totalBorrowed[_token] += jUsdMintAmount;
 
         // Update holding's borrowed amount.
@@ -363,8 +363,8 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
 
         if (registry.borrowed(_holding) == 0) return true;
 
-        return getRatio({ _holding: _holding, registry: registry, rate: registry.getConfig().collateralizationRate })
-            >= registry.borrowed(_holding).mulDiv(manager.getJUsdExchangeRate(), manager.EXCHANGE_RATE_PRECISION());
+        return getRatio({ _holding: _holding, registry: registry, rate: registry.getConfig().collateralizationRate })//@audit dont understand
+            >= registry.borrowed(_holding).mulDiv(manager.getJUsdExchangeRate(), manager.EXCHANGE_RATE_PRECISION());//@audit is it returning rate in Jusd or colllateral
     }
 
     /**
@@ -414,10 +414,10 @@ contract StablesManager is IStablesManager, Ownable2Step, Pausable {
         // Get holding's available collateral amount.
         uint256 colAmount = registry.collateral(_holding);
         // Calculate the final divider for precise calculations.
-        uint256 precision = manager.EXCHANGE_RATE_PRECISION() * manager.PRECISION();
+        uint256 precision = manager.EXCHANGE_RATE_PRECISION() * manager.PRECISION();// 1e18/1e5
 
         // Calculate the solvency ratio.
-        uint256 result = colAmount * rate * exchangeRate / precision;
+        uint256 result = colAmount * rate * exchangeRate / precision;//@audit dont understand
         // Transform to 18 decimals if needed.
         return _transformTo18Decimals({ _amount: result, _decimals: IERC20Metadata(registry.token()).decimals() });
     }
