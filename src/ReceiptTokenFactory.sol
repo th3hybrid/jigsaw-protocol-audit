@@ -27,7 +27,7 @@ contract ReceiptTokenFactory is IReceiptTokenFactory, Ownable2Step {
      */
     constructor(address _initialOwner, address _referenceImplementation) Ownable(_initialOwner) {
         // Assert that referenceImplementation has code in it to protect the system from cloning invalid implementation.
-        require(_referenceImplementation.code.length > 0, "3096");
+        require(_referenceImplementation.code.length > 0, "3096");//@audit does zero address have code?
 
         emit ReceiptTokenImplementationUpdated(_referenceImplementation);
         referenceImplementation = _referenceImplementation;
