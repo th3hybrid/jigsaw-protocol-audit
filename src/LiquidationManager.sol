@@ -511,7 +511,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         // Transform from 18 decimals to collateral's decimals
         uint256 collateralDecimals = IERC20Metadata(_collateral).decimals();
         if (collateralDecimals > 18) totalCollateral = totalCollateral * (10 ** (collateralDecimals - 18));
-        else if (collateralDecimals < 18) totalCollateral = totalCollateral.ceilDiv(10 ** (18 - collateralDecimals));
+        else if (collateralDecimals < 18) totalCollateral = totalCollateral.ceilDiv(10 ** (18 - collateralDecimals));//@audit what if 18
     }
 
     /**
