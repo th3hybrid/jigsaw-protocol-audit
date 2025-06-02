@@ -46,19 +46,19 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
      * @dev Uses 3 decimal precision, where 1% is represented as 1000.
      * @dev 8% is the default self-liquidation fee.
      */
-    uint256 public override selfLiquidationFee = 8e3;
+    uint256 public override selfLiquidationFee = 8e3;//8000
 
     /**
      * @notice The max % amount the protocol gets when a self-liquidation operation happens.
      * @dev Uses 3 decimal precision, where 1% is represented as 1000.
      * @dev 10% is the max self-liquidation fee.
      */
-    uint256 public constant override MAX_SELF_LIQUIDATION_FEE = 10e3;
+    uint256 public constant override MAX_SELF_LIQUIDATION_FEE = 10e3;//10000
 
     /**
      * @notice utility variable used for preciser computations.
      */
-    uint256 public constant override LIQUIDATION_PRECISION = 1e5;
+    uint256 public constant override LIQUIDATION_PRECISION = 1e5;//100000
 
     /**
      * @notice Contract that contains all the necessary configs of the protocol.
@@ -88,7 +88,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
      * - `msg.sender` must have holding.
      * - `msg.sender` must be solvent.
      * - There should be enough liquidity in jUSD pool.
-     * - `_jUsdAmount` must be <= user's borrowed amount.
+     * - `_jUsdAmount` must be <= user's borrowed amount.//@audit as how?
      *
      * @notice Effects:
      * - Retrieves collateral from specified strategies if needed.

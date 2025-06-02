@@ -94,7 +94,7 @@ contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
         tokenIn = _tokenIn;
         rewardToken = _rewardToken;
         rewardsDuration = _rewardsDuration;
-        periodFinish = block.timestamp + rewardsDuration;
+        periodFinish = block.timestamp + rewardsDuration;//@audit setting with no rewards deposited
     }
 
     // -- User specific methods  --
@@ -109,7 +109,7 @@ contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
         uint256 _amount
     ) external override nonReentrant whenNotPaused updateReward(msg.sender) validAmount(_amount) {
         uint256 rewardBalance = IERC20(rewardToken).balanceOf(address(this));//@audit issue??
-        require(rewardBalance != 0, "3090");
+        require(rewardBalance != 0, "3090");//@audit can attacker create false sense of safeness by sending 1 wei
 
         // Ensure that deposit operation will never surpass supply limit
         require(_totalSupply + _amount <= totalSupplyLimit, "3091");
@@ -188,7 +188,7 @@ contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
     ) external override onlyOwner validAmount(_amount) updateReward(address(0)) {
         // Transfer assets from the `_from`'s address to this contract.
         IERC20(rewardToken).safeTransferFrom({ from: _from, to: address(this), value: _amount });
-
+?
         require(rewardsDuration > 0, "3089");
         if (block.timestamp >= periodFinish) {
             rewardRate = _amount / rewardsDuration;
@@ -262,7 +262,7 @@ contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
      */
     function rewardPerToken() public view override returns (uint256) {
         if (_totalSupply == 0) {
-            return rewardPerTokenStored;
+            return rewardPerTokenStored;//@audit how is this calculated?
         }
 
         return
@@ -297,7 +297,7 @@ contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
         address account
     ) {
         rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
+        lastUpdateTime = lastTimeRewardApplicable();//@audit used for?
         if (account != address(0)) {
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
