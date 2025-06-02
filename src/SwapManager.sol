@@ -59,7 +59,7 @@ contract SwapManager is ISwapManager, Ownable2Step {
         address _uniswapFactory,
         address _swapRouter,
         address _manager
-    ) Ownable(_initialOwner) {
+    ) Ownable(_initialOwner) {//@audit add check for zero address on owner
         require(_uniswapFactory != address(0), "3000");
         require(_swapRouter != address(0), "3000");
         require(_manager != address(0), "3000");
@@ -195,7 +195,7 @@ contract SwapManager is ISwapManager, Ownable2Step {
      */
     function _getPool(address tokenA, address tokenB, uint24 fee) private view returns (address) {
         // The address of the first token of the pool has to be smaller than the address of the second one.
-        (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);//@audit what??
         // Compute the pool address.
         return address(
             uint160(

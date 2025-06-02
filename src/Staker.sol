@@ -108,7 +108,7 @@ contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
     function deposit(
         uint256 _amount
     ) external override nonReentrant whenNotPaused updateReward(msg.sender) validAmount(_amount) {
-        uint256 rewardBalance = IERC20(rewardToken).balanceOf(address(this));
+        uint256 rewardBalance = IERC20(rewardToken).balanceOf(address(this));//@audit issue??
         require(rewardBalance != 0, "3090");
 
         // Ensure that deposit operation will never surpass supply limit
@@ -195,7 +195,7 @@ contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
         } else {
             uint256 remaining = periodFinish - block.timestamp;
             uint256 leftover = remaining * rewardRate;
-            rewardRate = (_amount + leftover) / rewardsDuration;
+            rewardRate = (_amount + leftover) / rewardsDuration;//@audit issue with potentially getting more?
         }
 
         // Prevent setting rewardRate to 0 because of precision loss.
@@ -203,7 +203,7 @@ contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
 
         // Prevent overflows.
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        require(rewardRate <= (balance / rewardsDuration), "2003");
+        require(rewardRate <= (balance / rewardsDuration), "2003");//@audit can attacker create false sense of safeness by sending 1 wei
 
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp + rewardsDuration;
