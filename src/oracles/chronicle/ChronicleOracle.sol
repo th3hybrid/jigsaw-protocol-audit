@@ -116,7 +116,7 @@ contract ChronicleOracle is IChronicleOracle, Initializable, Ownable2StepUpgrade
 
         // Emit the event before modifying the state to provide a reliable record of the oracle's age update operation.
         emit AgeValidityBufferUpdated({ oldValue: ageValidityBuffer, newValue: _newAgeValidityBuffer });
-        ageValidityBuffer = _newAgeValidityBuffer;
+        ageValidityBuffer = _newAgeValidityBuffer;//@audit do we need to compare in terms of anything?
     }
 
     // -- Getters --
