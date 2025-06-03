@@ -414,7 +414,7 @@ contract SharesRegistry is ISharesRegistry, Ownable2Step {
     function getExchangeRate() external view override returns (uint256) {
         (bool updated, uint256 rate) = oracle.peek(oracleData);
         require(updated, "3037");
-        require(rate > 0, "2100");
+        require(rate > 0, "2100");//@too trusting on the values?
 
         return rate;
     }

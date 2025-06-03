@@ -109,7 +109,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
      * @return jUsdAmountRepaid amount repaid.
      */
     function selfLiquidate(
-        address _collateral,
+        address _collateral,//@audit possible to use another collateral then original one?
         uint256 _jUsdAmount,
         SwapParamsCalldata calldata _swapParams,
         StrategiesParamsCalldata calldata _strategiesParams
@@ -157,12 +157,12 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         require(tempData.holdingManager.isHolding(tempData.holding), "3002");
 
         // Ensure collateral registry is active.
-        (tempData.isRegistryActive, tempData.registryAddress) = tempData.stablesManager.shareRegistryInfo(_collateral);
+        (tempData.isRegistryActive, tempData.registryAddress) = tempData.stablesManager.shareRegistryInfo(_collateral);//@audit can address be zero while active??
         require(tempData.isRegistryActive, "1200");
 
         // Ensure user is solvent.
-        tempData.totalBorrowed = ISharesRegistry(tempData.registryAddress).borrowed(tempData.holding);
-        require(tempData.stablesManager.isSolvent({ _token: _collateral, _holding: tempData.holding }), "3075");
+        tempData.totalBorrowed = ISharesRegistry(tempData.registryAddress).borrowed(tempData.holding);//in jusd?
+        require(tempData.stablesManager.isSolvent({ _token: _collateral, _holding: tempData.holding }), "3075");//why are we liquidating when still solvent, any advantages?
 
         // Ensure self-liquidation amount <= borrowed.
         tempData.jUsdAmountToBurn = _jUsdAmount;
@@ -179,7 +179,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         // Ensure safe computation.
         require(_swapParams.slippagePercentage <= precision, "3081");
         if (
-            tempData.amountInMaximum
+            tempData.amountInMaximum//@audit no validation of this??
                 > tempData.totalRequiredCollateral
                     + tempData.totalRequiredCollateral.mulDiv(_swapParams.slippagePercentage, precision)
         ) {
@@ -222,7 +222,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         });
 
         // Compute the final fee amount (if any) to be paid for performing self-liquidation.
-        uint256 finalFeeCollateral = collateralUsedForSwap.mulDiv(selfLiquidationFee, precision, Math.Rounding.Ceil);
+        uint256 finalFeeCollateral = collateralUsedForSwap.mulDiv(selfLiquidationFee, precision, Math.Rounding.Ceil);//@audit fee is removed from the actual debt amount 
 
         // Transfer fees to fee address.
         if (finalFeeCollateral != 0) {
@@ -234,7 +234,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
         }
 
         // Save the jUSD amount that has been repaid.
-        jUsdAmountRepaid = tempData.jUsdAmountToBurn;
+        jUsdAmountRepaid = tempData.jUsdAmountToBurn;//@audit same amount burned?
         // Save the amount of collateral that has been used to repay jUSD.
         collateralUsed = collateralUsedForSwap + finalFeeCollateral;
 
@@ -411,7 +411,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
                 _holding: holding,
                 _amount: totalCollateral,
                 _strategies: _data.strategies,
-                _strategiesData: _data.strategiesData,
+                _strategiesData: _data.strategiesData,//@audit no check if arrays are the same?
                 useHoldingBalance: true
             });
         }
@@ -499,18 +499,18 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
     ) private view returns (uint256 totalCollateral) {
         uint256 EXCHANGE_RATE_PRECISION = manager.EXCHANGE_RATE_PRECISION();
         // Calculate collateral amount based on its USD value.
-        totalCollateral = _jUsdAmount.mulDiv(EXCHANGE_RATE_PRECISION, _exchangeRate, Math.Rounding.Ceil);
+        totalCollateral = _jUsdAmount.mulDiv(EXCHANGE_RATE_PRECISION, _exchangeRate, Math.Rounding.Ceil);//@audit is rate in 1e18?
 
         // Adjust collateral amount in accordance with current jUSD price.
         totalCollateral =
-            totalCollateral.mulDiv(manager.getJUsdExchangeRate(), EXCHANGE_RATE_PRECISION, Math.Rounding.Ceil);
+            totalCollateral.mulDiv(manager.getJUsdExchangeRate(), EXCHANGE_RATE_PRECISION, Math.Rounding.Ceil);//@uses the oracle set in manager which may different from one set in shares registry 
 
         // Perform sanity check to avoid miscalculations.
         require(totalCollateral > 0, "3079");
 
         // Transform from 18 decimals to collateral's decimals
         uint256 collateralDecimals = IERC20Metadata(_collateral).decimals();
-        if (collateralDecimals > 18) totalCollateral = totalCollateral * (10 ** (collateralDecimals - 18));
+        if (collateralDecimals > 18) totalCollateral = totalCollateral * (10 ** (collateralDecimals - 18));//@audit shouldn't it be division,what happens in cases whereby amounts are different
         else if (collateralDecimals < 18) totalCollateral = totalCollateral.ceilDiv(10 ** (18 - collateralDecimals));//@audit what if 18
     }
 

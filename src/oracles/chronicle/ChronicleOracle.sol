@@ -82,7 +82,7 @@ contract ChronicleOracle is IChronicleOracle, Initializable, Ownable2StepUpgrade
         underlying = _underlying;
         chronicle = _chronicle;
         ageValidityPeriod = _ageValidityPeriod;
-        ageValidityBuffer = 15 minutes;
+        ageValidityBuffer = 15 minutes;//@audit issue if underlying no dey move like that
     }
 
     // -- Administration --

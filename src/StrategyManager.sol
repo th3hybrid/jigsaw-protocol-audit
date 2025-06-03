@@ -483,7 +483,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
 
         (tempData.withdrawnAmount, tempData.initialInvestment, tempData.yield, tempData.fee) =
             tempData.strategyContract.withdraw({ _shares: _shares, _recipient: _holding, _asset: _token, _data: _data });
-        require(tempData.withdrawnAmount > 0, "3016");
+        require(tempData.withdrawnAmount > 0, "3016");//@audit does withdrawn ammount include yield or loss
 
         if (tempData.yield > 0) {//@audit does claim investment claim rewards too?
             _getStablesManager().addCollateral({ _holding: _holding, _token: _token, _amount: uint256(tempData.yield) });

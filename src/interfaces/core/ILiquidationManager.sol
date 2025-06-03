@@ -236,7 +236,7 @@ interface ILiquidationManager {
      * @dev `_deadline` is a timestamp representing the latest time by which the swap operation must be completed.
      * @dev `slippagePercentage` represents the acceptable deviation percentage of `_amountInMaximum` from the
      * `totalSelfLiquidatableCollateral`.
-     * @dev `slippagePercentage` is denominated in 5, where 100% is represented as 1e5.
+     * @dev `slippagePercentage` is denominated in 5, where 100% is represented as 1e5. //@audit keep aneye, is it uniswap standard or what? 
      */
     struct SwapParamsCalldata {
         bytes swapPath;
