@@ -525,7 +525,7 @@ contract HoldingManager is IHoldingManager, Ownable2Step, Pausable, ReentrancyGu
         if (_from == address(this)) {
             IERC20(_token).safeTransfer({ to: holding, value: _amount });
         } else {
-            IERC20(_token).safeTransferFrom({ from: _from, to: holding, value: _amount });
+            IERC20(_token).safeTransferFrom({ from: _from, to: holding, value: _amount });//@audit thought to would be
         }
 
         _getStablesManager().addCollateral({ _holding: holding, _token: _token, _amount: _amount });
