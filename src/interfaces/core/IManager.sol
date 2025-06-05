@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IOracle } from "../oracle/IOracle.sol";
+import {IOracle} from "../oracle/IOracle.sol";
 
 /**
  * @title IManager.
@@ -58,49 +58,70 @@ interface IManager {
      * @param oldAddress The previous address of the holding manager.
      * @param newAddress The new address of the holding manager.
      */
-    event HoldingManagerUpdated(address indexed oldAddress, address indexed newAddress);
+    event HoldingManagerUpdated(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when a new liquidation manager is requested.
      * @param oldAddress The previous address of the liquidation manager.
      * @param newAddress The new address of the liquidation manager.
      */
-    event NewLiquidationManagerRequested(address indexed oldAddress, address indexed newAddress);
+    event NewLiquidationManagerRequested(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when the liquidation manager is set.
      * @param oldAddress The previous address of the liquidation manager.
      * @param newAddress The new address of the liquidation manager.
      */
-    event LiquidationManagerUpdated(address indexed oldAddress, address indexed newAddress);
+    event LiquidationManagerUpdated(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when the stablecoin manager is set.
      * @param oldAddress The previous address of the stablecoin manager.
      * @param newAddress The new address of the stablecoin manager.
      */
-    event StablecoinManagerUpdated(address indexed oldAddress, address indexed newAddress);
+    event StablecoinManagerUpdated(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when the strategy manager is set.
      * @param oldAddress The previous address of the strategy manager.
      * @param newAddress The new address of the strategy manager.
      */
-    event StrategyManagerUpdated(address indexed oldAddress, address indexed newAddress);
+    event StrategyManagerUpdated(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when a new swap manager is requested.
      * @param oldAddress The previous address of the swap manager.
      * @param newAddress The new address of the swap manager.
      */
-    event NewSwapManagerRequested(address indexed oldAddress, address indexed newAddress);
+    event NewSwapManagerRequested(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when the swap manager is set.
      * @param oldAddress The previous address of the swap manager.
      * @param newAddress The new address of the swap manager.
      */
-    event SwapManagerUpdated(address indexed oldAddress, address indexed newAddress);
+    event SwapManagerUpdated(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when the default fee is updated.
@@ -128,21 +149,30 @@ interface IManager {
      * @param oldAddress The previous fee address.
      * @param newAddress The new fee address.
      */
-    event FeeAddressUpdated(address indexed oldAddress, address indexed newAddress);
+    event FeeAddressUpdated(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when the receipt token factory is updated.
      * @param oldAddress The previous address of the receipt token factory.
      * @param newAddress The new address of the receipt token factory.
      */
-    event ReceiptTokenFactoryUpdated(address indexed oldAddress, address indexed newAddress);
+    event ReceiptTokenFactoryUpdated(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when the liquidity gauge factory is updated.
      * @param oldAddress The previous address of the liquidity gauge factory.
      * @param newAddress The new address of the liquidity gauge factory.
      */
-    event LiquidityGaugeFactoryUpdated(address indexed oldAddress, address indexed newAddress);
+    event LiquidityGaugeFactoryUpdated(
+        address indexed oldAddress,
+        address indexed newAddress
+    );
 
     /**
      * @notice Emitted when new oracle is requested.
@@ -192,25 +222,19 @@ interface IManager {
      * @notice Returns true if token is whitelisted.
      * @param _token The address of the token.
      */
-    function isTokenWhitelisted(
-        address _token
-    ) external view returns (bool);
+    function isTokenWhitelisted(address _token) external view returns (bool);
 
     /**
      * @notice Returns true if the token can be withdrawn from a holding.
      * @param _token The address of the token.
      */
-    function isTokenWithdrawable(
-        address _token
-    ) external view returns (bool);
+    function isTokenWithdrawable(address _token) external view returns (bool);
 
     /**
      * @notice Returns true if caller is allowed invoker.
      * @param _invoker The address of the invoker.
      */
-    function allowedInvokers(
-        address _invoker
-    ) external view returns (bool);
+    function allowedInvokers(address _invoker) external view returns (bool);
 
     // -- Essential tokens --
 
@@ -380,9 +404,7 @@ interface IManager {
      *
      * @param _contract The address of the contract to be whitelisted.
      */
-    function whitelistContract(
-        address _contract
-    ) external;
+    function whitelistContract(address _contract) external;
 
     /**
      * @notice Blacklists a contract.
@@ -398,9 +420,7 @@ interface IManager {
      *
      * @param _contract The address of the contract to be blacklisted.
      */
-    function blacklistContract(
-        address _contract
-    ) external;
+    function blacklistContract(address _contract) external;
 
     /**
      * @notice Whitelists a token.
@@ -416,9 +436,7 @@ interface IManager {
      *
      * @param _token The address of the token to be whitelisted.
      */
-    function whitelistToken(
-        address _token
-    ) external;
+    function whitelistToken(address _token) external;
 
     /**
      * @notice Removes a token from whitelist.
@@ -434,9 +452,7 @@ interface IManager {
      *
      * @param _token The address of the token to be whitelisted.
      */
-    function removeToken(
-        address _token
-    ) external;
+    function removeToken(address _token) external;
 
     /**
      * @notice Registers the `_token` as withdrawable.
@@ -453,15 +469,13 @@ interface IManager {
      *
      * @param _token The address of the token to be added as withdrawable.
      */
-    function addWithdrawableToken(
-        address _token
-    ) external;
+    function addWithdrawableToken(address _token) external;
 
     /**
      * @notice Unregisters the `_token` as withdrawable.
      *
      * @notice Requirements:
-     * - `_token` must be withdrawable.//@audit can be called by who?
+     * - `_token` must be withdrawable.
      *
      * @notice Effects:
      * - Updates the `isTokenWithdrawable` mapping.
@@ -472,6 +486,7 @@ interface IManager {
      * @param _token The address of the token to be removed as withdrawable.
      */
     function removeWithdrawableToken(
+        //@audit can be called by who?
         address _token
     ) external;
 
@@ -479,7 +494,7 @@ interface IManager {
      * @notice Sets invoker as allowed or forbidden.
      *
      * @notice Effects:
-     * - Updates the `allowedInvokers` mapping.//@audit who calls it?
+     * - Updates the `allowedInvokers` mapping.
      *
      * @notice Emits:
      * - `InvokerUpdated` event indicating successful invoker update operation.
@@ -487,13 +502,13 @@ interface IManager {
      * @param _component Invoker's address.
      * @param _allowed True/false.
      */
-    function updateInvoker(address _component, bool _allowed) external;
+    function updateInvoker(address _component, bool _allowed) external;//@audit who calls it?
 
     /**
      * @notice Sets the Holding Manager Contract's address.
      *
      * @notice Requirements:
-     * - `_val` must be different from previous `holdingManager` address.//@audit who calls it?
+     * - `_val` must be different from previous `holdingManager` address.
      *
      * @notice Effects:
      * - Updates the `holdingManager` state variable.
@@ -503,9 +518,7 @@ interface IManager {
      *
      * @param _val The holding manager's address.
      */
-    function setHoldingManager(
-        address _val
-    ) external;
+    function setHoldingManager(address _val) external;//@audit who calls it?
 
     /**
      * @notice Sets the Liquidation Manager Contract's address.
@@ -522,9 +535,7 @@ interface IManager {
      *
      * @param _val The liquidation manager's address.
      */
-    function setLiquidationManager(
-        address _val
-    ) external;
+    function setLiquidationManager(address _val) external;
 
     /**
      * @notice Initiates the process to update the Liquidation Manager Contract's address.
@@ -542,9 +553,7 @@ interface IManager {
      *
      * @param _val The new liquidation manager's address.
      */
-    function requestNewLiquidationManager(
-        address _val
-    ) external;
+    function requestNewLiquidationManager(address _val) external;
 
     /**
      * @notice Sets the Liquidation Manager Contract's address.
@@ -556,12 +565,12 @@ interface IManager {
      * @notice Effects:
      * - Updates the `liquidationManager` state variable.
      * - Updates the the `_newLiquidationManager` state variable.
-     * - Updates the the `_newLiquidationManagerTimestamp` state variable.//@audit discrepancies between request and accept timestamp
+     * - Updates the the `_newLiquidationManagerTimestamp` state variable.
      *
      * @notice Emits:
      * - `LiquidationManagerUpdated` event indicating the successful setting of the Liquidation Manager's address.
      */
-    function acceptNewLiquidationManager() external;
+    function acceptNewLiquidationManager() external;//@audit discrepancies between request and accept timestamp
 
     /**
      * @notice Sets the Stablecoin Manager Contract's address.
@@ -577,9 +586,7 @@ interface IManager {
      *
      * @param _val The Stablecoin manager's address.
      */
-    function setStablecoinManager(
-        address _val
-    ) external;
+    function setStablecoinManager(address _val) external;
 
     /**
      * @notice Sets the Strategy Manager Contract's address.
@@ -595,9 +602,7 @@ interface IManager {
      *
      * @param _val The Strategy manager's address.
      */
-    function setStrategyManager(
-        address _val
-    ) external;
+    function setStrategyManager(address _val) external;
 
     /**
      * @notice Sets the Swap Manager Contract's address.
@@ -614,9 +619,7 @@ interface IManager {
      *
      * @param _val The Swap manager's address.
      */
-    function setSwapManager(
-        address _val
-    ) external;
+    function setSwapManager(address _val) external;
 
     /**
      * @notice Initiates the process to update the Swap Manager Contract's address.
@@ -634,9 +637,7 @@ interface IManager {
      *
      * @param _val The new swap manager's address.
      */
-    function requestNewSwapManager(
-        address _val
-    ) external;
+    function requestNewSwapManager(address _val) external;
 
     /**
      * @notice Updates the Swap Manager Contract    .
@@ -670,9 +671,7 @@ interface IManager {
      *
      * @param _val The new performance fee value.
      */
-    function setPerformanceFee(
-        uint256 _val
-    ) external;
+    function setPerformanceFee(uint256 _val) external;
 
     /**
      * @notice Sets the withdrawal fee.
@@ -690,9 +689,7 @@ interface IManager {
      *
      * @param _val The new withdrawal fee value.
      */
-    function setWithdrawalFee(
-        uint256 _val
-    ) external;
+    function setWithdrawalFee(uint256 _val) external;
 
     /**
      * @notice Sets the global fee address.
@@ -708,9 +705,7 @@ interface IManager {
      *
      * @param _val The new fee address.
      */
-    function setFeeAddress(
-        address _val
-    ) external;
+    function setFeeAddress(address _val) external;
 
     /**
      * @notice Sets the receipt token factory's address.
@@ -726,9 +721,7 @@ interface IManager {
      *
      * @param _factory Receipt token factory's address.
      */
-    function setReceiptTokenFactory(
-        address _factory
-    ) external;
+    function setReceiptTokenFactory(address _factory) external;
 
     /**
      * @notice Registers jUSD's oracle change request.
@@ -746,9 +739,7 @@ interface IManager {
      *
      * @param _oracle Liquidity gauge factory's address.
      */
-    function requestNewJUsdOracle(
-        address _oracle
-    ) external;
+    function requestNewJUsdOracle(address _oracle) external;
 
     /**
      * @notice Updates jUSD's oracle.
@@ -782,9 +773,7 @@ interface IManager {
      *
      * @param _newOracleData New data used for jUSD's oracle data.
      */
-    function setJUsdOracleData(
-        bytes calldata _newOracleData
-    ) external;
+    function setJUsdOracleData(bytes calldata _newOracleData) external;
 
     /**
      * @notice Sets the minimum debt amount.
@@ -795,9 +784,7 @@ interface IManager {
      *
      * @param _minDebtAmount The new minimum debt amount.
      */
-    function setMinDebtAmount(
-        uint256 _minDebtAmount
-    ) external;
+    function setMinDebtAmount(uint256 _minDebtAmount) external;
 
     /**
      * @notice Registers timelock change request.
@@ -816,9 +803,7 @@ interface IManager {
      *
      * @param _newVal The new timelock value in seconds.
      */
-    function requestNewTimelock(
-        uint256 _newVal
-    ) external;
+    function requestNewTimelock(uint256 _newVal) external;
 
     /**
      * @notice Updates the timelock amount.
