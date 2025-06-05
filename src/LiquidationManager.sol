@@ -88,7 +88,7 @@ contract LiquidationManager is ILiquidationManager, Ownable2Step, Pausable, Reen
      * - `msg.sender` must have holding.
      * - `msg.sender` must be solvent.
      * - There should be enough liquidity in jUSD pool.
-     * - `_jUsdAmount` must be <= user's borrowed amount.//@audit as how?
+     * - `_jUsdAmount` must be <= user's borrowed amount.
      *
      * @notice Effects:
      * - Retrieves collateral from specified strategies if needed.

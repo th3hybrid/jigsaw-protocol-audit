@@ -188,7 +188,7 @@ contract Staker is IStaker, Ownable2Step, ReentrancyGuard, Pausable {
     ) external override onlyOwner validAmount(_amount) updateReward(address(0)) {
         // Transfer assets from the `_from`'s address to this contract.
         IERC20(rewardToken).safeTransferFrom({ from: _from, to: address(this), value: _amount });
-?
+
         require(rewardsDuration > 0, "3089");
         if (block.timestamp >= periodFinish) {
             rewardRate = _amount / rewardsDuration;
