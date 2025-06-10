@@ -334,7 +334,7 @@ contract StrategyManager is IStrategyManager, Ownable2Step, ReentrancyGuard, Pau
         StrategyInfo calldata _info
     ) external override onlyOwner validStrategy(_strategy) {
         require(_info.whitelisted, "3104");
-        require(_info.performanceFee <= OperationsLib.FEE_FACTOR, "3105");
+        require(_info.performanceFee <= OperationsLib.FEE_FACTOR, "3105");//@audit performance fee can be higher than max performance fee
         strategyInfo[_strategy] = _info;
         emit StrategyUpdated(_strategy, _info.active, _info.performanceFee);
     }
